@@ -23,7 +23,7 @@ npm run dev        # http://localhost:5173
 
 ## Status
 
-Four lessons are complete, in French and English. Open one directly with its number in the URL,
+Seven lessons are complete, in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -32,6 +32,9 @@ e.g. `http://localhost:5173/#1.4`.
 | **1.3 AC sources and RMS** | Predicts p(t) for a 1 kW heater, finds the DC equivalent (230 V), fools an average-responding meter | Glowing heater, true-RMS vs average meters |
 | **1.4 Resonance** | Watches the transient lock onto the phasor solution, tunes to f₀, gets Q·V across C | Clickable frequency response, rotating phasor diagram |
 | **2.1 Euler** | Predicts the sum of two sinusoids, turns the Euler helix, adds and cancels phasors, previews three-phase | 3D Euler helix |
+| **2.2 Phasors and impedance** | Predicts the current in an inductor, compares R, L and C, finds the 45° corner of an RL circuit | Impedance plane with the Z triangle and its frequency locus |
+| **2.3 AC power** | Predicts p(t) for a motor (it goes negative), splits it into active and reactive parts, corrects the power factor, overcompensates | Power triangle, cos φ dial, cable-loss meter |
+| **2.4 Three-phase** | Predicts the total power of three heaters (constant), unbalances the loads, breaks the neutral | Clickable neutral switch, phase-balance meter with ±10 % band |
 
 Shared by every lesson:
 
@@ -50,15 +53,16 @@ Shared by every lesson:
 ```
 web/src/
   lib/core/        linear algebra, LTI simulation (expm discretisation)
-  lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors;
-                   G2ELin-backed models later)
+  lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
+                   impedance, power, three-phase; G2ELin-backed models later)
   lib/lab/         lesson format (types.ts), shared experiment state, lesson + parameter panels
   lib/instruments/ oscilloscope, s-plane, energy balance, frequency response, phasor diagram,
                    live equations
   lib/canvas/      circuit schematics
   lib/ui/          i18n, formatting, markdown + math, top bar, course map
   lessons/         curriculum.ts (course map) and one folder per lesson, with any
-                   lesson-specific panels (heater, meters, Euler helix)
+                   lesson-specific panels (heater, meters, Euler helix, impedance plane,
+                   power triangle, three-phase schematic, phase balance)
 ```
 
 ## Adding a lesson

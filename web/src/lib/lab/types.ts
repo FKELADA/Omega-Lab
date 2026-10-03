@@ -146,11 +146,19 @@ export interface PhasorItem {
   after?: string;
   /** A thin reference arrow (e.g. the resultant). */
   thin?: boolean;
+  /** Absolute tail position, in the same units as the value (e.g. a shifted neutral). */
+  tail?: Complex;
+  /** Unit for the readout, when it differs from the diagram's (e.g. a current among voltages). */
+  unit?: string;
+  /** Drawing scale relative to the others, so currents can share a voltage plane. */
+  drawScale?: number;
 }
 
 export interface PhasorSpec {
   omega: (p: Params) => number;
   unit: string;
+  /** The values are RMS phasors (power-engineering convention) rather than peaks. */
+  rms?: boolean;
   items: (p: Params, k: any) => PhasorItem[];
 }
 

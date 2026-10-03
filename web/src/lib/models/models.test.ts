@@ -76,3 +76,74 @@ describe('phasor addition', () => {
     expect(Math.abs(k.phase)).toBeCloseTo(180, 9);
   });
 });
+
+import { KINDS, impedance, impedanceInfo, powerInfo, powerLoad, threePhase, threePhaseInfo } from './acCircuits';
+import { fitPhase } from './phasorRun';
+
+describe('impedance (2.2)', () => {
+  const base = { V: 230, f: 50, R: 10, L: 0.05, C: 200e-6 };
+  it('inductor current lags by 90°, capacitor current leads by 90°', () => {
+    expect(impedanceInfo({ ...base, kind: KINDS.L }).phi).toBeCloseTo(90, 9);
+    expect(impedanceInfo({ ...base, kind: KINDS.C }).phi).toBeCloseTo(-90, 9);
+    expect(impedanceInfo({ ...base, kind: KINDS.R }).phi).toBeCloseTo(0, 9);
+  });
+  it('RL is at 45° at its corner frequency', () => {
+    const p = { ...base, kind: KINDS.RL };
+    const fc = impedanceInfo(p).fc!;
+    expect(impedanceInfo({ ...p, f: fc }).phi).toBeCloseTo(45, 9);
+  });
+  it('the sampled current has the phasor phase (fitPhase recovers it)', () => {
+    const p = { ...base, kind: KINDS.RL };
+    const run = impedance.simulate(p, impedance.window(p));
+    const k = impedanceInfo(p);
+    const fit = fitPhase([...run.t].map((t, j) => [t, run.s.i[j]]), k.omega);
+    expect(fit.phase).toBeCloseTo(-k.phi * (Math.PI / 180), 6);
+    expect(fit.amp).toBeCloseTo(Math.SQRT2 * Math.hypot(k.I.re, k.I.im), 6);
+  });
+});
+
+describe('power and PF correction (2.3)', () => {
+  const base = { V: 230, f: 50, P: 10e3, pf: 0.7, C: 0 };
+  it('p(t) = P(1 + cos 2ωt) + Q sin 2ωt, and averages to P', () => {
+    const run = powerLoad.simulate(base, powerLoad.window(base));
+    let err = 0;
+    run.t.forEach((_, j) => (err = Math.max(err, Math.abs(run.s.p[j] - run.s.pP[j] - run.s.pQ[j]))));
+    expect(err / base.P).toBeLessThan(1e-9);
+    const mean = run.s.p.slice(0, -1).reduce((a, b) => a + b, 0) / (run.t.length - 1);
+    expect(mean / base.P).toBeCloseTo(1, 3);
+  });
+  it('the C95 capacitor raises the power factor to exactly 0.95', () => {
+    const C = powerInfo(base).C95;
+    expect(powerInfo({ ...base, C }).pf).toBeCloseTo(0.95, 9);
+  });
+  it('correction lowers the line current and the losses, not the active power', () => {
+    const a = powerInfo(base), b = powerInfo({ ...base, C: a.C95 });
+    expect(b.P).toBeCloseTo(a.P, 6);
+    expect(b.loss / a.loss).toBeCloseTo((0.7 / 0.95) ** 2, 6);
+  });
+});
+
+describe('three-phase (2.4)', () => {
+  const base = { V: 230, f: 50, phases: 3, Ra: 50, Rb: 50, Rc: 50, neutral: 1 };
+  it('balanced: no neutral current and constant total power', () => {
+    const k = threePhaseInfo(base);
+    expect(Math.hypot(k.IN.re, k.IN.im)).toBeLessThan(1e-9);
+    const run = threePhase.simulate(base, threePhase.window(base));
+    const spread = Math.max(...run.s.p) - Math.min(...run.s.p);
+    expect(spread / k.P).toBeLessThan(1e-9);
+    expect(k.P).toBeCloseTo((3 * 230 * 230) / 50, 6);
+  });
+  it('single phase: power pulses between 0 and 2P', () => {
+    const p = { ...base, phases: 1 };
+    const run = threePhase.simulate(p, threePhase.window(p));
+    expect(Math.min(...run.s.p) / threePhaseInfo(p).P).toBeLessThan(1e-5); // samples straddle the zero
+    expect(Math.max(...run.s.p) / threePhaseInfo(p).P).toBeCloseTo(2, 3);
+  });
+  it('open neutral with unbalanced loads shifts the star point (Millman)', () => {
+    const k = threePhaseInfo({ ...base, Ra: 10, Rb: 200, Rc: 200, neutral: 0 });
+    const sumI = k.I.reduce((a, i) => ({ re: a.re + i.re, im: a.im + i.im }), { re: 0, im: 0 });
+    expect(Math.hypot(sumI.re, sumI.im)).toBeLessThan(1e-9);
+    // The lightly loaded phases see far more than 230 V.
+    expect(Math.hypot(k.Vload[1].re, k.Vload[1].im)).toBeGreaterThan(300);
+  });
+});

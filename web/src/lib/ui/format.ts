@@ -16,7 +16,12 @@ const PREFIXES: [number, string, string][] = [
 /** Units that take no SI prefix. */
 const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB']);
 
+/** Below this, a value is round-off (e.g. the sum of balanced currents) and shown as 0. */
+const NOISE = 1e-11;
+const clean = (v: number) => (Math.abs(v) < NOISE ? 0 : v);
+
 function split(v: number, unit: string): { m: number; pre: number } {
+  v = clean(v);
   if (NO_PREFIX.has(unit) || v === 0 || !isFinite(v)) return { m: v, pre: 3 };
   const a = Math.abs(v);
   let idx = PREFIXES.findIndex(([f]) => a >= f * 0.9995);
@@ -25,6 +30,7 @@ function split(v: number, unit: string): { m: number; pre: number } {
 }
 
 export function num(v: number, digits = 3): string {
+  v = clean(v);
   if (!isFinite(v)) return v > 0 ? '∞' : v < 0 ? '−∞' : '—';
   const a = Math.abs(v);
   const sci = a !== 0 && (a >= 1e5 || a < 1e-3);

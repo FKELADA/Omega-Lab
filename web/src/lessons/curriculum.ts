@@ -4,6 +4,9 @@ import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
 import { acRms } from './ac-rms/experiment';
 import { euler } from './euler/experiment';
+import { impedanceLesson } from './impedance/experiment';
+import { powerLesson } from './power/experiment';
+import { threePhaseLesson } from './three-phase/experiment';
 import { resonance } from './resonance/experiment';
 import { rlcStep } from './rlc-step/experiment';
 
@@ -43,9 +46,9 @@ export const curriculum: ModuleEntry[] = [
     title: { fr: 'La boîte à outils de l’alternatif', en: 'The AC toolbox' },
     lessons: [
       { id: '2.1', title: { fr: 'Euler et le vecteur tournant', en: 'Euler and the rotating vector' }, experiment: euler },
-      soon('2.2', 'Phaseurs et impédance', 'Phasors and impedance'),
-      soon('2.3', 'Puissances P, Q, S', 'AC power: P, Q, S'),
-      soon('2.4', 'Systèmes triphasés', 'Three-phase systems'),
+      { id: '2.2', title: { fr: 'Phaseurs et impédance', en: 'Phasors and impedance' }, experiment: impedanceLesson },
+      { id: '2.3', title: { fr: 'Puissances P, Q, S', en: 'AC power: P, Q, S' }, experiment: powerLesson },
+      { id: '2.4', title: { fr: 'Systèmes triphasés', en: 'Three-phase systems' }, experiment: threePhaseLesson },
       soon('2.5', 'Clarke et Park', 'Clarke and Park'),
       soon('2.6', 'Système per-unit', 'Per-unit system'),
       soon('2.7', 'Harmoniques et Fourier', 'Harmonics and Fourier'),

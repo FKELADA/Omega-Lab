@@ -27,8 +27,12 @@
   const arrows = $derived.by(() => {
     const out = new Map<string, { it: PhasorItem; tail: Complex; head: Complex }>();
     for (const it of items) {
-      const v = cmul(it.value, spin);
-      const tail = chain && it.after ? (out.get(it.after)?.head ?? { re: 0, im: 0 }) : { re: 0, im: 0 };
+      const v = cmul({ re: it.value.re * (it.drawScale ?? 1), im: it.value.im * (it.drawScale ?? 1) }, spin);
+      const tail = it.tail
+        ? cmul(it.tail, spin)
+        : chain && it.after
+          ? (out.get(it.after)?.head ?? { re: 0, im: 0 })
+          : { re: 0, im: 0 };
       out.set(it.id, { it, tail, head: cadd(tail, v) });
     }
     return [...out.values()];
@@ -67,7 +71,7 @@
       <text x={W / 2 + 6} y="18" class="lbl">Im</text>
 
       {#each arrows as a (a.it.id)}
-        {#if !chain || !a.it.after}
+        {#if (!chain || !a.it.after) && !a.it.tail}
           <!-- shadow on the real axis = instantaneous value -->
           <line x1={X(a.head)} y1={Y(a.head)} x2={X(a.head)} y2={H / 2} class="drop" style="stroke: var({a.it.color})" />
           <circle cx={X(a.head)} cy={H / 2} r="3.5" style="fill: var({a.it.color})" />
@@ -105,7 +109,7 @@
     <div class="readout">
       {#each items as it (it.id)}
         <span style="color: var({it.color})"
-          >{@html renderMath(it.label)} = {si(Math.hypot(it.value.re, it.value.im), spec.unit)} ∠ {Math.round(
+          >{@html renderMath(it.label)} = {si(Math.hypot(it.value.re, it.value.im), it.unit ?? spec.unit)} ∠ {Math.round(
             (Math.atan2(it.value.im, it.value.re) * 180) / Math.PI,
           )}°</span
         >

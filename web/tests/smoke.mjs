@@ -124,13 +124,52 @@ await setParam(3, -120, -180, 180);
 check('2.1 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 await page.screenshot({ path: `${out}/smoke-2.1.png` });
 
+// ── 2.2 Impedance ─────────────────────────────────────────────────────────────
+await open('2.2');
+fb = await predict((f) => 0.5 - 0.35 * Math.cos(2 * Math.PI * 2 * f)); // in phase with v
+check('2.2 misconception: inductor current lags', /ne suit pas/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: 'C', exact: true }).click();
+await page.getByRole('radio', { name: 'L', exact: true }).click();
+await setParam(0, 500, 5, 5000, true);
+await page.getByRole('radio', { name: 'R + L' }).click();
+await setParam(0, 10 / (2 * Math.PI * 0.05), 5, 5000, true); // corner frequency
+await page.getByRole('radio', { name: 'R + C' }).click();
+await setParam(0, 5000, 5, 5000, true);
+check('2.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 2.3 Power ─────────────────────────────────────────────────────────────────
+await open('2.3');
+fb = await predict((f) => 0.25 - 0.15 * Math.cos(2 * Math.PI * 4 * f)); // never below zero
+check('2.3 misconception: power goes negative', /négative/.test(fb), fb.slice(0, 70));
+await page.locator('.chip').nth(3).click(); // p_Q
+await scrubToEnd();
+await setParam(2, 420e-6, 0, 1.5e-3);
+await setParam(2, 613e-6, 0, 1.5e-3);
+await setParam(2, 1000e-6, 0, 1.5e-3);
+check('2.3 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 2.4 Three-phase ───────────────────────────────────────────────────────────
+await open('2.4');
+check('2.4 starts with no step done', (await doneSteps()) === 0, `${await doneSteps()}`);
+fb = await predict((f) => 0.45 - 0.3 * Math.sin(2 * Math.PI * 4 * f)); // pulsing
+check('2.4 misconception: total power is constant', /constante/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: 'Monophasé' }).click();
+await page.getByRole('radio', { name: 'Triphasé' }).click();
+await setParam(1, 100, 5, 500, true); // unbalance phase B
+await page.getByRole('switch').click(); // break the neutral
+const bad = await page.locator('.u.bad').count();
+check('2.4 broken neutral flags an out-of-tolerance load voltage', bad > 0, `${bad}`);
+await page.getByRole('switch').click(); // reconnect
+await setParam(1, 26.45, 5, 500, true);
+check('2.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['1.2', '1.3', '1.4', '2.1']) {
+for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);
