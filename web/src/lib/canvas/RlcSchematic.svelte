@@ -22,7 +22,7 @@
 
 <section class="panel">
   <header>
-    <span>{tr({ fr: 'Circuit', en: 'Circuit' })}</span>
+    <span>{tr(S.circuit)}</span>
     <span class="spacer"></span>
     <span class="hint">{tr(S.clickToProbe)}</span>
   </header>
@@ -52,9 +52,13 @@
       >
         <circle cx="50" cy="130" r="22" class="body-fill" />
         <circle cx="50" cy="130" r="22" />
-        <text x="50" y="124" class="sign">+</text>
-        <text x="50" y="146" class="sign">−</text>
-        <text x="18" y="134" class="name" text-anchor="end">V</text>
+        {#if lab.exp.source === 'ac'}
+          <path d="M38,130 c4,-12 8,-12 12,0 s8,12 12,0" />
+        {:else}
+          <text x="50" y="124" class="sign">+</text>
+          <text x="50" y="146" class="sign">−</text>
+        {/if}
+        <text x="18" y="134" class="name" text-anchor="end">{lab.exp.source === 'ac' ? 'V̂' : 'V'}</text>
         <text x="18" y="150" class="val" text-anchor="end">{si(lab.params.V, 'V')}</text>
       </g>
 

@@ -75,6 +75,18 @@
         onmouseleave={() => (lab.hover = null)}
       >
         <span class="sym" title={tr(p.name)}>{@html renderMath(p.symbol)}</span>
+        {#if p.choices}
+          <div class="choices" role="radiogroup" aria-label={tr(p.name)}>
+            {#each p.choices as c (c.value)}
+              <button
+                role="radio"
+                aria-checked={lab.params[p.id] === c.value}
+                class:on={lab.params[p.id] === c.value}
+                onclick={() => lab.setParam(p.id, c.value)}>{tr(c.label)}</button
+              >
+            {/each}
+          </div>
+        {:else}
         <input
           type="range"
           min="0"
@@ -86,12 +98,15 @@
           ondblclick={() => lab.setParam(p.id, p.default)}
         />
         <span class="mono val">{si(lab.params[p.id], p.unit)}</span>
+        {/if}
+        {#if !p.choices}
         <button
           class="btn sweep"
           class:on={lab.fan?.param === p.id}
           title={tr(S.sweepTitle)}
           onclick={() => lab.sweep(p.id)}>⇶ {tr(S.sweep)}</button
         >
+        {/if}
       </div>
     {/each}
   </div>
@@ -150,6 +165,32 @@
   }
   .param:hover {
     background: var(--hot);
+  }
+  .param:has(.choices) {
+    grid-template-columns: 18px 1fr;
+  }
+  .choices {
+    display: inline-flex;
+    flex-wrap: wrap;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    overflow: hidden;
+    justify-self: start;
+  }
+  .choices button {
+    border: none;
+    background: var(--panel);
+    padding: 2px 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .choices button + button {
+    border-left: 1px solid var(--line);
+  }
+  .choices button.on {
+    background: var(--accent-soft);
+    color: var(--ink);
+    font-weight: 600;
   }
   .sym {
     color: var(--c);

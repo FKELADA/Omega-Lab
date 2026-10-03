@@ -2,6 +2,7 @@
   import type { Lab } from './lab.svelte';
   import { S, tr, ui } from '../ui/ui.svelte';
   import { renderMarkdown } from '../ui/markdown';
+  import { lessons } from '../../lessons/curriculum';
 
   let { lab }: { lab: Lab } = $props();
 
@@ -16,6 +17,10 @@
   });
 
   const body = $derived((void ui.lang, renderMarkdown(tr(step.body))));
+  const nextLesson = $derived.by(() => {
+    const k = lessons.findIndex((l) => l.experiment === lab.exp);
+    return k >= 0 ? lessons[k + 1] : undefined;
+  });
   const go = (k: number) => {
     lab.stepIndex = Math.min(steps.length - 1, Math.max(0, k));
     showHint = false;
@@ -71,12 +76,16 @@
   </div>
   <footer>
     <button class="btn" disabled={lab.stepIndex === 0} onclick={() => go(lab.stepIndex - 1)}>← {tr(S.prev)}</button>
-    <button
-      class="btn"
-      class:primary={lab.completed[step.id]}
-      disabled={lab.stepIndex === steps.length - 1}
-      onclick={() => go(lab.stepIndex + 1)}>{tr(S.next)} →</button
-    >
+    {#if lab.stepIndex === steps.length - 1 && nextLesson}
+      <a class="btn" class:primary={lab.completed[step.id]} href="#{nextLesson.id}">{nextLesson.id} {tr(nextLesson.title)} →</a>
+    {:else}
+      <button
+        class="btn"
+        class:primary={lab.completed[step.id]}
+        disabled={lab.stepIndex === steps.length - 1}
+        onclick={() => go(lab.stepIndex + 1)}>{tr(S.next)} →</button
+      >
+    {/if}
   </footer>
 </section>
 
@@ -173,6 +182,13 @@
   }
   .hintbox :global(p) {
     margin: 0;
+  }
+  a.btn {
+    text-decoration: none;
+    color: inherit;
+  }
+  a.btn.primary {
+    color: var(--accent-ink);
   }
   footer {
     display: flex;

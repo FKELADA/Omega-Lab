@@ -14,7 +14,7 @@ const PREFIXES: [number, string, string][] = [
 ];
 
 /** Units that take no SI prefix. */
-const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s']);
+const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB']);
 
 function split(v: number, unit: string): { m: number; pre: number } {
   if (NO_PREFIX.has(unit) || v === 0 || !isFinite(v)) return { m: v, pre: 3 };

@@ -89,5 +89,13 @@ export const S = {
   derive: { fr: 'Dériver', en: 'Derive' },
   at: { fr: 'à', en: 'at' },
   ghost: { fr: 'figé', en: 'frozen' },
+  bode: { fr: 'Réponse en fréquence', en: 'Frequency response' },
+  magnitude: { fr: 'Module', en: 'Magnitude' },
+  phase: { fr: 'Phase', en: 'Phase' },
+  clickToTune: { fr: 'cliquer ou glisser pour régler la fréquence', en: 'click or drag to tune the frequency' },
+  phasors: { fr: 'Diagramme de phaseurs', en: 'Phasor diagram' },
+  rotate: { fr: 'Rotation', en: 'Rotate' },
+  headToTail: { fr: 'Bout à bout', en: 'Head to tail' },
+  circuit: { fr: 'Circuit', en: 'Circuit' },
   clickToProbe: { fr: 'Cliquer un élément pour l’afficher', en: 'Click an element to probe it' },
 } satisfies Record<string, L>;

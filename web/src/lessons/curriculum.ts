@@ -2,6 +2,9 @@
 
 import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
+import { acRms } from './ac-rms/experiment';
+import { euler } from './euler/experiment';
+import { resonance } from './resonance/experiment';
 import { rlcStep } from './rlc-step/experiment';
 
 export interface LessonEntry {
@@ -30,8 +33,8 @@ export const curriculum: ModuleEntry[] = [
     lessons: [
       soon('1.1', 'R, L, C : éléments d’énergie', 'R, L, C as energy elements'),
       { id: '1.2', title: { fr: 'Régimes transitoires RLC', en: 'RLC transients' }, experiment: rlcStep },
-      soon('1.3', 'Sources alternatives, valeur efficace', 'AC sources and RMS'),
-      soon('1.4', 'Résonance', 'Resonance'),
+      { id: '1.3', title: { fr: 'Sources alternatives, valeur efficace', en: 'AC sources and RMS' }, experiment: acRms },
+      { id: '1.4', title: { fr: 'Résonance', en: 'Resonance' }, experiment: resonance },
       soon('1.5', 'Continu contre alternatif', 'DC versus AC'),
     ],
   },
@@ -39,7 +42,7 @@ export const curriculum: ModuleEntry[] = [
     n: 2,
     title: { fr: 'La boîte à outils de l’alternatif', en: 'The AC toolbox' },
     lessons: [
-      soon('2.1', 'Euler et le vecteur tournant', 'Euler and the rotating vector'),
+      { id: '2.1', title: { fr: 'Euler et le vecteur tournant', en: 'Euler and the rotating vector' }, experiment: euler },
       soon('2.2', 'Phaseurs et impédance', 'Phasors and impedance'),
       soon('2.3', 'Puissances P, Q, S', 'AC power: P, Q, S'),
       soon('2.4', 'Systèmes triphasés', 'Three-phase systems'),
@@ -116,3 +119,6 @@ export const curriculum: ModuleEntry[] = [
     ],
   },
 ];
+
+/** Lessons that can be opened, in course order. */
+export const lessons = curriculum.flatMap((m) => m.lessons.filter((l) => l.experiment));

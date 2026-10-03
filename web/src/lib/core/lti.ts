@@ -68,3 +68,8 @@ export function cumtrapz(t: Float64Array, y: Float64Array): Float64Array {
   for (let k = 1; k < t.length; k++) out[k] = out[k - 1] + 0.5 * (y[k] + y[k - 1]) * (t[k] - t[k - 1]);
   return out;
 }
+
+/** Exact simulation of an autonomous system dx/dt = A x (no input). */
+export function simulateFree(A: Mat, x0: number[], tEnd: number, n: number) {
+  return simulate({ A, B: A.map(() => [0]) }, x0, () => [0], tEnd, n);
+}

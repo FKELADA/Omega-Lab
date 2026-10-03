@@ -40,6 +40,8 @@ export class Lab {
   completed = $state<Record<string, boolean>>({});
   /** Furthest the learner has scrubbed, for steps that ask them to explore in time. */
   maxFrac = $state(0);
+  /** Lesson-specific events that step checks can test (e.g. a view was opened). */
+  flags = $state<Record<string, boolean>>({});
 
   tEnd: number;
   run: Run;

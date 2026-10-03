@@ -1,26 +1,37 @@
 <script lang="ts">
-  import { rlcStep } from './lessons/rlc-step/experiment';
+  import { untrack } from 'svelte';
+  import { lessons } from './lessons/curriculum';
   import { Lab } from './lib/lab/lab.svelte';
   import type { Experiment } from './lib/lab/types';
   import LessonPanel from './lib/lab/LessonPanel.svelte';
   import ParamRail from './lib/lab/ParamRail.svelte';
-  import RlcSchematic from './lib/canvas/RlcSchematic.svelte';
   import Scope from './lib/instruments/Scope.svelte';
-  import SPlane from './lib/instruments/SPlane.svelte';
-  import EnergyBars from './lib/instruments/EnergyBars.svelte';
   import Equations from './lib/instruments/Equations.svelte';
   import TopBar from './lib/ui/TopBar.svelte';
   import CourseMap from './lib/ui/CourseMap.svelte';
   import { ui } from './lib/ui/ui.svelte';
-  import { untrack } from 'svelte';
 
-  let lab = $state(new Lab(rlcStep));
+  /** Lessons are addressed by their course number in the URL hash, e.g. #1.4. */
+  const fromHash = () => lessons.find((l) => l.id === location.hash.slice(1)) ?? lessons[0];
+
+  let lab = $state(new Lab(fromHash().experiment!));
   let mapOpen = $state(false);
 
-  function pick(e: Experiment) {
+  function open(e: Experiment) {
     if (e.id !== lab.exp.id) lab = new Lab(e);
     mapOpen = false;
   }
+  function pick(e: Experiment) {
+    const entry = lessons.find((l) => l.experiment === e);
+    if (entry) location.hash = entry.id;
+    open(e);
+  }
+
+  $effect(() => {
+    const onHash = () => open(fromHash().experiment!);
+    addEventListener('hashchange', onHash);
+    return () => removeEventListener('hashchange', onHash);
+  });
 
   // Theme: explicit choice on <html>, and repaint canvas plots when colours change.
   $effect(() => {
@@ -41,24 +52,27 @@
 <div class="app" data-hover={lab.hover ?? ''}>
   <TopBar exp={lab.exp} onmap={() => (mapOpen = true)} />
 
-  <main>
-    <div class="col left">
-      <RlcSchematic {lab} />
-      <LessonPanel {lab} />
-    </div>
-    <div class="col mid">
-      <Scope {lab} />
-      <div class="pair">
-        <SPlane {lab} />
-        <EnergyBars {lab} />
+  {#key lab}
+    <main>
+      <div class="col left">
+        <lab.exp.canvas {lab} />
+        <LessonPanel {lab} />
       </div>
-    </div>
-    <div class="col right">
-      <Equations {lab} />
-    </div>
-  </main>
+      <div class="col mid">
+        <Scope {lab} />
+        <div class="instruments" style="--n: {lab.exp.instruments.length}">
+          {#each lab.exp.instruments as Instrument, k (k)}
+            <Instrument {lab} />
+          {/each}
+        </div>
+      </div>
+      <div class="col right">
+        <Equations {lab} />
+      </div>
+    </main>
 
-  <ParamRail {lab} />
+    <ParamRail {lab} />
+  {/key}
 
   {#if mapOpen}
     <CourseMap current={lab.exp.id} onpick={pick} onclose={() => (mapOpen = false)} />
@@ -89,9 +103,9 @@
   .mid > :global(.scope) {
     flex: 1.5;
   }
-  .pair {
+  .instruments {
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
     gap: 12px;
     flex: 1;
     min-height: 0;
@@ -123,9 +137,8 @@
   @media (max-width: 860px) {
     main {
       grid-template-columns: minmax(0, 1fr);
-      padding: 12px 16px;
     }
-    .pair {
+    .instruments {
       grid-template-columns: minmax(0, 1fr);
     }
   }

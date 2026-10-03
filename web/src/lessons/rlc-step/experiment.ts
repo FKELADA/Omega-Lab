@@ -1,5 +1,8 @@
 // Module 1.2 — DC transients: the series RLC circuit switched onto a DC source.
 
+import RlcSchematic from '../../lib/canvas/RlcSchematic.svelte';
+import EnergyBars from '../../lib/instruments/EnergyBars.svelte';
+import SPlane from '../../lib/instruments/SPlane.svelte';
 import type { EqContext, Experiment } from '../../lib/lab/types';
 import { rlcInfo, rlcSeries, rlcStateSpace, type RlcInfo } from '../../lib/models/rlcSeries';
 import { tex } from '../../lib/ui/format';
@@ -25,6 +28,8 @@ export const rlcStep: Experiment = {
   model: rlcSeries,
   info: rlcInfo,
   locusParam: 'R',
+  canvas: RlcSchematic,
+  instruments: [SPlane, EnergyBars],
 
   params: [
     { id: 'R', symbol: 'R', name: { fr: 'Résistance', en: 'Resistance' }, unit: 'Ω', min: 0.1, max: 200, default: 2, scale: 'log', term: 'R' },

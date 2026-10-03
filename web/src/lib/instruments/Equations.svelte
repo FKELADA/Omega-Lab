@@ -51,7 +51,7 @@
         {#if eq.bars}
           {@const b = eq.bars(ctx)}
           <div class="bars">
-            {#each b.items as it (it.term)}
+            {#each b.items as it, j (j)}
               {@const w = Math.min(50, (50 * Math.abs(it.value)) / (b.scale || 1))}
               <div class="row" data-term={it.term}>
                 <span class="sym">{@html renderMath(it.label)}</span>

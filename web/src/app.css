@@ -24,6 +24,11 @@
   --c-L: #b4549b;
   --c-C: #0072b2;
   --c-i: #c98a00;
+  --c-p: #6f4bd8;
+  --c-P: #6f4bd8;
+  --c-v1: #0072b2;
+  --c-v2: #d55e00;
+  --c-vs: #00916a;
 
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20, 22, 30, 0.05), 0 2px 8px rgba(20, 22, 30, 0.04);
@@ -54,6 +59,11 @@
     --c-L: #ec9fd3;
     --c-C: #5cb8ff;
     --c-i: #ffc94d;
+    --c-p: #b49cff;
+    --c-P: #b49cff;
+    --c-v1: #5cb8ff;
+    --c-v2: #ff8b4d;
+    --c-vs: #34d3a3;
     --shadow: none;
   }
 }
@@ -80,6 +90,11 @@
   --c-L: #ec9fd3;
   --c-C: #5cb8ff;
   --c-i: #ffc94d;
+  --c-p: #b49cff;
+  --c-P: #b49cff;
+  --c-v1: #5cb8ff;
+  --c-v2: #ff8b4d;
+  --c-vs: #34d3a3;
   --shadow: none;
 }
 
@@ -195,11 +210,21 @@ button {
 .eqt-L { color: var(--c-L); }
 .eqt-C { color: var(--c-C); }
 .eqt-i { color: var(--c-i); }
+.eqt-p { color: var(--c-p); }
+.eqt-P { color: var(--c-P); }
+.eqt-v1 { color: var(--c-v1); }
+.eqt-v2 { color: var(--c-v2); }
+.eqt-vs { color: var(--c-vs); }
 [data-hover='S'] .eqt-S,
 [data-hover='R'] .eqt-R,
 [data-hover='L'] .eqt-L,
 [data-hover='C'] .eqt-C,
-[data-hover='i'] .eqt-i {
+[data-hover='i'] .eqt-i,
+[data-hover='p'] .eqt-p,
+[data-hover='P'] .eqt-P,
+[data-hover='v1'] .eqt-v1,
+[data-hover='v2'] .eqt-v2,
+[data-hover='vs'] .eqt-vs {
   background: var(--hot);
   outline: 2px solid var(--hot);
 }
@@ -207,13 +232,24 @@ button {
 [data-hover='R'] [data-term='R'],
 [data-hover='L'] [data-term='L'],
 [data-hover='C'] [data-term='C'],
-[data-hover='i'] [data-term='i'] {
+[data-hover='i'] [data-term='i'],
+[data-hover='p'] [data-term='p'],
+[data-hover='P'] [data-term='P'],
+[data-hover='v1'] [data-term='v1'],
+[data-hover='v2'] [data-term='v2'],
+[data-hover='vs'] [data-term='vs'] {
   filter: drop-shadow(0 0 5px currentColor);
 }
 [data-hover='S'] .row[data-term='S'],
 [data-hover='R'] .row[data-term='R'],
 [data-hover='L'] .row[data-term='L'],
-[data-hover='C'] .row[data-term='C'] {
+[data-hover='C'] .row[data-term='C'],
+[data-hover='i'] .row[data-term='i'],
+[data-hover='p'] .row[data-term='p'],
+[data-hover='P'] .row[data-term='P'],
+[data-hover='v1'] .row[data-term='v1'],
+[data-hover='v2'] .row[data-term='v2'],
+[data-hover='vs'] .row[data-term='vs'] {
   filter: none;
   background: var(--hot);
 }

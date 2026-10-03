@@ -21,6 +21,9 @@
   const hiddenId = $derived(lab.concealed ? lab.exp.predict?.signal : undefined);
   const primary = $derived(shown.find((s) => s.id === lab.exp.predict?.signal) ?? shown[0]);
 
+  /** The oscilloscope axis the prediction is sketched against. */
+  const predictScale = () => lab.exp.signals.find((s) => s.id === lab.exp.predict?.signal)?.unit ?? 'V';
+
   function withAlpha(color: string, a: number): string {
     const m = color.match(/^#([0-9a-f]{6})$/i);
     if (!m) return color;
@@ -35,7 +38,7 @@
     const data: (Float64Array | number[])[] = [lab.run.t];
 
     for (const s of shown) {
-      series.push({ stroke: cssVar(s.color), width: 2, scale: s.unit, show: s.id !== hiddenId });
+      series.push({ stroke: cssVar(s.color), width: s.dash ? 1.5 : 2, dash: s.dash ? [5, 4] : undefined, scale: s.unit, show: s.id !== hiddenId });
       data.push(lab.run.s[s.id]);
     }
     lab.ghostRuns.forEach((g) => {
@@ -58,10 +61,11 @@
 
     const units = [...new Set(shown.map((s) => s.unit))];
     const predictRange = lab.prediction.active && lab.exp.predict ? lab.exp.predict.yRange(lab.params) : null;
+    const predictUnit = lab.exp.signals.find((s) => s.id === lab.exp.predict?.signal)?.unit;
     const scales: uPlot.Scales = { x: { time: false, range: () => [0, lab.tEnd] } };
     for (const u of units) {
       scales[u] =
-        u === 'A' && predictRange
+        u === predictUnit && predictRange
           ? { range: () => predictRange }
           : { range: (_u, min, max) => uPlot.rangeNum(Math.min(min, 0), Math.max(max, 0), 0.1, true) };
     }
@@ -112,7 +116,7 @@
     ctx.stroke();
     // Sketched prediction.
     const pts = [...sketch.entries()].sort((a, b) => a[0] - b[0]);
-    if (pts.length > 1 && u.scales.A) {
+    if (pts.length > 1 && u.scales[predictScale()]) {
       ctx.setLineDash([]);
       ctx.strokeStyle = cssVar('--ink');
       ctx.globalAlpha = 0.75;
@@ -121,7 +125,7 @@
       ctx.beginPath();
       pts.forEach(([b, y], k) => {
         const px = u.valToPos((b / BUCKETS) * lab.tEnd, 'x', true);
-        const py = u.valToPos(y, 'A', true);
+        const py = u.valToPos(y, predictScale(), true);
         k ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
       });
       ctx.stroke();
@@ -169,9 +173,9 @@
       const rect = over.getBoundingClientRect();
       const px = e.clientX - rect.left, py = e.clientY - rect.top;
       const t = u.posToVal(px, 'x');
-      if (lab.prediction.active && !lab.prediction.revealed && u.scales.A) {
+      if (lab.prediction.active && !lab.prediction.revealed && u.scales[predictScale()]) {
         const b = Math.round((Math.min(Math.max(t, 0), lab.tEnd) / lab.tEnd) * BUCKETS);
-        const y = u.posToVal(py, 'A');
+        const y = u.posToVal(py, predictScale());
         // Fill the gap from the previous bucket so fast strokes stay continuous.
         const prev = [...sketch.keys()].reduce((best, k) => (Math.abs(k - b) < Math.abs(best - b) ? k : best), b);
         if (dragging && prev !== b && Math.abs(prev - b) < 25) {
