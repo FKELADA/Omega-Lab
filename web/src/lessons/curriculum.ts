@@ -1,0 +1,118 @@
+// The course map, from plan.md §5. Lessons without an experiment are listed as coming soon.
+
+import type { Experiment } from '../lib/lab/types';
+import type { L } from '../lib/ui/ui.svelte';
+import { rlcStep } from './rlc-step/experiment';
+
+export interface LessonEntry {
+  id: string;
+  title: L;
+  experiment?: Experiment;
+}
+
+export interface ModuleEntry {
+  n: number;
+  title: L;
+  lessons: LessonEntry[];
+}
+
+const soon = (id: string, fr: string, en: string): LessonEntry => ({ id, title: { fr, en } });
+
+export const curriculum: ModuleEntry[] = [
+  {
+    n: 0,
+    title: { fr: 'Le réseau en 10 minutes', en: 'The grid in 10 minutes' },
+    lessons: [soon('0.1', 'De la turbine à la prise', 'From turbine to socket'), soon('0.2', 'Rejouer un blackout', 'Replay a blackout')],
+  },
+  {
+    n: 1,
+    title: { fr: 'Circuits, continu et alternatif', en: 'Circuits, DC vs AC' },
+    lessons: [
+      soon('1.1', 'R, L, C : éléments d’énergie', 'R, L, C as energy elements'),
+      { id: '1.2', title: { fr: 'Régimes transitoires RLC', en: 'RLC transients' }, experiment: rlcStep },
+      soon('1.3', 'Sources alternatives, valeur efficace', 'AC sources and RMS'),
+      soon('1.4', 'Résonance', 'Resonance'),
+      soon('1.5', 'Continu contre alternatif', 'DC versus AC'),
+    ],
+  },
+  {
+    n: 2,
+    title: { fr: 'La boîte à outils de l’alternatif', en: 'The AC toolbox' },
+    lessons: [
+      soon('2.1', 'Euler et le vecteur tournant', 'Euler and the rotating vector'),
+      soon('2.2', 'Phaseurs et impédance', 'Phasors and impedance'),
+      soon('2.3', 'Puissances P, Q, S', 'AC power: P, Q, S'),
+      soon('2.4', 'Systèmes triphasés', 'Three-phase systems'),
+      soon('2.5', 'Clarke et Park', 'Clarke and Park'),
+      soon('2.6', 'Système per-unit', 'Per-unit system'),
+      soon('2.7', 'Harmoniques et Fourier', 'Harmonics and Fourier'),
+      soon('2.8', 'Composantes symétriques', 'Symmetrical components'),
+    ],
+  },
+  {
+    n: 3,
+    title: { fr: 'Signaux et commande', en: 'Signals & control' },
+    lessons: [
+      soon('3.1', 'Laplace, pôles et zéros', 'Laplace, poles and zeros'),
+      soon('3.2', 'Bode et Nyquist', 'Bode and Nyquist'),
+      soon('3.3', 'Espace d’état et linéarisation', 'State space and linearisation'),
+      soon('3.4', 'Régulateur PI, PLL', 'PI control, PLL'),
+    ],
+  },
+  {
+    n: 4,
+    title: { fr: 'Éléments conventionnels', en: 'Conventional elements' },
+    lessons: [
+      soon('4.1', 'Lignes', 'Lines'),
+      soon('4.2', 'Transformateurs', 'Transformers'),
+      soon('4.3', 'Machine synchrone', 'Synchronous machine'),
+      soon('4.4', 'Charges', 'Loads'),
+      soon('4.5', 'Machine asynchrone', 'Induction motor'),
+      soon('4.6', 'Compensation', 'Compensation'),
+      soon('4.7', 'FACTS', 'FACTS'),
+    ],
+  },
+  {
+    n: 5,
+    title: { fr: 'Le réseau en régime permanent', en: 'The network in steady state' },
+    lessons: [
+      soon('5.1', 'Matrice Y et répartition de charge', 'Y-bus and power flow'),
+      soon('5.2', 'Courbes P–V, Q–V', 'P–V and Q–V curves'),
+      soon('5.3', 'Défauts et courts-circuits', 'Faults and short circuits'),
+    ],
+  },
+  {
+    n: 6,
+    title: { fr: 'Électronique de puissance', en: 'Power electronics' },
+    lessons: [
+      soon('6.1', 'Hacheurs', 'Choppers'),
+      soon('6.2', 'Redresseurs', 'Rectifiers'),
+      soon('6.3', 'MLI', 'PWM'),
+      soon('6.4', 'Modèles moyens, filtres LCL', 'Averaging, LCL filters'),
+    ],
+  },
+  {
+    n: 7,
+    title: { fr: 'Ressources à onduleurs et CCHT', en: 'Inverter-based resources and HVDC' },
+    lessons: [
+      soon('7.1', 'Commande des VSC', 'VSC control'),
+      soon('7.2', 'Grid-following contre grid-forming', 'Grid-following vs grid-forming'),
+      soon('7.3', 'Photovoltaïque', 'PV'),
+      soon('7.4', 'Éolien', 'Wind'),
+      soon('7.5', 'Stockage', 'Storage'),
+      soon('7.6', 'CCHT et MMC', 'HVDC and MMC'),
+      soon('7.7', 'Codes de réseau', 'Grid codes'),
+    ],
+  },
+  {
+    n: 8,
+    title: { fr: 'Stabilité des réseaux', en: 'Power system stability' },
+    lessons: [
+      soon('8.1', 'Stabilité angulaire', 'Rotor-angle stability'),
+      soon('8.2', 'Stabilité de tension', 'Voltage stability'),
+      soon('8.3', 'Stabilité de fréquence', 'Frequency stability'),
+      soon('8.4', 'Stabilité liée aux convertisseurs', 'Converter-driven stability'),
+      soon('8.5', 'Résonances', 'Resonance stability'),
+    ],
+  },
+];
