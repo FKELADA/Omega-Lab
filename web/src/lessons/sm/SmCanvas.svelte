@@ -19,7 +19,7 @@
     <span class="mode">{sc ? tr({ fr: 'court-circuit triphasé', en: 'three-phase short circuit' }) : tr({ fr: 'régime établi', en: 'steady state' })}</span>
   </header>
   <div class="body">
-    <svg viewBox="0 0 400 220" role="img" aria-label="Synchronous generator">
+    <svg viewBox="0 0 400 220" text-anchor="middle" role="img" aria-label="Synchronous generator">
       <!-- machine -->
       <circle cx="90" cy="105" r="62" class="stator" />
       <circle cx="90" cy="105" r="40" class="rotor" />
@@ -64,9 +64,6 @@
     height: auto;
     max-height: 230px;
     display: block;
-  }
-  text {
-    text-anchor: middle;
   }
   .mode {
     text-transform: none;

@@ -411,6 +411,81 @@ await setParam(0, 0.7, 0.4, 0.95);
 await setParam(2, 0.7, 0.2, 1); // STATCOM sized to hold 0.9 pu
 check('4.7 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
+// ── Module 5 ──────────────────────────────────────────────────────────────────
+const setCursor = (f) =>
+  page.evaluate((v) => {
+    const t = document.getElementById('tcursor');
+    t.value = String(Math.round(v * 1000));
+    t.dispatchEvent(new Event('input', { bubbles: true }));
+  }, f);
+
+// 5.1 Y-bus and Newton–Raphson
+await open('5.1');
+fb = await predict((f) => 0.08 + 0.5 * f); // a slow, straight decline
+check('5.1 misconception: quadratic convergence', /quadratiquement/.test(fb), fb.slice(0, 70));
+const ybtn = page.locator('.panel header .btn', { hasText: /Construire|Ajouter/ });
+for (let k = 0; k < 6; k++) await ybtn.click();
+await page.getByRole('radio', { name: 'Ligne 3–4' }).click();
+await setParam(2, 1.06, 0.95, 1.08); // generator 2 setpoint
+await page.getByRole('radio', { name: 'Aucune' }).click();
+await setParam(2, 1.01, 0.95, 1.08);
+await setParam(0, 3.2, 0.2, 4); // six iterations
+await setParam(0, 4, 0.2, 4); // beyond the nose
+check('5.1 divergence shown', /ne converge pas/.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('5.1 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 5.2 P–V and Q–V
+await open('5.2');
+fb = await predict((f) => 0.2 + 0.25 * f); // keeps falling gently to 3.5×
+check('5.2 misconception: no solution beyond the nose', /plus de solution/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await setParam(1, 1, 0.3, 5); // generator 2 reactive limit
+await setParam(2, 0.5, 0, 0.8); // capacitor at bus 4
+await page.getByRole('radio', { name: 'Ligne 1–3' }).click();
+await setCursor(1.26 / 3.5); // close to the nose
+check('5.2 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 5.3 Faults
+await open('5.3');
+fb = await predict((f) => 0.5 - 0.04 * Math.sin(2 * Math.PI * 6 * f)); // load-sized current throughout
+check('5.3 misconception: fault current is several times load', /plusieurs fois/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: 'Triphasé' }).click();
+await page.getByRole('radio', { name: 'Phase–terre' }).click();
+await page.getByRole('radio', { name: 'Isolé' }).click();
+await page.getByRole('radio', { name: 'À la terre' }).click();
+await setParam(0, 5, 0, 100);
+await page.getByRole('radio', { name: 'Biphasé', exact: true }).click();
+await page.getByRole('radio', { name: 'Phase–terre' }).click();
+await setParam(1, 0.6, 0, 1);
+check('5.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 5.4 Economic dispatch
+await open('5.4');
+fb = await predict(() => 0.55); // a flat price
+check('5.4 misconception: the price is not fixed', /pas fixe/.test(fb), fb.slice(0, 70));
+await setParam(0, 1050, 600, 1300);
+await setCursor(19 / 24); // G2 and G3 both running
+await setParam(2, 400, 200, 1000);
+await setParam(1, 350, 0, 600);
+check('5.4 congestion shown at the evening peak', /congestion/.test((await page.locator('.panel').first().textContent()) ?? ''));
+await setParam(1, 600, 0, 600);
+await setParam(2, 250, 200, 1000);
+check('5.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 5.5 A day on a feeder
+await open('5.5');
+fb = await predict((f) => 0.35 + 0.1 * Math.sin(Math.PI * f)); // always below the substation
+check('5.5 misconception: voltage rises at midday', /élévation/.test(fb), fb.slice(0, 70));
+await setCursor(13 / 24);
+check('5.5 reverse flow shown', /flux inverse/.test((await page.locator('.panel').first().textContent()) ?? ''));
+await setParam(0, 3.51, 0, 6);
+await page.getByRole('radio', { name: 'Q(V)' }).click();
+await page.getByRole('radio', { name: 'Aucun', exact: true }).click();
+await setParam(1, 0.99, 0.97, 1.06);
+await page.getByRole('radio', { name: 'Écrêtement P(V)' }).click();
+await setParam(0, 5.1, 0, 6);
+check('5.5 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
 await page.reload();
@@ -447,7 +522,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

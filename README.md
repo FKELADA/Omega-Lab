@@ -15,15 +15,15 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 127 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS) |
+| `npm test` | 161 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 26 lessons, the documentation page and the teaching notes in a real Chrome, 96 checks (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 31 lessons, the documentation page and the teaching notes in a real Chrome, 114 checks (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Twenty-six lessons are complete (Modules 0–4), in French and English. Open one directly with its number in the URL,
+Thirty-one lessons are complete (Modules 0–5), in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -54,6 +54,11 @@ e.g. `http://localhost:5173/#1.4`.
 | **4.5 Induction motor** | Predicts the starting current, fails to start a heavy load, stalls a compressor in a dip (FIDVR), lets a fan ride through | Torque–speed and current–speed curves, turning rotor |
 | **4.6 Compensation** | Drops the voltage with load, restores it with a shunt capacitor, overshoots at night, adds series compensation, collapses past the nose | Nose curve, P_max versus series compensation |
 | **4.7 FACTS** | Compares an SVC and a STATCOM in a dip, deepens it, strengthens the grid, sizes the STATCOM | Side-by-side systems, V–I characteristics, Q_max versus V |
+| **5.1 Y-bus and power flow** | Predicts Newton–Raphson's convergence, builds Y line by line, trips a line, pushes the load until there is no solution | Network replayed iteration by iteration, Y matrix, NR versus Gauss–Seidel |
+| **5.2 P–V and Q–V curves** | Predicts the voltage as load rises, finds the nose, hits a generator's reactive limit, adds a capacitor, loses a line, reads the reactive margin | Load-level cursor, P–V curve, Q–V curve |
+| **5.3 Faults** | Predicts a fault current, compares fault types, isolates the neutral, finds a ground fault larger than three-phase, adds fault resistance | Sequence-network connections, fault phasors, current versus distance |
+| **5.4 Economic dispatch** | Predicts the price over a day, calls the peaker, checks equal marginal costs, congests a line, adds solar until it is curtailed | Three-bus network with nodal prices, merit order, marginal-cost curves |
+| **5.5 A day on a feeder** | Predicts the feeder-end voltage with PV, finds reverse flow and overvoltage, compares Q(V), the tap changer and curtailment | Feeder with voltage bars, daily profile envelope, hosting capacity by control |
 
 Shared by every lesson:
 
@@ -76,7 +81,8 @@ Shared by every lesson:
 
 ```
 web/src/
-  lib/core/        linear algebra, LTI simulation (expm discretisation), RK4 for nonlinear models
+  lib/core/        linear algebra, LTI simulation (expm discretisation), RK4 for nonlinear models,
+                   power flow (Y-bus, Newton–Raphson, Gauss–Seidel, DC)
   lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
                    impedance, power, three-phase, Park, per-unit, Fourier, sequences;
                    G2ELin-backed models later)
@@ -88,7 +94,8 @@ web/src/
   lessons/         curriculum.ts (course map) and one folder per lesson, with any
                    lesson-specific panels (heater, meters, Euler helix, impedance plane,
                    power triangle, three-phase schematic, phase balance, line, transformer,
-                   machines, loads, compensation, FACTS)
+                   machines, loads, compensation, FACTS, power-flow networks, faults,
+                   dispatch, feeder)
 ```
 
 ## Adding a lesson

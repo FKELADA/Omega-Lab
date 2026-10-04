@@ -52,7 +52,7 @@
     <button class="btn play" onclick={togglePlay} aria-label={lab.playing ? tr(S.pause) : tr(S.play)}>
       {lab.playing ? '❚❚' : '▶'}
     </button>
-    <label class="tlabel" for="tcursor">{tr(S.time)}</label>
+    <label class="tlabel" for="tcursor">{lab.exp.axis ? tr(lab.exp.axis.label) : tr(S.time)}</label>
     <input
       id="tcursor"
       type="range"
@@ -61,7 +61,7 @@
       value={lab.frac * 1000}
       oninput={(e) => lab.setFrac(+e.currentTarget.value / 1000)}
     />
-    <span class="mono">{time(lab.t, lab.exp.timeUnit)} / {time(lab.tEnd, lab.exp.timeUnit)}</span>
+    <span class="mono">{lab.fmtT(lab.t)} / {lab.fmtT(lab.tEnd)}</span>
   </div>
 
   <div class="params">

@@ -32,7 +32,7 @@
   <header>
     <span>{tr(S.equations)}</span>
     <span class="spacer"></span>
-    <span class="t">t = {time(lab.t, lab.exp.timeUnit)}</span>
+    <span class="t">{lab.exp.axis?.symbol ?? 't'} = {lab.fmtT(lab.t)}</span>
   </header>
   {#if lab.concealed}<div class="concealed">{tr(S.hiddenUntilReveal)}</div>{/if}
   <div class="body scroll" role="presentation" onmouseover={onOver} onfocus={() => {}} onmouseleave={() => (lab.hover = null)}>

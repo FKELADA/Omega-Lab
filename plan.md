@@ -10,7 +10,7 @@
 
 ## Status (4 October 2026)
 
-**Modules 0 to 4 are built: 26 lessons, in French and English.** Code is on
+**Modules 0 to 5 are built: 31 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -42,10 +42,15 @@ tests are in [documentation.md](documentation.md).
 | 4.5 Induction motor | ✅ Done | `2e3694f` |
 | 4.6 Shunt and series compensation | ✅ Done | `2e3694f` |
 | 4.7 FACTS | ✅ Done | `2e3694f` |
-| Modules 5–8 | Not started | — |
+| 5.1 Y-bus and power flow | ✅ Done | `M5` |
+| 5.2 P–V and Q–V curves | ✅ Done | `M5` |
+| 5.3 Faults | ✅ Done | `M5` |
+| 5.4 Economic dispatch | ✅ Done | `M5` |
+| 5.5 A day on a feeder | ✅ Done | `M5` |
+| Modules 6–8 | Not started | — |
 
-**Verification:** 127 unit tests (solver, models, note completeness), and a browser test that walks
-all 26 lessons, the documentation page and the teaching notes (96 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 161 unit tests (solver, models, note completeness), and a browser test that walks
+all 31 lessons, the documentation page and the teaching notes (114 checks: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -54,15 +59,15 @@ no console errors).
 |---|---|
 | 1. Live equations (colour-coded terms, live numbers, term bars, derivations) | ✅ All lessons |
 | 2. Probes and virtual instruments | ✅ Oscilloscope with click-to-probe; frequency response, phasor diagram, s-plane, spectrum, meters, and x–y characteristic charts (line profile, B–H, capability, V-curves, P–V, torque–speed, V–I). No PMU or impedance scanner yet |
-| 3. Sweep cursors | ✅ Sweep fans and root locus (in R, K, D, ζ). Stability region maps not yet |
-| 4. Predict, then reveal | ✅ 13 lessons, with scoring |
+| 3. Sweep cursors | ✅ Sweep fans and root locus (in R, K, D, ζ); the cursor itself can be an NR iteration (5.1) or a load level (5.2). Stability region maps not yet |
+| 4. Predict, then reveal | ✅ 18 lessons, with scoring |
 | 5. Freeze and compare | ✅ Ghost traces. Split view (two cases side by side) not yet |
 | 6. Synchronised time scrubber | ✅ Every panel follows the cursor, including rotating phasors, helix, epicycles, dq camera |
 | 7. Inverse design (drag an eigenvalue) | ✅ Lesson 3.1: drag poles into a design target region |
 | 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3, energy dots plant-to-socket in 0.1, reversing power arrow in 1.1 |
 | 9. Sound | ✅ Lesson 2.7 (WebAudio) |
 | 10. Break-it / fix-it challenges | ✅ As step checks. No scoring or leaderboard yet |
-| 11. Misconception detectors | ✅ 13 lessons |
+| 11. Misconception detectors | ✅ 18 lessons |
 | 12. AI tutor | Not yet |
 | 13. Export to code | Not yet |
 | 14. Time-scale map | Not yet |
@@ -89,11 +94,18 @@ no console errors).
   - the generator's dq model and its fidelity slider, AVR, governor and PSS (better placed with
     Module 8 on G2ELin);
   - TCSC and UPFC as simulations (they appear as equation cards only).
+- **Module 5** runs entirely in the browser on a new power-flow core (Y-bus, Newton–Raphson with
+  reactive limits, Gauss–Seidel, DC flow).
+  - The time-series power flow (5.5) is a client-side 20 kV feeder, not G2ELin's `timeseries`.
+  - Economic dispatch (5.4) is a DC-OPF on three buses.
+  - The Y-bus animation is a step-by-step builder.
+  - The NR "mismatch surface" became a replay of the network iteration by iteration, with a
+    convergence chart.
 
 ### Next
 
 1. **P2:** connect the G2ELin API for Module 8.
-2. **Module 5**, the network in steady state (power flow), building on 4.1 and 4.6.
+2. **Module 6**, power electronics fundamentals (choppers, rectifiers, PWM, averaged models).
 
 ---
 
@@ -338,6 +350,8 @@ Each tool is introduced on a circuit the learner already knows from Modules 1–
 
 ### Module 5: The network in steady state
 
+✅ Built as five lessons: 5.1 Y-bus and Newton–Raphson · 5.2 P–V and Q–V curves · 5.3 faults (sequence networks, grounding, fault level, SCR) · 5.4 economic dispatch (merit order, congestion, nodal prices) · 5.5 a day on a PV feeder (time-series power flow, hosting capacity).
+
 - Y-bus construction, animated one element at a time.
 - Power flow: Newton–Raphson iterations animated on a mismatch surface; PV / PQ / slack buses.
 - P–V and Q–V curves (the nose curve, with a loading cursor).
@@ -459,7 +473,7 @@ The concept map is a **prerequisite graph**, not a linear book. An engineer can 
 | **P0 (2–3 wk)** ✅ | Lesson format, layout shell, live-equation component, client solver, one complete lesson (RLC step response) | Validates the core interaction before scaling up |
 | **P1** ✅ | Modules 0–2 | Simple physics, large audience, mostly client-side |
 | **P2** | Module 8 wired to the G2ELin API, plus the case library | The engine already exists, so this pays off quickly and suits researchers and engineers |
-| **P3** 🟡 | Modules 3–5 (Modules 3 and 4 done) | The spine plus conventional elements |
+| **P3** ✅ | Modules 3–5 | The spine plus conventional elements |
 | **P4** | Modules 6–7, plus the switched-circuit solver and an impedance-scan endpoint | The heaviest new engineering |
 | **P5** | AI tutor, challenges/leaderboards, classroom mode (teacher dashboard, assignments), FR/EN localisation | Scaling up |
 

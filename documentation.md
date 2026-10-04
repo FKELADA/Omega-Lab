@@ -19,8 +19,9 @@ contributors who extend them or check the physics.
 7. [Module 2 — The AC toolbox](#7-module-2--the-ac-toolbox)
 8. [Module 3 — Signals and control](#8-module-3--signals-and-control)
 9. [Module 4 — Grid elements](#9-module-4--grid-elements)
-10. [Modules not yet built](#10-modules-not-yet-built)
-11. [Standards and figures quoted in the lessons](#11-standards-and-figures-quoted-in-the-lessons)
+10. [Module 5 — The network in steady state](#10-module-5--the-network-in-steady-state)
+11. [Modules not yet built](#11-modules-not-yet-built)
+12. [Standards and figures quoted in the lessons](#12-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -130,6 +131,23 @@ $$
 
 ---
 
+### 2.6 Power flow
+
+`lib/core/powerflow.ts` holds the steady-state network solvers used by Module 5:
+- `ybus`: the bus admittance matrix with line charging, off-nominal taps and bus shunts.
+- `newtonRaphson`: polar NR on the mismatch $[Delta P;Delta Q]$, with the analytic Jacobian
+  and Gaussian elimination.
+  - Flat or warm start (continuation).
+  - Tolerance $10^{-8}$ pu.
+  - Divergence is declared at a mismatch above $10^4$, on a singular Jacobian, or after the
+    maximum number of iterations.
+  - After convergence, a PV bus outside its reactive limits is fixed at the limit, becomes PQ,
+    and the iterations resume (up to 4 passes).
+  - Every iterate is kept, so lesson 5.1 can replay them.
+- `gaussSeidel`: for comparison (no reactive limits).
+- `dcFlow`: $	heta = B^{-1}P$ with the slack at 0.
+- `cinv`: complex matrix inverse through the real $2n 	imes 2n$ form, for Z-bus work.
+
 ## 3. The lesson format and shared features
 
 A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Experiment`
@@ -146,6 +164,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 | `steps` | Guided steps: Markdown text, an optional `hint`, and a `check(lab)` that marks the step done. |
 | `predict` | Optional predict-then-reveal: which signal, a y-range that does not give the answer away, and a `diagnose` function that returns misconception feedback. |
 | `bode`, `phasors` | Optional specifications for the frequency-response and phasor-diagram instruments. |
+| `axis` | Optional: a different cursor variable (NR iteration, load multiplier) with its own label and format, replacing time. |
 | `charts` | Optional characteristic charts (x–y curves, operating points, bands, markers), drawn by `XYChart` and placed with the `Chart0`–`Chart2` instruments. |
 
 **Behaviour shared by every lesson:**
@@ -178,9 +197,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 127 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 161 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts`, `lib/models/module5.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 26 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 96 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 31 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 114 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -1959,17 +1978,392 @@ No prediction in this lesson.
 
 ---
 
-## 10. Modules not yet built
+## 10. Module 5 — The network in steady state
+
+Module 5 moves from single elements to the whole network. All five lessons share the power-flow
+core of §2.6 (`lib/core/powerflow.ts`). The models are in `lib/models/module5.ts` and are tested in
+`lib/models/module5.test.ts`.
+
+In two lessons the cursor is not time:
+- 5.1 scrubs the Newton–Raphson **iterations**;
+- 5.2 scrubs the **load multiplier** λ.
+
+These lessons declare `axis` in their `Experiment` (§3).
+
+**The four-bus network (5.1, 5.2).** It uses a 100 MVA base.
+- Bus 1: slack, 1.02 pu.
+- Bus 2: PV generator, $P_2$ and $V_2$, with reactive limits $-0.5 \le Q_2 \le Q_{2,max}$.
+- Buses 3 and 4: loads, 120 MW and 100 MW at λ = 1, at a common power factor. Bus 4 has an
+  optional shunt capacitor.
+
+| Line | r (pu) | x (pu) | b (pu) |
+|---|---|---|---|
+| 1–2 | 0.01 | 0.08 | 0.04 |
+| 1–3 | 0.02 | 0.12 | 0.03 |
+| 2–3 | 0.015 | 0.10 | 0.03 |
+| 2–4 | 0.02 | 0.14 | 0.03 |
+| 3–4 | 0.02 | 0.12 | 0.02 |
+
+### 5.1 Y-bus and Newton–Raphson power flow · `#5.1` · `lessons/pflow`
+
+**Objectives.** After this lesson the learner can:
+- build the bus admittance matrix element by element;
+- state the power-flow equations and the three bus types;
+- explain one Newton–Raphson iteration and its quadratic convergence;
+- compare it with Gauss–Seidel and the DC approximation;
+- recognise that a non-converging power flow can mean no solution exists.
+
+**Model.**
+- Newton–Raphson in polar form from a flat start, tolerance $10^{-8}$ pu, at most 12 iterations.
+- Gauss–Seidel from the same start, at most 150 iterations.
+- DC power flow with the slack as reference.
+- The time axis is the iteration number $k$ (0–8). Each signal holds its value between iterates,
+  so the network drawing shows the iterate under the cursor.
+
+**Formulas.**
+- $Y_{ii} = \sum_k(y_{ik} + jb_{ik}/2) + jB_{sh,i}$, $Y_{ik} = -y_{ik}$, with the live $Y_{33}$.
+- $P_i = V_i\sum_k V_k(G_{ik}\cos\theta_{ik} + B_{ik}\sin\theta_{ik})$ and the matching $Q_i$.
+- Bus types: slack ($V, \theta$), PV ($P, V$), PQ ($P, Q$); here 5 equations in 5 unknowns.
+- $[\Delta\theta;\Delta V] = J^{-1}[\Delta P;\Delta Q]$, with the live mismatch at iteration $k$.
+- $P_1 = \sum P_d - P_2 + P_{losses}$, live.
+- *Researcher, Engineer:* DC power flow $P_{ik} \approx (\theta_i - \theta_k)/x_{ik}$, AC against
+  DC on line 1–3.
+- *Researcher:* the Gauss–Seidel update.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Load level λ | 0.2–4 | 1 |
+| $P_2$ | 0–2 pu | 0.8 pu |
+| $V_2$ | 0.95–1.08 pu | 1.01 pu |
+| Line out of service | none / 1–3 / 2–4 / 3–4 | none |
+
+**Panels.**
+- Network: $\lvert V\rvert\angle\theta$ at each bus, line flows with arrows sized by loading, and
+  generator Q. Hovering a line or bus highlights its entries in Y.
+- Y matrix, with a **Build step by step** button that adds the lines one at a time.
+- Convergence: mismatch against iteration on a log scale, NR against GS, with the tolerance band.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the convergence | Prediction revealed |
+| 2 | Building the Y matrix | Y built to the end with the stepper |
+| 3 | A line trips | A line out of service, converged |
+| 4 | A PV bus | $V_2 \ge 1.05$ pu, converged |
+| 5 | A heavily loaded grid | NR needs ≥ 6 iterations |
+| 6 | No solution | NR does not converge |
+
+**Misconception detected** (y-range −16 to 1): the error falls linearly (a constant number of
+digits per iteration). Triggers when the sketch stays above $10^{-5}$ between iterations 2.5
+and 3.5.
+
+**Tests.**
+- Y is symmetric, and each row sums to the bus's half line-charging.
+- NR converges in ≤ 5 iterations, with $\lvert\Delta\rvert_3 < 10\lvert\Delta\rvert_2^2$.
+- GS needs more than 5 × as many iterations and reaches the same solution ($10^{-6}$).
+- The slack supplies load − $P_2$ + losses.
+- DC flows are within 10 % of AC on loaded lines.
+- An outage zeroes its Y entries.
+- A PV bus at its Q limit becomes PQ at the limit.
+- There is no solution at λ = 3.5.
+
+### 5.2 P–V and Q–V curves · `#5.2` · `lessons/pv`
+
+**Objectives.** After this lesson the learner can:
+- trace a P–V curve by continuation and locate the maximum loading point;
+- explain why voltage falls faster and faster near the nose;
+- read a Q–V curve and its reactive margin;
+- name what moves the nose: generator reactive limits, power factor, shunt capacitors, outages.
+
+**Model.**
+- Both loads scale with λ from 0 to 3.5, in steps of 0.01.
+- Each power flow is warm-started from the previous one.
+- The curve stops at the first λ with no converged upper-branch solution. A jump of more than
+  0.12 pu in $V_4$ is treated as a fall onto the lower branch.
+- Q–V at bus 4: bus 4 becomes a PV bus with $V_4$ swept from 1.15 down to 0.4 pu. The curve
+  records the reactive power it must inject. The margin is $-\min Q$.
+- The Q–V curve is computed at the cursor's λ, quantised to 0.05 and cached.
+
+**Formulas.**
+- $\lambda_{max}$ and $P_{max} = \lambda_{max}P_0$, live.
+- $Q_2 \le Q_{2,max}$, and the λ at which the limit is reached.
+- $Q_C = B_4V_4^2$, live.
+- $\Delta Q_{margin} = -\min Q_{inj}(V_4)$, live.
+- *Engineer, Researcher:* the real-power margin $(P_{max} - P)/P$ against the usual ≥ 5 % after N–1
+  (WECC).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Load $\cos\varphi$ | 0.85–1 | 0.9 |
+| $Q_{2,max}$ | 0.3–5 pu | 5 pu |
+| $B_4$ | 0–0.8 pu | 0 |
+| Line out of service | none / 1–3 / 2–4 / 3–4 | none |
+
+**Panels.**
+- The network at the cursor's λ, with "G2 at its reactive limit" and collapse warnings.
+- P–V curve ($V_3$ and $V_4$ against total load) with the nose; when the limit matters, the
+  dashed curve without the $Q_2$ limit.
+- Q–V curve at bus 4 with the zero line and the margin.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the voltage | Prediction revealed |
+| 2 | Find the nose | Cursor taken to $\lambda_{max}$ |
+| 3 | The generator at its limit | $Q_{2,max} \le 1$, limit reached, nose ≥ 0.05 closer than without the limit |
+| 4 | A capacitor at bus 4 | $B_4 \ge 0.4$, nose further out than without it |
+| 5 | Losing a line | Line 1–3 out |
+| 6 | Reading the reactive margin | Margin at the cursor between 0 and 0.2 pu |
+
+**Misconception detected** (y-range 0.3–1.2 pu): the voltage keeps falling gently beyond the nose.
+Triggers when more than three sketched points lie beyond $\lambda_{max} + 0.15$ above 0.6 pu.
+
+**Tests.**
+- The nose lies between 2 and 3.5.
+- A $Q_2$ limit, a line outage (below 0.7 of the base nose) and a poorer power factor move the
+  nose in. A capacitor moves it out.
+- $\lvert dV_4/d\lambda\rvert$ near the nose is more than 4 × its value at light load.
+- The Q–V margin is above 1 pu at λ = 1, under a third of that near the nose, and gone beyond it.
+
+### 5.3 Faults · `#5.3` · `lessons/faults`
+
+**Objectives.** After this lesson the learner can:
+- connect the sequence networks for three-phase, phase-to-ground, phase-to-phase and
+  two-phase-to-ground faults;
+- explain the role of neutral earthing;
+- compute fault level and short-circuit ratio;
+- explain the DC offset and the effect of fault resistance and distance.
+
+**Model.** A 225 kV, 100 MVA base radial system: generator ($X''_d = X_2 = 0.2$) → Δ/Y
+transformer ($X_t = 0.1$) → 100 km line ($Z_1 = 0.03 + j0.3$, $Z_0 = 0.09 + j0.9$ pu). The fault
+is at distance $d$.
+- $Z_1 = Z_2 = j(X''_d + X_t) + (d/100)Z_{1L}$.
+- $Z_0 = j X_t + 3Z_n + (d/100)Z_{0L}$. The Δ blocks the generator side. $Z_n$ is 0
+  (solid), 0.5 pu (resistance) or open (isolated).
+- Sequence currents by fault type (formulas below), then
+  $I_{abc} = A\,I_{012}$ and $V_{012} = (E - Z_1I_1, -Z_2I_2, -Z_0I_0)$.
+- Waveforms over 120 ms:
+  - before 40 ms, a 0.5 pu load current at $\cos\varphi = 0.9$;
+  - after it, the fault current plus a DC term decaying with $\tau = (X/R)/\omega$, sized so each
+    phase current is continuous.
+
+**Formulas.**
+- Fortescue: $I_{abc} = A\,I_{012}$, $a = e^{j120°}$.
+- The current of the selected fault, live:
+  - three-phase $E/(Z_1 + Z_f)$;
+  - phase-to-ground $3E/(Z_1 + Z_2 + Z_0 + 3Z_f)$;
+  - phase-to-phase $-j\sqrt3E/(Z_1 + Z_2 + Z_f)$;
+  - two-phase-to-ground $I_1 = E/(Z_1 + Z_2 \parallel (Z_0 + 3Z_f))$.
+- $S_{cc} = S_b/\lvert Z_1\rvert$ and $I_{cc}$ in kA, live.
+- SCR for a 100 MW plant, live.
+- Healthy-phase voltages $\lvert V_b\rvert$, $\lvert V_c\rvert$, live.
+- *Engineer, Researcher:* peak factor $\kappa = 1.02 + 0.98e^{-3R/X}$ (IEC 60909).
+- *Researcher, Engineer:* the general Z-bus method.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Fault type | three-phase / phase–ground / phase–phase / two-phase–ground | phase–ground |
+| Transformer neutral | solid / resistance / isolated | solid |
+| Distance $d$ | 0–100 km | 50 km |
+| $R_f$ | 0–1 pu | 0 |
+
+**Panels.**
+- One-line diagram:
+  - the neutral connection and the fault marker;
+  - phase currents;
+  - $S_{cc}$, $I_{cc}$ and X/R.
+- The sequence networks and how they connect for this fault type.
+- Phasor diagram of $I_a$, $I_b$, $I_c$ and $3I_0$.
+- Largest phase current against distance for all four types.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the fault current | Prediction revealed |
+| 2 | The three-phase fault | Three-phase selected |
+| 3 | Isolated neutral | Phase–ground, isolated, $I_{max} < 0.05$ pu |
+| 4 | Larger than three-phase | Phase–ground, solid, $d \le 10$ km, $I_{max} > I_{3\varphi}$ |
+| 5 | The phase-to-phase fault | Phase–phase selected |
+| 6 | A resistive fault | Phase–ground, $R_f \ge 0.5$ pu |
+
+**Misconception detected** (y-range ±14 pu): the fault current stays load-sized. Triggers when
+the sketch's peak after the fault is under 45 % of the true peak.
+
+**Tests.**
+- Phase–phase / three-phase = √3/2.
+- Isolated neutral: zero current, healthy phases at √3 pu.
+- At $d = 0$, phase–ground exceeds three-phase, and a neutral resistor reduces it.
+- The current falls with distance and with $R_f$ (0.5 pu gives under 75 %).
+- $S_{cc} = S_b/(X''_d + X_t)$ at $d = 0$.
+- Phase currents are continuous at the fault instant.
+
+### 5.4 Economic dispatch · `#5.4` · `lessons/dispatch`
+
+**Objectives.** After this lesson the learner can:
+- state the equal-incremental-cost condition and its limits (KKT);
+- explain the merit order and why the price follows the marginal unit;
+- explain congestion, PTDFs and nodal prices;
+- describe the merit-order effect of solar and curtailment behind a congested line.
+
+**Model.** Quadratic costs $C_i = b_iP_i + c_iP_i^2$:
+
+| Unit | Bus | $b$ (€/MWh) | $c$ (€/MW²h) | $P_{max}$ (MW) |
+|---|---|---|---|---|
+| G1 (coal/nuclear) | 1 | 20 | 0.02 | 600 |
+| G2 (gas CCGT) | 2 | 40 × gas | 0.05 × gas | 400 |
+| G3 (peaker) | 3 | 70 × gas | 0.06 × gas | 250 |
+| Solar | 1 | 0 | 0.0005 | profile |
+
+Lines 1–2, 2–3 and 1–3 have equal reactances, so the PTDF on 1–3 is (2/3, 1/3, 0) for
+injections at buses 1, 2 and 3. The load is at bus 3.
+- Each unit runs at $P_i = \mathrm{clip}((\lambda - \mu\,\mathrm{PTDF}_i - b_i)/2c_i)$.
+- λ is found by bisection to meet demand.
+- If line 1–3 exceeds its rating, $\mu \ge 0$ is raised by bisection until it fits.
+- Flows come from a DC power flow; nodal prices are $\lambda_k = \lambda - \mu\,\mathrm{PTDF}_k$.
+- Demand profile over 24 h: a night trough, a late-morning bump and an evening peak at 19 h.
+- Solar profile: $\sin^2$ from 6 h to 20 h.
+
+**Formulas.**
+- Production cost, live (€/h).
+- Equal incremental cost $b_i + 2c_iP_i = \lambda$, live.
+- KKT conditions at the limits.
+- Nodal prices, live.
+- *Researcher, Engineer:* the DC-OPF formulation.
+- *Engineer, Researcher:* the day's minimum and maximum price and daily cost.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Peak demand | 600–1300 MW | 850 MW |
+| Solar at bus 1 | 0–600 MW | 0 |
+| Line 1–3 rating | 200–1000 MW | 1000 MW |
+| Gas price | 0.5–3 × | 1 |
+
+**Panels.**
+- Three-bus network at the cursor hour:
+  - unit outputs;
+  - line flows, with the 1–3 limit and congestion highlighted;
+  - nodal prices.
+- Merit order (aggregate supply curve) with the demand line and the price.
+- Each unit's marginal cost against output, with λ (and λ₁ when congested) and the operating
+  points.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the price | Prediction revealed |
+| 2 | Calling the peaker | Peak ≥ 1000 MW and G3 runs at some hour |
+| 3 | Equal marginal costs | At the cursor hour, G2 and G3 both strictly between 0 and $P_{max}$ |
+| 4 | A congested line | Rating ≤ 450 MW, at least one congested hour |
+| 5 | Midday solar | Solar ≥ 300 MW |
+| 6 | Wasted solar | Some solar curtailed (e.g. 600 MW behind a 250 MW line) |
+
+**Misconception detected** (y-range 0–120 €/MWh): a constant price. Triggers when the sketch's
+spread is under 30 % of the true spread.
+
+**Tests.**
+- Units off their limits share one marginal cost, and supply equals demand.
+- The peaker is off at 700 MW and on at 1100 MW.
+- A congested line is held at its limit, with $\lambda_1 < \lambda_2 < \lambda_3$ and a higher cost.
+- 300 MW of solar lowers the 13 h price by more than 5 €/MWh.
+- 600 MW of solar behind a 300 MW line is curtailed by more than 50 MW.
+
+### 5.5 A day on a feeder · `#5.5` · `lessons/feeder`
+
+**Objectives.** After this lesson the learner can:
+- run a time-series power flow;
+- explain voltage rise and reverse flow with PV, and the role of R/X in distribution;
+- compare inverter controls (fixed $\cos\varphi$, $Q(V)$, $P(V)$ curtailment) and the tap
+  changer;
+- estimate a feeder's hosting capacity.
+
+**Model.**
+- A 20 kV feeder on a 10 MVA base:
+  - substation (slack, at the tap-changer setpoint);
+  - five 2 km sections, overhead ($0.015 + j0.0175$ pu) or underground
+    ($0.012 + j0.006$ pu);
+  - at each node, a 2 MW load ($\cos\varphi = 0.95$, daily profile with an evening peak) and a PV
+    plant ($\sin^2$ profile).
+- One Newton–Raphson power flow every 15 min over 24 h.
+- The local controls are solved by damped fixed-point iteration (up to 12 passes):
+  - **fixed cos φ:** $Q = 0.484P$ absorbed;
+  - **Q(V):** absorb $0.484\,P_n\min(1, (V - 1)/0.05)$;
+  - **P(V):** output reduced linearly from 1.04 to 1.06 pu.
+- Hosting capacity: the largest PV per node keeping all voltages ≤ 1.05 pu at 13 h, swept in
+  0.05 MW steps.
+
+**Formulas.**
+- $\Delta V \approx (RP + XQ)/V$, with the live $V_5 - V_0$.
+- R/X, live.
+- $P_0 = \sum P_{load} + P_{losses} - \sum P_{PV}$, live.
+- The Q(V) law and the total absorbed Q, live.
+- Hosting capacity, $V_{max}$ and $V_{min}$, live.
+- *Engineer, Researcher:* EN 50160 and connection codes (VDE-AR-N 4105/4110, IEEE 1547-2018,
+  EN 50549); the curtailed energy.
+- *Researcher:* quasi-static time-series (QSTS) power flow.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| PV per node (peak) | 0–6 MW | 2.5 MW |
+| Inverter control | none / cos φ = 0.9 / Q(V) / P(V) | none |
+| Tap-changer setpoint | 0.97–1.06 pu | 1.03 pu |
+| Line type | overhead / underground | overhead |
+
+**Panels.**
+- Feeder at the cursor hour:
+  - homes and PV (brightness follows the sun);
+  - section flows (reverse flow highlighted);
+  - voltage bars against the 0.95 and 1.05 pu limits.
+- Voltage profile along the feeder at the cursor hour, with the daily maximum and minimum.
+- Peak-hour maximum voltage against PV per node for each control, with the 1.05 pu limit.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the voltage at the feeder end | Prediction revealed |
+| 2 | The flow reverses | Substation power < 0 at the cursor hour |
+| 3 | Overvoltage | No control, daily $V_{max} > 1.05$ pu |
+| 4 | Inverters absorb reactive power | Q(V), PV ≥ 3.5 MW, $V_{max} \le 1.05$ pu |
+| 5 | Lower the substation voltage? | No control, setpoint ≤ 1.00 pu, $V_{min} < 0.95$ pu |
+| 6 | Curtailment, as a last resort | P(V), PV ≥ 5 MW, curtailed energy > 0.5 MWh |
+
+**Misconception detected** (y-range 0.9–1.1 pu): the far-end voltage stays below the substation's
+at midday. Triggers when the true midday maximum exceeds the setpoint and the sketch stays below
+it from 11 to 15 h.
+
+**Tests.**
+- At 13 h, $V_5 > V_0$; at 19:30, $V_5 < V_0$; reverse flow lasts more than 2 h.
+- Hosting with no control is 2.5–3.6 MW per node; 4 MW exceeds 1.05 pu.
+- Q(V) holds 3.5 MW without curtailment and raises hosting.
+- P(V) holds 5 MW (under 1.06 pu) but curtails more than 0.5 MWh.
+- A 1.00 pu setpoint gives $V_{min} < 0.95$ pu in the evening.
+
+---
+
+## 11. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
-- Modules 5 (steady-state network), 6 (power electronics), 7 (IBR and HVDC) and 8 (stability,
-  on the G2ELin engine).
+- Modules 6 (power electronics), 7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
 
 Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 11. Standards and figures quoted in the lessons
+## 12. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.
@@ -1990,3 +2384,7 @@ before using them in a formal context.
 | ZIP and exponential load models, CVR factor | 4.4 | IEEE Task Force on load representation (1993, 1995) |
 | Starting current 5–7 × rated, FIDVR | 4.5 | NERC FIDVR technical reference |
 | Mohave subsynchronous-resonance failures (1970–71) | 4.6 | IEEE SSR working group |
+| Real-power margin ≥ 5 % after N–1 | 5.2 | WECC voltage stability criteria |
+| Peak factor $kappa = 1.02 + 0.98e^{-3R/X}$ | 5.3 | IEC 60909 |
+| Nodal (locational marginal) pricing | 5.4 | PJM, ERCOT market design |
+| Voltage 230 V ± 10 % (planning ± 5 % here); inverter Q(V), cos φ(P), P(V) capabilities | 5.5 | EN 50160; VDE-AR-N 4105/4110, IEEE 1547-2018, EN 50549 |

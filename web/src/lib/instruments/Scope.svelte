@@ -31,20 +31,23 @@
     return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
   }
 
+  /** uPlot draws gaps for null, not NaN (e.g. no solution beyond a nose point). */
+  const gaps = (a: Float64Array) => (a.some((v) => !isFinite(v)) ? Array.from(a, (v) => (isFinite(v) ? v : null)) : a);
+
   function build(): { opts: uPlot.Options; data: uPlot.AlignedData } {
     const ink = cssVar('--muted');
     const grid = cssVar('--line');
     const series: uPlot.Series[] = [{}];
-    const data: (Float64Array | number[])[] = [lab.run.t];
+    const data: (Float64Array | (number | null)[])[] = [lab.run.t];
 
     for (const s of shown) {
       series.push({ stroke: cssVar(s.color), width: s.dash ? 1.5 : 2, dash: s.dash ? [5, 4] : undefined, scale: s.unit, show: s.id !== hiddenId });
-      data.push(lab.run.s[s.id]);
+      data.push(gaps(lab.run.s[s.id]));
     }
     lab.ghostRuns.forEach((g) => {
       for (const s of shown) {
         series.push({ stroke: withAlpha(cssVar(s.color), 0.6), width: 1.5, dash: [6, 5], scale: s.unit, show: s.id !== hiddenId });
-        data.push(g.s[s.id]);
+        data.push(gaps(g.s[s.id]));
       }
     });
     if (primary) {
@@ -55,7 +58,7 @@
           scale: primary.unit,
           show: primary.id !== hiddenId,
         });
-        data.push(r.s[primary.id]);
+        data.push(gaps(r.s[primary.id]));
       });
     }
 
@@ -81,7 +84,8 @@
       stroke: ink,
       grid: { stroke: grid, width: 1, show: side === 3 || units.length === 1 },
       ticks: { stroke: grid },
-      size: 62,
+      // Wide enough for the longest tick label (e.g. "120 €/MWh").
+      size: (_u, values) => Math.max(54, 20 + 7.2 * Math.max(0, ...(values ?? []).map((v) => String(v).length))),
       values: (_u, ticks) => ticks.map((v) => si(v, scale, 4)),
     });
     const axes: uPlot.Axis[] = [
@@ -89,7 +93,7 @@
         stroke: ink,
         grid: { stroke: grid, width: 1 },
         ticks: { stroke: grid },
-        values: (_u, ticks) => ticks.map((v) => time(v, lab.exp.timeUnit, 2)),
+        values: (_u, ticks) => ticks.map((v) => lab.fmtT(v, 2)),
       },
       ...units.map((u, k) => axis(u, k === 0 ? 3 : 1)),
     ];
@@ -233,7 +237,7 @@
           title={tr(s.name)}
         >
           <i></i>{@html renderMath(s.symbol)}
-          <span class="val">{s.id === hiddenId ? '?' : si(lab.at(s.id), s.unit)}</span>
+          <span class="val">{s.id === hiddenId ? '?' : isFinite(lab.at(s.id)) ? si(lab.at(s.id), s.unit) : '—'}</span>
         </button>
       {/each}
     </div>

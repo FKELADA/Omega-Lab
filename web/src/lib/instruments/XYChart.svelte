@@ -16,14 +16,17 @@
   const yr = $derived(rng(spec.y));
   const fx = (v: number) => (spec.x.log ? Math.log10(Math.max(1e-12, v)) : v);
   const X = (v: number) => M.l + ((W - M.l - M.r) * (fx(v) - fx(xr[0]))) / (fx(xr[1]) - fx(xr[0]));
-  const Y = (v: number) => H - M.b - ((H - M.t - M.b) * (v - yr[0])) / (yr[1] - yr[0]);
+  const fy = (v: number) => (spec.y.log ? Math.log10(Math.max(1e-300, v)) : v);
+  const Y = (v: number) => H - M.b - ((H - M.t - M.b) * (fy(v) - fy(yr[0]))) / (fy(yr[1]) - fy(yr[0]));
   const clipY = (v: number) => Math.max(M.t - 4, Math.min(H - M.b + 4, Y(v)));
 
   /** About five round-number ticks. */
   function ticks(a: [number, number], log = false): number[] {
     if (log) {
       const out: number[] = [];
-      for (let e = Math.ceil(Math.log10(a[0])); e <= Math.floor(Math.log10(a[1])); e++) out.push(10 ** e);
+      const e0 = Math.ceil(Math.log10(a[0])), e1 = Math.floor(Math.log10(a[1]));
+      const step = Math.max(1, Math.ceil((e1 - e0) / 6));
+      for (let e = e1; e >= e0; e -= step) out.unshift(10 ** e);
       return out;
     }
     const span = a[1] - a[0];
@@ -34,6 +37,13 @@
     for (let v = Math.ceil(a[0] / step) * step; v <= a[1] + 1e-9 * step; v += step) out.push(+v.toPrecision(12));
     return out;
   }
+
+  const SUP: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+  /** Decades on a log axis as 10ⁿ (exact powers of ten only), plain numbers otherwise. */
+  const tickText = (v: number, log = false) => {
+    if (!log || (v >= 0.01 && v <= 1000)) return num(v, 3);
+    return '10' + String(Math.round(Math.log10(v))).replace(/./g, (c) => SUP[c] ?? c);
+  };
 
   const series = $derived(spec.series(lab));
   const paths = $derived(
@@ -63,13 +73,13 @@
       {#each bands as b, j (j)}
         <rect x={M.l} width={W - M.l - M.r} y={Y(Math.min(yr[1], b.y1))} height={Math.max(0, Y(Math.max(yr[0], b.y0)) - Y(Math.min(yr[1], b.y1)))} class="band" />
       {/each}
-      {#each ticks(yr) as v (v)}
+      {#each ticks(yr, spec.y.log) as v (v)}
         <line x1={M.l} x2={W - M.r} y1={Y(v)} y2={Y(v)} class="grid" class:zero={v === 0} />
-        <text x={M.l - 4} y={Y(v) + 3} class="tick" text-anchor="end">{num(v, 3)}</text>
+        <text x={M.l - 4} y={Y(v) + 3} class="tick" text-anchor="end">{tickText(v, spec.y.log)}</text>
       {/each}
       {#each ticks(xr, spec.x.log) as v (v)}
         <line x1={X(v)} x2={X(v)} y1={M.t} y2={H - M.b} class="grid" class:zero={v === 0} />
-        <text x={X(v)} y={H - M.b + 12} class="tick">{num(v, 3)}</text>
+        <text x={X(v)} y={H - M.b + 12} class="tick">{tickText(v, spec.x.log)}</text>
       {/each}
       <text x={W - M.r} y={H - 4} class="axl" text-anchor="end">{label(spec.x)}</text>
       <text x={M.l + 2} y={M.t - 2} class="axl" text-anchor="start">{label(spec.y)}</text>

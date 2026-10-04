@@ -116,6 +116,11 @@ export interface Experiment {
   source?: 'dc' | 'ac';
   /** Unit of the model's time axis. Default: seconds. */
   timeUnit?: 's' | 'h';
+  /**
+   * A different independent variable for the cursor and the oscilloscope's x-axis
+   * (Newton–Raphson iterations, a load multiplier…), replacing time.
+   */
+  axis?: { label: L; symbol: string; fmt: (v: number, digits?: number) => string };
   /** Characteristic charts, shown by the Chart0/1/2 instruments in this order. */
   charts?: ChartSpec[];
 }

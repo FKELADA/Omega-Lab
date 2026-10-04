@@ -10,6 +10,11 @@ import { loadsLesson } from './loads/experiment';
 import { motorLesson } from './motor/experiment';
 import { smLesson } from './sm/experiment';
 import { trafoLesson } from './trafo/experiment';
+import { pflowLesson } from './pflow/experiment';
+import { pvLesson } from './pv/experiment';
+import { faultsLesson } from './faults/experiment';
+import { dispatchLesson } from './dispatch/experiment';
+import { feederLesson } from './feeder/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -104,9 +109,11 @@ export const curriculum: ModuleEntry[] = [
     n: 5,
     title: { fr: 'Le réseau en régime permanent', en: 'The network in steady state' },
     lessons: [
-      soon('5.1', 'Matrice Y et répartition de charge', 'Y-bus and power flow'),
-      soon('5.2', 'Courbes P–V, Q–V', 'P–V and Q–V curves'),
-      soon('5.3', 'Défauts et courts-circuits', 'Faults and short circuits'),
+      { id: '5.1', title: { fr: 'Matrice Y et répartition de charge', en: 'Y-bus and power flow' }, experiment: pflowLesson },
+      { id: '5.2', title: { fr: 'Courbes P–V, Q–V', en: 'P–V and Q–V curves' }, experiment: pvLesson },
+      { id: '5.3', title: { fr: 'Défauts et courts-circuits', en: 'Faults and short circuits' }, experiment: faultsLesson },
+      { id: '5.4', title: { fr: 'Dispatching économique', en: 'Economic dispatch' }, experiment: dispatchLesson },
+      { id: '5.5', title: { fr: 'Une journée sur un départ', en: 'A day on a feeder' }, experiment: feederLesson },
     ],
   },
   {

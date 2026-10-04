@@ -5,6 +5,7 @@
 import type { Complex } from '../core/linalg';
 import type { Params, Run } from '../models/types';
 import type { L } from '../ui/ui.svelte';
+import { time } from '../ui/format';
 import type { Experiment } from './types';
 
 export interface Ghost {
@@ -80,6 +81,11 @@ export class Lab {
     this.prediction = freshPrediction();
   }
 
+  /** The cursor's value as text: a time, or the lesson's own variable (see Experiment.axis). */
+  fmtT(v: number, digits = 3): string {
+    return this.exp.axis ? this.exp.axis.fmt(v, digits) : time(v, this.exp.timeUnit, digits);
+  }
+
   at(signal: string): number {
     return this.run.s[signal]?.[this.idx] ?? NaN;
   }
@@ -139,17 +145,18 @@ export class Lab {
     const spec = this.exp.predict!;
     const pts = [...this.prediction.points].sort((a, b) => a[0] - b[0]);
     const truth = this.run.s[spec.signal];
-    const peak = Math.max(...truth.map(Math.abs)) || 1;
+    const peak = Math.max(...Array.from(truth).filter(isFinite).map(Math.abs)) || 1;
     let err = 0, n = 0;
     this.run.t.forEach((t, k) => {
-      if (pts.length < 2 || t < pts[0][0] || t > pts[pts.length - 1][0]) return;
+      // Samples without a solution (e.g. beyond a nose point) are not scored.
+      if (!isFinite(truth[k]) || pts.length < 2 || t < pts[0][0] || t > pts[pts.length - 1][0]) return;
       const j = pts.findIndex((p) => p[0] >= t);
       const [t0, y0] = pts[Math.max(0, j - 1)], [t1, y1] = pts[j];
       const y = t1 === t0 ? y1 : y0 + ((y1 - y0) * (t - t0)) / (t1 - t0);
       err += ((y - truth[k]) / peak) ** 2;
       n++;
     });
-    const coverage = n / this.run.t.length;
+    const coverage = n / (Array.from(truth).filter(isFinite).length || 1);
     const rms = n ? Math.sqrt(err / n) : 1;
     this.prediction.score = Math.round(100 * Math.max(0, 1 - rms) * Math.min(1, coverage / 0.6));
     this.prediction.feedback = spec.diagnose?.(pts, this.run, this.params) ?? null;
