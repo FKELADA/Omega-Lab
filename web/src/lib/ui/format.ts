@@ -14,7 +14,7 @@ const PREFIXES: [number, string, string][] = [
 ];
 
 /** Units that take no SI prefix. */
-const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu', 'km', 'GW', 'MW', 'Hz/s', '€/MWh', '€/h', 'MVA', 'Mvar', 'kA', 'MWh', 'kHz', 'µH', 'µF', 'mH', 'kW', 'kV', 'MJ', 'm/s', 'W/m²', '°C', 'rpm', 'ms', 'mF', 'kV ', 'pu/s']);
+const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu', 'km', 'GW', 'MW', 'Hz/s', '€/MWh', '€/h', 'MVA', 'Mvar', 'kA', 'MWh', 'kHz', 'µH', 'µF', 'mH', 'kW', 'kV', 'MJ', 'm/s', 'W/m²', '°C', 'rpm', 'ms', 'mF', 'kV ', 'pu/s', 'mHz', '1/s']);
 
 /** Below this, a value is round-off (e.g. the sum of balanced currents) and shown as 0. */
 const NOISE = 1e-11;
