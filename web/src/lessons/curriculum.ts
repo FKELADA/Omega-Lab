@@ -19,6 +19,13 @@ import { chopperLesson } from './chopper/experiment';
 import { rectifierLesson } from './rectifier/experiment';
 import { pwmLesson } from './pwm/experiment';
 import { lclLesson } from './lcl/experiment';
+import { vscLesson } from './vsc/experiment';
+import { gfmLesson } from './gfm/experiment';
+import { pvmpptLesson } from './pvmppt/experiment';
+import { windLesson } from './wind/experiment';
+import { bessLesson } from './bess/experiment';
+import { mmcLesson } from './mmc/experiment';
+import { frtLesson } from './frt/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -134,13 +141,13 @@ export const curriculum: ModuleEntry[] = [
     n: 7,
     title: { fr: 'Ressources à onduleurs et CCHT', en: 'Inverter-based resources and HVDC' },
     lessons: [
-      soon('7.1', 'Commande des VSC', 'VSC control'),
-      soon('7.2', 'Grid-following contre grid-forming', 'Grid-following vs grid-forming'),
-      soon('7.3', 'Photovoltaïque', 'PV'),
-      soon('7.4', 'Éolien', 'Wind'),
-      soon('7.5', 'Stockage', 'Storage'),
-      soon('7.6', 'CCHT et MMC', 'HVDC and MMC'),
-      soon('7.7', 'Codes de réseau', 'Grid codes'),
+      { id: '7.1', title: { fr: 'Commande des VSC', en: 'VSC control' }, experiment: vscLesson },
+      { id: '7.2', title: { fr: 'Suiveur ou formeur de réseau', en: 'Grid-following vs grid-forming' }, experiment: gfmLesson },
+      { id: '7.3', title: { fr: 'Photovoltaïque', en: 'PV' }, experiment: pvmpptLesson },
+      { id: '7.4', title: { fr: 'Éolien', en: 'Wind' }, experiment: windLesson },
+      { id: '7.5', title: { fr: 'Stockage', en: 'Storage' }, experiment: bessLesson },
+      { id: '7.6', title: { fr: 'CCHT et MMC', en: 'HVDC and MMC' }, experiment: mmcLesson },
+      { id: '7.7', title: { fr: 'Codes de réseau', en: 'Grid codes' }, experiment: frtLesson },
     ],
   },
   {

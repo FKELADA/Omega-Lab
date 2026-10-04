@@ -7,6 +7,7 @@ import type { L } from '../lib/ui/ui.svelte';
 import { module4Note, module4Notes } from './notes4';
 import { module5Note, module5Notes } from './notes5';
 import { module6Note, module6Notes } from './notes6';
+import { module7Note, module7Notes } from './notes7';
 
 const r = String.raw;
 
@@ -81,6 +82,7 @@ export const moduleNotes: Record<number, ModuleNote> = {
   4: module4Note,
   5: module5Note,
   6: module6Note,
+  7: module7Note,
   3: {
     summary: {
       fr: 'La colonne vertébrale de la commande : pôles, marges de stabilité, linéarisation et régulateurs. Indispensable pour comprendre machines et onduleurs.',
@@ -614,4 +616,5 @@ export const lessonNotes: Record<string, LessonNote> = {
   ...module4Notes,
   ...module5Notes,
   ...module6Notes,
+  ...module7Notes,
 };

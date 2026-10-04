@@ -21,8 +21,9 @@ contributors who extend them or check the physics.
 9. [Module 4 — Grid elements](#9-module-4--grid-elements)
 10. [Module 5 — The network in steady state](#10-module-5--the-network-in-steady-state)
 11. [Module 6 — Power electronics](#11-module-6--power-electronics)
-12. [Modules not yet built](#12-modules-not-yet-built)
-13. [Standards and figures quoted in the lessons](#13-standards-and-figures-quoted-in-the-lessons)
+12. [Module 7 — Inverter-based resources and HVDC](#12-module-7--inverter-based-resources-and-hvdc)
+13. [Modules not yet built](#13-modules-not-yet-built)
+14. [Standards and figures quoted in the lessons](#14-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -2603,16 +2604,461 @@ No prediction in this lesson.
 
 ---
 
-## 12. Modules not yet built
+## 12. Module 7 — Inverter-based resources and HVDC
+
+Module 7 uses averaged (dq) converter models, in the spirit of G2ELin's GFL and GFM models, but
+reduced so they run in the browser. The models are in three files:
+- `lib/models/module7.ts`: VSC control and GFL/GFM.
+- `lib/models/module7b.ts`: PV and wind.
+- `lib/models/module7c.ts`: BESS, MMC and FRT.
+
+They are tested in `lib/models/module7.test.ts`. Quantities are per unit on the converter rating
+unless stated.
+
+### 7.1 VSC control · `#7.1` · `lessons/vsc`
+
+**Objectives.** After this lesson the learner can:
+- describe the cascaded control of a grid-following VSC (current loop, P/Q loops, PLL);
+- tune bandwidths and apply time-scale separation;
+- explain dq decoupling, feed-forward and current limiting;
+- recognise PLL-driven instability on a weak grid.
+
+**Model.** An averaged VSC behind $X_f = 0.15$, $R_f = 0.005$, on a grid behind
+$X_g = 1/\mathrm{SCR}$, $R_g = X_g/10$. There are 10 states:
+- the current (grid frame);
+- the current-PI integrators;
+- the filtered PCC voltage ($\tau = 0.5$ ms);
+- the PLL angle and integrator;
+- the filtered P and Q references.
+
+The controller:
+- Current PI: $K_p = \omega_cX_f/\omega_0$, $K_i = K_p\omega_c/5$, with decoupling and voltage
+  feed-forward.
+- PLL: $K_p = 2\zeta\omega_n$, $K_i = \omega_n^2$, $\zeta = 0.7$.
+- Outer loops: first order at $f_o$.
+- Current limit 1.1 pu with P priority.
+
+The run is RK4 over 0.5 s (2500 × 10 steps). Steps: $P^*$ at 50 ms, $Q^*$ at 250 ms.
+
+**Formulas.**
+- The plant $L_f\,d\underline i/dt = \underline e - \underline v - (R_f + j\omega L_f)\underline i$.
+- $K_p = \omega_cL_f$, live.
+- $i_d^* = P^*/v_d$ and $i_q^* = -Q^*/v_d$, with the live rise time.
+- The PLL law.
+- The current limit.
+- *Researcher, Engineer:* $X_g = 1/\mathrm{SCR}$ and the P→Q coupling, live.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $f_c$ | 50–2000 Hz (log) | 500 Hz |
+| $f_o$ | 1–100 Hz (log) | 5 Hz |
+| $f_{PLL}$ | 2–150 Hz (log) | 20 Hz |
+| SCR | 1.2–20 (log) | 10 |
+| $P^*$ | 0–1.1 pu | 0.8 pu |
+| $Q^*$ | −0.8 to 0.8 pu | 0.3 pu |
+
+**Panels.**
+- Control block diagram with live values.
+- Bandwidth ladder on a log frequency axis.
+- P–Q trajectory with the current-limit circle.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the power | Prediction revealed |
+| 2 | Speeding up the outer loop | Rise time < 20 ms, stable |
+| 3 | A current loop that is too slow | $f_c < 5f_o$ |
+| 4 | Decoupling | After step 3: $f_c \ge 5f_o$, P→Q coupling < 0.05 pu |
+| 5 | The current limit | $P^* \ge 0.99$, $Q^* \ge 0.7$, limited, $Q < Q^* - 0.05$ |
+| 6 | Weak grid, fast PLL | SCR < 2 and unstable |
+
+**Misconception detected** (y-range −0.2 to 1.2 pu): the power jumps at once. Triggers when the
+sketch exceeds 0.56 pu 15 ms after the step while the true value is under 0.32 pu.
+
+**Tests.**
+- P and Q reach their setpoints with under 0.02 pu of coupling.
+- Rise time ≈ 0.35/$f_o$.
+- P has priority under the limit.
+- A 100 Hz PLL is unstable at SCR 1.5 and stable at SCR 3; a 20 Hz PLL is stable at SCR 1.5.
+
+### 7.2 Grid-following or grid-forming · `#7.2` · `lessons/gfm`
+
+**Objectives.** After this lesson the learner can:
+- contrast a current-source (GFL) and a voltage-source (GFM) inverter;
+- predict both responses to a phase jump and a frequency ramp;
+- relate virtual inertia and droop to the power delivered;
+- explain why GFM tolerates very weak grids.
+
+**Model.** Each unit is on its own grid behind $1/\mathrm{SCR}$, and both see the same event at 0.1 s:
+- a phase jump of −20°;
+- or a frequency ramp of −1 Hz/s for 0.5 s, then held at 49.5 Hz.
+
+The two units:
+- **GFL:** the model of 7.1 at $P^* = 0.5$, with $f_c = 400$ Hz and $f_o = 10$ Hz.
+- **GFM:** a VSM, $E = 1.02$ behind $X_v = 0.15$:
+  - $2H\dot\omega = P^* - P - (\omega-1)/m - D_d(\omega - \omega_g)$;
+  - $m = 5\,\%$, $D_d = 40$;
+  - P is measured through a 5 ms filter.
+
+**Formulas.**
+- GFL as a current source.
+- The VSM equations, live H.
+- $\Delta P_{GFM}$ and $\Delta P_{GFL}$, live.
+- Inertial power $-2H\dot f/f_0$.
+- *Researcher, Engineer:* GFM families (droop, VSM, dVOC, matching).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Event | phase jump −20° / frequency drop | phase jump |
+| $H$ | 0.1–10 s (log) | 2 s |
+| SCR | 1.2–20 (log) | 5 |
+| GFL $f_{PLL}$ | 5–150 Hz (log) | 20 Hz |
+
+**Panels.**
+- The two units side by side with live P and f.
+- The GFM P–δ curve with its operating point.
+- The GFM P–f droop line.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the grid-forming response | Prediction revealed |
+| 2 | Compare | Phase jump, $\Delta P_{GFM} > 5\Delta P_{GFL}$, cursor beyond 30 % |
+| 3 | A frequency drop | Frequency event, final GFM ΔP > 0.1 pu |
+| 4 | More inertia | Frequency event, H ≥ 8 s |
+| 5 | A very weak grid | SCR < 1.6, GFL unstable |
+
+**Misconception detected** (y-range −0.5 to 2.5 pu): the GFM power does not react. Triggers when
+the sketch's peak in the 100 ms after the event is under 40 % of the true excursion.
+
+**Tests.**
+- After the phase jump, the GFM ΔP exceeds 0.5 pu and is more than 10 × the GFL's.
+- After the frequency drop, the droop share is $\Delta f/(mf_0)$, H = 8 s adds more than 0.15 pu, and the GFL does not move.
+- At SCR 1.3 with a 100 Hz PLL, the GFL is unstable.
+
+### 7.3 Photovoltaics · `#7.3` · `lessons/pvmppt`
+
+**Objectives.** After this lesson the learner can:
+- read I–V and P–V curves and the effects of irradiance and temperature;
+- explain perturb-and-observe MPPT and its step-size trade-off;
+- explain bypass diodes, multiple peaks under shading, and global scanning.
+
+**Model.** A 60-cell module in three 20-cell substrings:
+- Single-diode model per substring: $I_{sc} = 9.5$ A, $V_{oc} = 37.8$ V, $n = 1.3$,
+  $R_s = 0.1$ Ω, $R_{sh} = 300$ Ω.
+- Temperature coefficients: +0.05 %/°C on $I_{sc}$, −0.32 %/°C on $V_{oc}$.
+- Bypass diodes clamp each substring at −0.5 V; one substring takes the shading.
+- $V(I)$ comes from bisection of each substring; $I(V)$ from bisection of the sum.
+
+MPPT:
+- Perturb and observe every 20 ms over 4 s, starting at 0.95 $V_{oc}$.
+- A cloud at 2 s.
+- Optional global scan every second.
+
+**Formulas.**
+- The single-diode equation.
+- $dP/dV = 0$ with live $V_{mpp}$, $P_{mpp}$ and $V_{oc}$.
+- The P&O rule and tracking efficiency, live.
+- The temperature coefficients.
+- *Researcher, Engineer:* bypass diodes.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $G$ | 100–1000 W/m² | 1000 |
+| Cloud | 0–0.8 | 0.5 |
+| $T$ | −10 to 75 °C | 25 °C |
+| ΔV | 0.1–4 V (log) | 0.5 V |
+| Shading | 0–0.9 | 0 |
+| Global scan | off / on | off |
+
+**Panels.**
+- The module with shaded cells and the bypass diodes that conduct.
+- I–V curve against standard conditions.
+- P–V curve with the MPP, local peaks and the operating point.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the power under a cloud | Prediction revealed |
+| 2 | The algorithm climbs | Cursor beyond 90 % |
+| 3 | Heat | T ≥ 60 °C |
+| 4 | The search step | ΔV ≥ 2 V, efficiency < 98.5 % |
+| 5 | Shading | ΔV < 1 V, stuck on a local maximum |
+| 6 | The global scan | Scan on, shading ≥ 0.5, not stuck |
+
+**Misconception detected** (y-range 0–340 W): power does not follow the cloud. Triggers when the
+sketched after/before ratio differs from the truth by more than 0.25.
+
+**Tests.**
+- $I_{sc}$ and $V_{oc}$ match the data, with one peak.
+- At 65 °C the module loses more than 12 %.
+- Power ∝ irradiance.
+- P&O tracks above 99 %; a large step oscillates 5 × more.
+- Shading gives two peaks; P&O gets stuck and the scan frees it.
+
+### 7.4 Wind · `#7.4` · `lessons/wind`
+
+**Objectives.** After this lesson the learner can:
+- explain $C_p(\lambda, \beta)$, the Betz limit and the power curve;
+- describe MPPT below rated wind and pitch control above it;
+- explain synthetic inertia and its recovery dip, and name the four turbine types.
+
+**Model.** A 2 MW type-4 turbine, R = 40 m, H = 4 s.
+- Aerodynamics: Heier's $C_p(\lambda, \beta)$, giving $C_{p,max} = 0.48$ at $\lambda = 8.1$ and
+  a rated wind of 11.1 m/s.
+- Generator torque:
+  - $k_{opt}\Omega^2$ below rated speed;
+  - $P_n/\Omega$ above it;
+  - plus synthetic inertia $-2H_{syn}\dot f/f_0$, capped at 0.1 $P_n$.
+- Pitch: a PI on the speed error, held at 0° below rated, rate-limited to 8°/s.
+- Events:
+  - a gust (1 − cos, 4 s) at 6 s;
+  - a grid frequency ramp of −0.5 Hz/s at 18 s.
+- RK4 over 30 s.
+
+**Formulas.**
+- $P = \frac12\rho\pi R^2v^3C_p$ and $C_p \le C_{p,max} < 16/27$, live.
+- λ against $\lambda_{opt}$, live.
+- The pitch PI, with live β_max.
+- Synthetic inertia, with live ΔP and recovery dip.
+- *Researcher, Engineer:* turbine types 1–4.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Mean wind $v$ | 4–20 m/s | 8 m/s |
+| Gust | 0–8 m/s | 3 m/s |
+| $H_{syn}$ | 0–10 s | 0 |
+
+**Panels.**
+- The turbine with the rotor turning and a pitch indicator, live P, rpm, λ, β and Cp.
+- Cp–λ for β = 0, 5, 10 and 20° with the Betz limit and the operating point.
+- The power curve with cut-in, rated and cut-out.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the power during a gust | Prediction revealed |
+| 2 | At the top of Cp | No gust, v < 10, λ within 0.3 of $\lambda_{opt}$ |
+| 3 | Above rated | v ≥ 14, β > 2° |
+| 4 | A strong gust | v ≥ 13, gust ≥ 6, peak P < 2.1 MW |
+| 5 | Supporting frequency | v < 11, $H_{syn}$ ≥ 5, extra P > 0.05 MW |
+
+**Misconception detected** (y-range 0–2.5 MW): power proportional to wind speed. Triggers when the
+sketched peak-to-baseline ratio during the gust is less than halfway to the true ratio.
+
+**Tests.**
+- $C_{p,max}$ ≈ 0.48 at λ ≈ 8.1, below Betz.
+- The power curve is ∝ v³, capped, and zero beyond cut-out.
+- There is no pitch below rated; the gust is absorbed above rated.
+- Synthetic inertia adds more than 0.15 MW, then gives a recovery dip.
+
+### 7.5 Storage · `#7.5` · `lessons/bess`
+
+**Objectives.** After this lesson the learner can:
+- relate inertia, RoCoF and nadir;
+- size a battery's power, energy and response time for fast frequency response;
+- compare droop and triggered FFR.
+
+**Model.** A 30 GW system loses 1 GW at 1 s.
+- System: $\frac{2HS}{f_0}\dot{\Delta f} = P_g + P_b - P_{loss} - D\frac{S}{f_0}\Delta f$, with $D = 1$.
+- Governors: first order, $\tau = 6$ s, 2000 MW/Hz, capped at 1.5 GW.
+- Battery:
+  - first order with time constant $\tau_b$;
+  - droop: full power at 0.5 Hz beyond a 15 mHz deadband;
+  - FFR: triggered below 49.8 Hz, full power for 10 s, then a 30 s ramp down;
+  - starts half charged, and stops when that energy is used.
+- RK4 over 60 s.
+
+**Formulas.**
+- The system equation and the initial RoCoF, live.
+- Nadir with and without the battery, live.
+- Energy used and final SoC, live.
+- The droop and FFR laws.
+- *Engineer, Researcher:* the FFR → FCR → aFRR → mFRR ladder.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $H$ | 1.5–8 s | 4 s |
+| $P_b$ | 0–1000 MW | 0 |
+| $E_b$ | 0.5–50 MWh (log) | 20 MWh |
+| $\tau_b$ | 0.05–3 s (log) | 0.2 s |
+| Mode | droop / triggered FFR | droop |
+
+**Panels.**
+- The system with the lost unit, the battery's SoC and output, and a frequency dial.
+- Nadir against battery power (droop and FFR).
+- Nadir against response time.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency | Prediction revealed |
+| 2 | Adding a battery | $P_b$ ≥ 500 MW, nadir +0.1 Hz |
+| 3 | Too slow | $\tau_b$ ≥ 2 s, $P_b$ ≥ 300 MW |
+| 4 | Running out of energy | $\tau_b$ < 0.5 s, battery empty |
+| 5 | FFR | FFR, $E_b$ ≥ 10 MWh, $P_b$ ≥ 300 MW |
+| 6 | Less inertia | H ≤ 2 s, nadir ≥ 49.4 Hz |
+
+**Misconception detected** (y-range 48.8–50.2 Hz): frequency keeps falling. Triggers when the
+sketch's minimum comes more than 8 s after the true nadir.
+
+**Tests.**
+- The initial RoCoF is $\Delta P f_0/(2HS)$.
+- 600 MW fast raises the nadir by more than 0.15 Hz, and fast beats slow by more than 0.05 Hz.
+- 2 MWh empties within 30 s.
+- H = 2 s deepens the nadir; 400 MW restores it to at least 49.4 Hz.
+
+### 7.6 HVDC and MMC · `#7.6` · `lessons/mmc`
+
+**Objectives.** After this lesson the learner can:
+- explain nearest-level modulation and why MMCs need no filter;
+- explain capacitor-voltage balancing by sorting;
+- relate sub-module capacitance to ripple and stored energy;
+- explain the DC-fault problem and how full-bridge sub-modules address it.
+
+**Model.** One phase leg at ±320 kV with N half-bridge sub-modules per arm.
+- Modulation: nearest-level, m = 0.9.
+- Arm currents: $I_{dc}/3 \pm i_{ac}/2$ at unity power factor.
+- Each inserted capacitor integrates its arm current. With sorting, the lowest capacitors are
+  inserted when the current charges them, otherwise the highest; in fixed order, the first ones
+  always go in.
+- 5 cycles at 400 steps per cycle, with capacitor snapshots kept for the bar chart.
+- THD of the ideal staircase, by DFT.
+- The DC-fault curves are illustrative:
+  - a capacitor discharge until blocking at 2 ms;
+  - then a half-bridge rises towards an AC-fed level (τ = 6 ms), while a full-bridge falls to zero in 3 ms.
+
+**Formulas.**
+- The NLM insertion law and the number of levels.
+- THD, live.
+- $C\dot v_{c,j} = s_ji_{arm}$, with live spread.
+- Ripple and stored energy $W = 6N\cdot\frac12Cv_c^2$, live.
+- *Engineer, Researcher:* LCC against VSC-MMC; multi-terminal grids and DC breakers.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| N | 4–24 (step 2) | 10 |
+| $C_{SM}$ | 0.1–3 mF (log) | 0.4 mF |
+| P | 0–1000 MW | 600 MW |
+| Balancing | sorting / fixed order | sorting |
+| Sub-module | half-bridge / full-bridge | half-bridge |
+
+**Panels.**
+- The phase leg with inserted sub-modules at the cursor, and live readouts.
+- Upper-arm capacitor voltages at the cursor.
+- THD against N.
+- The DC fault current for both sub-module types.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | The staircase | THD < 5 % |
+| 2 | Inserting and bypassing | Cursor beyond 30 % |
+| 3 | Without balancing | Fixed order, spread > 10 % |
+| 4 | Sorting | After step 3: sorting, spread < 2 % |
+| 5 | Capacitors that are too small | Ripple > 20 % |
+| 6 | A DC-side fault | Full-bridge selected |
+
+No prediction in this lesson.
+
+**Tests.**
+- THD falls with N and is below 5 % at N = 20.
+- Spread is below 2 % with sorting and above 10 % in fixed order.
+- Ripple ∝ 1/C.
+- A full-bridge clears the fault; a half-bridge exceeds 10 kA.
+
+### 7.7 Grid codes · `#7.7` · `lessons/frt`
+
+**Objectives.** After this lesson the learner can:
+- read a fault-ride-through envelope and decide when a plant must stay connected;
+- set reactive-current injection and recognise current saturation;
+- explain active-power recovery ramps and why legacy protection is non-compliant.
+
+**Model.** A voltage dip of residual $V_{res}$ and duration $t_d$ at 0.5 s, then recovery from
+0.9 to 1 pu over 0.5 s.
+- Envelope (generic, after RfG type D): 0 pu for 150 ms, rising linearly to 0.85 pu at 1.5 s,
+  then 0.9 pu.
+- Plant: $i_q^* = \min(I_{max}, K(1 - 0.1 - V))$ and $i_p^* \le \sqrt{I_{max}^2 - i_q^{*2}}$,
+  with first-order lags of 20 ms.
+- After the fault, $i_p$ ramps at the set rate.
+- Protection:
+  - legacy: trips after V < 0.8 for 0.1 s;
+  - compliant: trips only below the envelope.
+- Euler stepping, 1500 steps over 3 s.
+
+**Formulas.**
+- The envelope rule.
+- $\Delta i_q = K(\Delta V - 0.1)$, with live $i_q$, the required value and $t_{90}$.
+- Reactive priority.
+- The recovery ramp, with live $t_{90\%}$.
+- *Engineer, Researcher:* incidents that shaped the codes (South Australia 2016, Blue Cut 2016,
+  GB 2019) and IEEE 2800 / RfG.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $V_{res}$ | 0–0.9 pu | 0.5 pu |
+| $t_d$ | 0.05–1.2 s (log) | 0.15 s |
+| K | 0–6 | 2 |
+| Recovery ramp | 0.2–20 pu/s (log) | 5 pu/s |
+| Protection | legacy / compliant | legacy |
+
+**Panels.**
+- The test bench: dip generator, breaker, plant, and bars for V, $i_q$ and $i_p$.
+- The V–t envelope with the "stay connected" zone and the applied dip.
+- $i_q$ against ΔV with the dead band and the current limit.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the reactive current | Prediction revealed |
+| 2 | Over-sensitive protection | Legacy, tripped, dip above the envelope |
+| 3 | The compliant setting | Compliant, no trip, $t_{90}$ ≤ 60 ms |
+| 4 | A deep dip | $V_{res}$ < 0.2, above the envelope, $i_q$ at the limit |
+| 5 | Below the envelope | Dip below the envelope |
+| 6 | A slow recovery | Ramp < 1 pu/s, ridden through, recovery > 0.25 s |
+
+**Misconception detected** (y-range −0.2 to 1.3 pu): no reactive current during the dip. Triggers
+when the sketch stays under 0.2 pu between 50 and 100 ms into the dip.
+
+**Tests.**
+- Legacy protection trips on a dip above the envelope, so it is non-compliant.
+- The compliant setting rides through with $i_q$ ≈ 0.8 pu within 60 ms.
+- A deep dip saturates $i_q$; below the envelope the plant may trip.
+- A 0.5 pu/s ramp makes recovery more than 5 × slower.
+
+---
+
+## 13. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
-- Modules 7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
+- Module 8 (stability, on the G2ELin engine).
 
 Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 13. Standards and figures quoted in the lessons
+## 14. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.

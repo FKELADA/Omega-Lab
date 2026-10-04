@@ -544,6 +544,95 @@ await setParam(3, 2, 0, 10); // damped
 await setParam(4, 10, 1.5, 20, true);
 check('6.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
+// ── Module 7 ──────────────────────────────────────────────────────────────────
+// 7.1 VSC control
+await open('7.1');
+fb = await predict((f) => (f < 0.1 ? 0.857 : 0.286)); // P jumps instantly
+check('7.1 misconception: P rises through the outer loop', /boucle externe/.test(fb), fb.slice(0, 70));
+await setParam(1, 40, 1, 100, true); // fast outer loop
+await setParam(0, 100, 50, 2000, true); // current loop too slow
+await setParam(1, 5, 1, 100, true);
+await setParam(0, 500, 50, 2000, true); // separation restored
+await setParam(4, 1, 0, 1.1);
+await setParam(5, 0.8, -0.8, 0.8); // current limit
+await setParam(3, 1.5, 1.2, 20, true);
+await setParam(2, 100, 2, 150, true); // weak grid, fast PLL
+check('7.1 instability shown', /instable/.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('7.1 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 7.2 Grid-following vs grid-forming
+await open('7.2');
+fb = await predict(() => 0.667); // no reaction
+check('7.2 misconception: grid-forming reacts instantly', /instantanément/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await page.getByRole('radio', { name: 'Chute de fréquence' }).click();
+await setParam(0, 8, 0.1, 10, true);
+await page.getByRole('radio', { name: 'Saut de phase −20°' }).click();
+await setParam(1, 1.3, 1.2, 20, true);
+await setParam(2, 100, 5, 150, true);
+check('7.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 7.3 PV
+await open('7.3');
+fb = await predict(() => 0.25); // ignores the cloud
+check('7.3 misconception: power follows irradiance', /proportionnel/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await setParam(2, 65, -10, 75);
+await setParam(3, 3, 0.1, 4, true); // large step
+await setParam(2, 25, -10, 75);
+await setParam(3, 0.5, 0.1, 4, true);
+await setParam(4, 0.6, 0, 0.9); // shading
+check('7.3 local maximum flagged', /maximum local/.test((await page.locator('.panel').first().textContent()) ?? ''));
+await page.getByRole('radio', { name: 'Oui' }).click();
+check('7.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 7.4 Wind
+await open('7.4');
+fb = await predict(() => 0.6); // ignores the gust
+check('7.4 misconception: power goes with v³', /cube/.test(fb), fb.slice(0, 70));
+await setParam(1, 0, 0, 8); // no gust, λ stays optimal
+await setParam(0, 15, 4, 20); // above rated
+await setParam(1, 6.5, 0, 8); // strong gust
+await setParam(0, 8, 4, 20);
+await setParam(2, 6, 0, 10); // synthetic inertia
+check('7.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 7.5 Battery
+await open('7.5');
+fb = await predict((f) => 0.1 + 0.8 * f); // keeps falling
+check('7.5 misconception: the frequency has a nadir', /creux/.test(fb), fb.slice(0, 70));
+await setParam(1, 600, 0, 1000);
+await setParam(3, 2.5, 0.05, 3, true); // slow
+await setParam(3, 0.2, 0.05, 3, true);
+await setParam(2, 2, 0.5, 50, true); // runs out
+await setParam(2, 20, 0.5, 50, true);
+await page.getByRole('radio', { name: 'FFR déclenchée' }).click();
+await page.getByRole('radio', { name: 'Statisme' }).click();
+await setParam(0, 2, 1.5, 8); // low inertia
+check('7.5 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 7.6 MMC
+await open('7.6');
+await setParam(0, 20, 4, 24);
+await setCursor(0.5);
+await page.getByRole('radio', { name: 'Ordre fixe' }).click();
+await page.getByRole('radio', { name: 'Tri des tensions' }).click();
+await setParam(1, 0.1, 0.1, 3, true); // small capacitors
+await page.getByRole('radio', { name: 'Pont complet' }).click();
+check('7.6 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 7.7 Grid codes
+await open('7.7');
+fb = await predict(() => 0.86); // no reactive current
+check('7.7 misconception: plants inject reactive current', /courant réactif/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: /Conforme/ }).click();
+await setParam(0, 0.1, 0, 0.9); // deep dip
+await setParam(1, 0.6, 0.05, 1.2, true); // below the envelope
+await setParam(1, 0.15, 0.05, 1.2, true);
+await setParam(0, 0.5, 0, 0.9);
+await setParam(3, 0.3, 0.2, 20, true); // slow recovery
+check('7.7 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
 await page.reload();
@@ -580,7 +669,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);
