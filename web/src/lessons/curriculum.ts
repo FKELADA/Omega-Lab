@@ -3,6 +3,10 @@
 import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
 import { acRms } from './ac-rms/experiment';
+import { loopLesson } from './loop/experiment';
+import { pllLesson } from './pll/experiment';
+import { polesLesson } from './poles/experiment';
+import { swingLesson } from './swing/experiment';
 import { euler } from './euler/experiment';
 import { fourierLesson } from './fourier/experiment';
 import { impedanceLesson } from './impedance/experiment';
@@ -63,10 +67,10 @@ export const curriculum: ModuleEntry[] = [
     n: 3,
     title: { fr: 'Signaux et commande', en: 'Signals & control' },
     lessons: [
-      soon('3.1', 'Laplace, pôles et zéros', 'Laplace, poles and zeros'),
-      soon('3.2', 'Bode et Nyquist', 'Bode and Nyquist'),
-      soon('3.3', 'Espace d’état et linéarisation', 'State space and linearisation'),
-      soon('3.4', 'Régulateur PI, PLL', 'PI control, PLL'),
+      { id: '3.1', title: { fr: 'Laplace, pôles et zéros', en: 'Laplace, poles and zeros' }, experiment: polesLesson },
+      { id: '3.2', title: { fr: 'Bode et Nyquist', en: 'Bode and Nyquist' }, experiment: loopLesson },
+      { id: '3.3', title: { fr: 'Espace d’état et linéarisation', en: 'State space and linearisation' }, experiment: swingLesson },
+      { id: '3.4', title: { fr: 'Régulateur PI, PLL', en: 'PI control, PLL' }, experiment: pllLesson },
     ],
   },
   {

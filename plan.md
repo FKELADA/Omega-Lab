@@ -10,7 +10,7 @@
 
 ## Status (4 October 2026)
 
-**Modules 1 and 2 are built: 11 lessons, in French and English.** Code is on
+**Modules 1 to 3 are built: 15 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -29,10 +29,14 @@ tests are in [documentation.md](documentation.md).
 | 2.6 Per-unit system | ✅ Done | `f446195` |
 | 2.7 Harmonics and Fourier | ✅ Done | `f446195` |
 | 2.8 Symmetrical components | ✅ Done | `f446195` |
-| Module 0, Modules 3–8 | Not started | — |
+| 3.1 Laplace, poles and zeros | ✅ Done | (this commit) |
+| 3.2 Bode and Nyquist | ✅ Done | (this commit) |
+| 3.3 State space and linearisation | ✅ Done | (this commit) |
+| 3.4 PI control and the PLL | ✅ Done | (this commit) |
+| Module 0, Modules 4–8 | Not started | — |
 
-**Verification:** 45 solver and model unit tests, and a browser test that walks all 11 lessons
-(42 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 60 solver and model unit tests, and a browser test that walks all 15 lessons
+(57 checks: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -41,11 +45,11 @@ no console errors).
 |---|---|
 | 1. Live equations (colour-coded terms, live numbers, term bars, derivations) | ✅ All lessons |
 | 2. Probes and virtual instruments | ✅ Oscilloscope with click-to-probe; frequency response, phasor diagram, s-plane, spectrum, meters. No PMU or impedance scanner yet |
-| 3. Sweep cursors | ✅ Sweep fans and root locus. Stability region maps not yet |
+| 3. Sweep cursors | ✅ Sweep fans and root locus (in R, K, D, ζ). Stability region maps not yet |
 | 4. Predict, then reveal | ✅ 8 lessons, with scoring |
 | 5. Freeze and compare | ✅ Ghost traces. Split view (two cases side by side) not yet |
 | 6. Synchronised time scrubber | ✅ Every panel follows the cursor, including rotating phasors, helix, epicycles, dq camera |
-| 7. Inverse design (drag an eigenvalue) | Not yet (planned for Module 3) |
+| 7. Inverse design (drag an eigenvalue) | ✅ Lesson 3.1: drag poles into a design target region |
 | 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3 |
 | 9. Sound | ✅ Lesson 2.7 (WebAudio) |
 | 10. Break-it / fix-it challenges | ✅ As step checks. No scoring or leaderboard yet |
@@ -69,11 +73,9 @@ no console errors).
 
 ### Next
 
-1. **Module 3, Signals and control:** 3.1 Laplace and a drag-the-pole playground (inverse
-   design), 3.2 Bode and Nyquist, 3.3 state space and linearisation, 3.4 PI control and the PLL
-   (builds directly on 2.5).
-2. **Module 0** (the hook) and **lesson 1.5**.
-3. **P2:** connect the G2ELin API for Module 8.
+1. **Module 0** (the hook) and **lessons 1.1 and 1.5**.
+2. **P2:** connect the G2ELin API for Module 8.
+3. **Module 4**, conventional elements, starting with the synchronous machine (builds on 2.5 and 3.3).
 
 ---
 
@@ -270,6 +272,8 @@ changes:
 - ✅ 2.8 Symmetrical components: decompose an unbalanced set into rotating sequence sets.
 
 ### Module 3: Signals & Control toolkit (spine)
+
+✅ Built as four lessons: 3.1 Laplace, poles and zeros · 3.2 Bode and Nyquist · 3.3 state space and linearisation (on the swing equation) · 3.4 PI control, anti-windup and the PLL.
 
 Topics:
 

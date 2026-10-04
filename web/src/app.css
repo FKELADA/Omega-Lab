@@ -187,6 +187,9 @@ button {
   color: var(--muted);
   flex-wrap: wrap;
 }
+.panel > header .nocase {
+  text-transform: none;
+}
 .panel > header .spacer {
   flex: 1;
 }

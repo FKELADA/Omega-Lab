@@ -16,8 +16,9 @@ contributors who extend them or check the physics.
 4. [Testing](#4-testing)
 5. [Module 1 — Circuits, DC vs AC](#5-module-1--circuits-dc-vs-ac)
 6. [Module 2 — The AC toolbox](#6-module-2--the-ac-toolbox)
-7. [Modules not yet built](#7-modules-not-yet-built)
-8. [Standards and figures quoted in the lessons](#8-standards-and-figures-quoted-in-the-lessons)
+7. [Module 3 — Signals and control](#7-module-3--signals-and-control)
+8. [Modules not yet built](#8-modules-not-yet-built)
+9. [Standards and figures quoted in the lessons](#9-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -93,7 +94,14 @@ The oscilloscope's time window is chosen automatically.
 The learner can lock the window. Freezing, sweeping or predicting locks it automatically, so that
 traces stay comparable.
 
-### 2.4 Sketch analysis
+### 2.4 Nonlinear models
+
+The swing equation (3.3) and the PLL (3.4) are nonlinear. They are integrated with fixed-step
+fourth-order Runge–Kutta (`lib/core/ode.ts`): each output interval is split into 4–5 substeps.
+For the PLL at 100 Hz bandwidth, that gives $omega_n h approx 0.03$, well inside RK4's
+accuracy range. Linear models keep the exact step of §2.1.
+
+### 2.5 Sketch analysis
 
 - **Phase of a sketch** (lesson 2.2): least-squares fit of $a\cos\omega t - b\sin\omega t$ to the
   sketched points (`fitPhase`). This gives the sketch's amplitude $\sqrt{a^2+b^2}$ and phase
@@ -152,9 +160,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 45 tests in `lib/core/solver.test.ts` and `lib/models/models.test.ts`: the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 60 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts` and `lib/models/module3.test.ts`: the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 11 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors. 42 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 15 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors. 57 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -481,7 +489,7 @@ $\lvert S\rvert$.
 | 4 | At 45° | R+L selected and $\lvert\varphi - 45°\rvert < 2°$ |
 | 5 | The locus of Z | R+C selected and $\lvert\varphi\rvert < 6°$ |
 
-**Misconceptions detected.** The sketch's phase is found by least squares (§2.4) and compared
+**Misconceptions detected.** The sketch's phase is found by least squares (§2.5) and compared
 with the true lag. An error under 30° is accepted. Otherwise the feedback is one of:
 - "in phase": an explanation from $v_L = L\,di/dt$;
 - "leading": that is what a capacitor does;
@@ -877,19 +885,321 @@ hint for step 5.
 
 ---
 
-## 7. Modules not yet built
+## 7. Module 3 — Signals and control
+
+Module 3 is the spine between the AC toolbox and the machines and converters of Modules 4–7.
+Every lesson reuses the s-plane of 1.2 and the phasors of Module 2. The two nonlinear models
+(3.3 and 3.4) are integrated with fixed-step RK4 (§2.4); everything linear keeps the exact
+matrix-exponential step.
+
+### 3.1 Laplace, poles and zeros · `#3.1` · `lessons/poles`
+
+**Objectives.** After this lesson the learner can:
+- relate each pole to a mode $e^{pt}$: decay from $\sigma$, oscillation from $\omega_d$;
+- predict overshoot and settling time from the pole position;
+- run the design backwards: place poles to meet a specification (the "inverse design" idea of
+  the plan);
+- recognise the wrong-way start caused by a right-half-plane zero.
+
+**Model.**
+
+$$
+H(s) = \frac{\omega_n^2\,(1 - s/z)}{s^2 - 2\sigma s + \omega_n^2},\qquad p_{1,2} = \sigma \pm j\omega_d,\quad \omega_n^2 = \sigma^2 + \omega_d^2,\quad H(0) = 1 .
+$$
+
+- It is simulated in controllable canonical form with the exact step (§2.1). The numerator is
+  $\omega_n^2 x_1 - (\omega_n^2/z)\,x_2$.
+- A zero closer to the origin than 0.5 is clamped to ±0.5, to avoid an infinite derivative term.
+- Overshoot, undershoot and 2 % settling time are **measured** on a 3000-sample simulated
+  response, not taken from formulas.
+
+**Formulas.**
+- $\zeta = -\sigma/\omega_n$.
+- The partial-fraction derivation: each pole is a mode $e^{pt}$.
+- Overshoot $D\% = e^{-\pi\zeta/\sqrt{1-\zeta^2}}$, settling $t_{s,2\%} \approx 4/\lvert\sigma\rvert$,
+  peak time $t_p = \pi/\omega_d$.
+- The closed-form underdamped step response, with a note that the solver does not use it.
+- *Engineer, Researcher:* non-minimum-phase systems (hydro turbine, boost converter) and the
+  measured undershoot.
+
+**Design target.**
+- Overshoot ≤ 5 %, which means $\zeta \ge -\ln 0.05/\sqrt{\pi^2 + \ln^2 0.05} = 0.69$ (a cone).
+- 2 % settling ≤ 0.6 s, which means $\sigma \le -6.7$ (a half-plane).
+- Their intersection is drawn in green. The step check uses the **measured** figures, so a pole
+  right on the boundary may differ slightly from the drawn region (the $4/\lvert\sigma\rvert$ rule
+  is approximate).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| σ | −40 to 5 s⁻¹ | −2 |
+| $\omega_d$ | 0–40 rad/s | 10 |
+| Zero | none / with zero | none |
+| z | −40 to 40 s⁻¹ | 5 |
+
+The defaults give $\zeta = 0.196$ and 53 % overshoot.
+
+**Panels.**
+- **Interactive s-plane:** drag the pole pair, or click anywhere to move it there; drag the zero
+  along the real axis. It shows the target region, the stable half-plane and the $\omega_n$ circle.
+- **Performance table:** measured value, formula value and target for overshoot and settling, the
+  initial undershoot, and a verdict.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the response | Prediction revealed |
+| 2 | Moving the poles | σ > 0 (unstable) |
+| 3 | Design | Stable, measured overshoot ≤ 5 % and settling ≤ 0.6 s |
+| 4 | A zero on the right | Measured undershoot ≥ 10 % |
+
+**Misconception detected** (y-range [−0.3, 2]): a lightly damped pair rings. Triggers when the
+true peak exceeds 1.3 and the sketch stays below 1.12.
+
+**Tests.**
+- The simulated step matches the closed form to $10^{-9}$.
+- Measured overshoot equals $e^{-\pi\zeta/\sqrt{1-\zeta^2}}$ (3 decimals).
+- An RHP zero gives more than 10 % undershoot; an LHP zero gives none.
+
+---
+
+### 3.2 Bode and Nyquist · `#3.2` · `lessons/loop`
+
+**Objectives.** After this lesson the learner can:
+- read gain and phase margins on a Bode diagram;
+- apply the Nyquist criterion around −1;
+- explain the accuracy-versus-stability trade-off of a proportional loop;
+- check that Routh, Bode and the root locus all give the same critical gain.
+
+**Model.** Unity feedback around $L(s) = \dfrac{K}{(1 + s/p_1)(1 + s/p_2)(1 + s/p_3)}$.
+
+- Closed loop: $T(s) = \dfrac{K p_1p_2p_3}{(s+p_1)(s+p_2)(s+p_3) + K p_1p_2p_3}$, simulated
+  exactly as a third-order state-space system.
+- Margins: magnitude and phase are both monotonic in ω for this loop, so $\omega_c$ and
+  $\omega_{180}$ are found by bisection on $\log\omega$.
+- Closed-loop poles: Faddeev–LeVerrier and Durand–Kerner (§2.1).
+
+**Formulas.**
+- $L$, $T$ and the steady-state error $e_\infty = 1/(1+K)$.
+- $\omega_c$ and $\mathrm{PM} = 180° + \angle L(j\omega_c)$; $\omega_{180}$ and
+  $\mathrm{GM} = 1/\lvert L(j\omega_{180})\rvert$ (in dB).
+- Nyquist, $Z = N + P$.
+- *Researcher:* the Routh critical gain
+  $K_c = \dfrac{(p_1+p_2+p_3)(p_1p_2+p_2p_3+p_3p_1)}{p_1p_2p_3} - 1$, so that $\mathrm{GM} = K_c/K$.
+- *Engineer, Researcher:* usual targets, PM 30–60° and GM ≥ 6 dB.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| K | 0.1–300 (log) | 10 |
+| $p_1$ | 0.1–1000 rad/s (log) | 1 |
+| $p_2$ | 0.1–1000 rad/s (log) | 10 |
+| $p_3$ | 0.1–1000 rad/s (log) | 100 |
+
+The defaults give PM ≈ 55°, GM ≈ 21.7 dB and $K_c \approx 122$. A 45° phase margin needs
+$K \approx 14.3$.
+
+**Panels.**
+- Block diagram with live $e$, $K$, $y$ and a stable/unstable badge.
+- Bode: magnitude in dB and phase, with PM and GM drawn as green or orange bars.
+- Nyquist: zoomed on −1, with mirror image for negative frequencies and a verdict.
+- s-plane with the root locus in K.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the response | Prediction revealed |
+| 2 | Margins shrink | $K \ge 30$ |
+| 3 | Over the edge | Closed loop unstable |
+| 4 | Tune for 45° | Stable and $\lvert\mathrm{PM} - 45°\rvert < 3°$ |
+| 5 | Accuracy versus stability | Stable and $e_\infty < 5\ \%$ |
+
+**Misconception detected** (y-range [−0.2, 1.8]): the output reaches the reference. Triggers when
+the end of the sketch is within 3 % of 1 while $K/(1+K)$ is more than 5 % away.
+
+**Tests.**
+- GM equals $K_c/K$ (6 digits).
+- At $K_c$ the closed-loop poles reach the imaginary axis; 5 % above, the loop is unstable;
+  5 % below, it is stable.
+- The step settles at $K/(1+K)$.
+- The default phase margin lies between 50° and 60°.
+
+---
+
+### 3.3 State space and linearisation · `#3.3` · `lessons/swing`
+
+**Objectives.** After this lesson the learner can:
+- write the swing equation as a two-state model;
+- find the equilibria and linearise around the stable one ($K_s = P_{max}\cos\delta_0$);
+- compute the electromechanical mode (about 1 Hz) from the eigenvalues of $A$;
+- know when linearisation holds (small disturbances) and when it fails (large steps, loss of
+  synchronism);
+- relate grid strength ($P_{max}$) and damping to the mode.
+
+**Model.** Single machine, infinite bus (pu, $\omega_b = 2\pi\cdot50$):
+
+$$
+\dot\delta = \omega_b\,\Delta\omega,\qquad 2H\,\dot{\Delta\omega} = P_m - P_{max}\sin\delta - D\,\Delta\omega .
+$$
+
+- The machine starts at the equilibrium $\delta_0 = \arcsin(P_m/P_{max})$. The mechanical power
+  steps by $\Delta P_m$ at $t = 0.2$ s.
+- $P_{m0}$ is clamped to $0.98\,P_{max}$ so that an equilibrium always exists.
+- **Nonlinear model:** RK4, 1600 samples × 4 substeps over 4 s.
+- **Linear model:** the exact step on
+
+$$
+A = \begin{bmatrix} 0 & \omega_b \\ -K_s/2H & -D/2H \end{bmatrix},\qquad B = \begin{bmatrix} 0 \\ 1/2H \end{bmatrix}.
+$$
+
+- Loss of synchronism is flagged when the nonlinear δ exceeds 180°.
+
+**Formulas.**
+- The swing equation.
+- Equilibria $\delta_0$ and $\delta_u = 180° - \delta_0$.
+- Linearisation $\Delta P_e \approx K_s\Delta\delta$, with the numerical matrix $A$.
+- $\omega_n = \sqrt{\omega_b K_s/2H}$, $f_n$, $\zeta = D/(4H\omega_n)$.
+- *Researcher:* the general Jacobian linearisation $A = \partial f/\partial x$, $B = \partial f/\partial u$,
+  as done by G2ELin.
+- *Engineer, Researcher:* local modes 1–2 Hz and inter-area modes 0.1–0.8 Hz; PSS; the
+  equal-area criterion (Module 8).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $P_{m0}$ | 0.1–0.95 pu | 0.5 |
+| $\Delta P_m$ | −0.4 to 0.6 pu | 0.05 |
+| $P_{max}$ | 0.6–2 pu | 1 |
+| H | 1–10 s | 4 |
+| D | 0–30 pu | 2 |
+
+The defaults give $\delta_0 = 30°$, $K_s = 0.866$, $f_n = 0.93$ Hz and $\zeta = 0.02$.
+
+**Panels.**
+- One-line diagram G – X – ∞ with a rotor-angle dial against the grid reference. It turns orange
+  past 180°.
+- P–δ curve: $P_m$ before and after the step, stable and unstable equilibria, the operating point
+  at the cursor, and the tangent at $\delta_0$ (the linearisation made visible).
+- Phase portrait: nonlinear trajectory solid, linear dashed.
+- s-plane with the root locus in D.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the angle | Prediction revealed |
+| 2 | The tangent is enough | Cursor has reached 90 % |
+| 3 | A large step | $\Delta P_m \ge 0.3$ |
+| 4 | Losing synchronism | Nonlinear δ > 180° |
+| 5 | A weaker grid | $P_{max} \le 0.75$, still synchronous |
+| 6 | Adding damping | $D \ge 10$ |
+
+**Misconception detected** (y-range from $\delta_0 - 2.5\Delta$ to $\delta_0 + 3.5\Delta$, where
+$\Delta = \Delta P_m/K_s$): no overshoot. Triggers when the true δ overshoots its new equilibrium
+by more than 30 % of the step and the sketch by less than 15 %.
+
+**Tests.**
+- The run starts exactly at $\delta_0 = 30°$.
+- Small step: linear and nonlinear agree within 8 % of the swing over the first swing. About 5 %
+  remains from the curvature of sin δ. After that, a ~2 % frequency difference accumulates as
+  phase drift; this is real physics, documented in the test.
+- The measured oscillation frequency equals the linear damped frequency (1 decimal).
+- $\Delta P_m = 0.45$ loses synchronism and $0.1$ does not, consistent with the equal-area
+  criterion.
+
+---
+
+### 3.4 PI control and the PLL · `#3.4` · `lessons/pll`
+
+**Objectives.** After this lesson the learner can:
+- explain the SRF-PLL as a control loop: Park transform as phase detector, PI controller,
+  integrator;
+- tune $K_p$ and $K_i$ from bandwidth and damping;
+- explain why a phase jump produces a frequency transient in the estimate;
+- relate steady-state error to the number of integrators (P versus PI);
+- recognise integrator windup and conditional-integration anti-windup.
+
+**Model.** Phases are taken relative to the nominal 50 Hz frame, with V = 1 pu.
+- Grid phase: a jump of Δφ at 50 ms, then a frequency step Δf at 250 ms.
+- Phase detector: $v_q = \sin(\varphi_g - \hat\varphi)$.
+- Controller: $\Delta\hat\omega = \mathrm{clamp}(K_p v_q + x_I, \pm 2\pi\Delta f_{max})$, and
+  $\dot{\hat\varphi} = \Delta\hat\omega$.
+- Integrator: $\dot x_I = K_i v_q$, except with anti-windup on, when the output is saturated and
+  $K_i v_q$ has the sign of the saturation.
+- Gains:
+  - PI: $K_p = 2\zeta\omega_n$, $K_i = \omega_n^2$, so $s^2 + 2\zeta\omega_n s + \omega_n^2$.
+  - P only: $K_p = \omega_n$, $K_i = 0$.
+- RK4, 2000 samples × 5 substeps over 0.5 s.
+
+**Formulas.**
+- $v_q = V\sin(\theta_g - \hat\theta) \approx V\varepsilon$, with live values.
+- The PI law and the gain design, with numbers.
+- Closed loop: $\dfrac{2\zeta\omega_n s + \omega_n^2}{s^2 + 2\zeta\omega_n s + \omega_n^2}$.
+- Steady-state errors: zero after a phase jump; after a frequency step, zero with PI and
+  $\Delta\omega/(K_pV)$ with P only.
+- *Researcher, Engineer:* conditional-integration anti-windup.
+- *Engineer, Researcher:* the 2016 Blue Cut fire, where about 1.2 GW of PV tripped, largely on
+  frequency mis-measurement during fault-induced phase jumps (NERC report).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Δφ | −90 to 90° | 30° |
+| Δf | −2 to 2 Hz | 0 |
+| $f_n$ | 2–100 Hz (log) | 20 Hz |
+| ζ | 0.2–2 | 0.7 |
+| Controller | PI / P only | PI |
+| $\Delta f_{max}$ | 1–50 Hz (log) | 50 Hz |
+| Anti-windup | on / off | on |
+
+**Panels.**
+- PLL block diagram with live $v_q$, $\hat f - f_0$, ε, $K_p$, $K_i$ and the limit.
+- Phase tracker: the grid vector against the estimated $\hat d$ and $\hat q$ axes in the nominal
+  frame, the error arc, and $v_q$ as a projection.
+- s-plane with the root locus in ζ.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency estimate | Prediction revealed |
+| 2 | A faster PLL | $f_n \ge 49$ Hz |
+| 3 | Tracking a frequency change | PI, $\Delta f \ge 0.95$ Hz, $f_n < 49$ Hz |
+| 4 | Without the integral term | P only, $\lvert\Delta f\rvert \ge 0.95$ Hz |
+| 5 | Windup | PI, $\lvert\Delta\varphi\rvert \ge 60°$, $\Delta f_{max} \le 3$ Hz, anti-windup off |
+| 6 | Anti-windup | Step 5 done, same settings with anti-windup on |
+
+**Misconception detected** (y-range ±1.3 × the true peak): the frequency estimate stays at
+50 Hz. Triggers when the sketch's spread is under 20 % of the true spread.
+
+**Tests.**
+- PI removes both the phase-jump error (< 0.5°) and the frequency-step error; $\hat f$ settles at
+  +1 Hz.
+- P only keeps $\varepsilon_\infty = \Delta\omega/K_p$ (2 decimals).
+- A 30° jump spikes $\hat f$ by more than 2 Hz.
+- The linear poles are $-\zeta\omega_n \pm j\omega_n\sqrt{1-\zeta^2}$.
+
+---
+
+## 8. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
 - Module 0 (hook);
 - lessons 1.1 and 1.5;
-- Modules 3 (signals and control), 4 (conventional elements), 5 (steady-state network),
-  6 (power electronics), 7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
+- Modules 4 (conventional elements), 5 (steady-state network), 6 (power electronics),
+  7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
 
 Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 8. Standards and figures quoted in the lessons
+## 9. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.

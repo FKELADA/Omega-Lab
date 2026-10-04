@@ -206,13 +206,74 @@ await page.locator('.presets').getByRole('button', { name: 'Équilibré', exact:
 await setParam(3, 0.95, 0, 1.5); // 5 % dip on phase c
 check('2.8 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
+// ── 3.1 Poles and zeros ───────────────────────────────────────────────────────
+await open('3.1');
+// y-range is [−0.3, 2]: a value v sits at (2 − v)/2.3 from the top.
+fb = await predict((f) => (2 - (1 - Math.exp(-5 * f))) / 2.3); // smooth, no overshoot
+check('3.1 misconception: lightly damped poles overshoot', /peu amortie/.test(fb), fb.slice(0, 70));
+const pz = await page.locator('svg[aria-label="s-plane"]').boundingBox();
+await page.mouse.click(pz.x + pz.width * 0.95, pz.y + pz.height * 0.3); // click right of the axis
+check('3.1 clicking the s-plane moves the poles to the right half-plane', /Instable/.test((await page.locator('.verdict').textContent()) ?? ''));
+await setParam(0, -10, -40, 5);
+await setParam(1, 5, 0, 40);
+await page.getByRole('radio', { name: 'Avec zéro' }).click();
+check('3.1 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
+// ── 3.2 Bode and Nyquist ──────────────────────────────────────────────────────
+await open('3.2');
+fb = await predict((f) => (1.8 - (1 - Math.exp(-6 * f))) / 2.0); // settles at 1
+check('3.2 misconception: type-0 loop keeps a steady-state error', /ne rejoint pas/.test(fb), fb.slice(0, 70));
+await setParam(0, 40, 0.1, 300, true);
+await setParam(0, 150, 0.1, 300, true); // beyond the critical gain (≈ 122)
+check('3.2 Nyquist reports instability', /instable/.test((await page.locator('.verdict').textContent()) ?? ''));
+// K for a 45° phase margin, computed independently: phase(ωc) = −135°, K = Π√(1 + (ωc/p)²).
+const poles = [1, 10, 100];
+let lo = 0.01, hi = 1000;
+for (let i = 0; i < 100; i++) {
+  const w = Math.sqrt(lo * hi);
+  const ph = -poles.reduce((s, p) => s + Math.atan(w / p), 0) * (180 / Math.PI);
+  if (ph > -135) lo = w; else hi = w;
+}
+const K45 = poles.reduce((k, p) => k * Math.hypot(1, lo / p), 1);
+await setParam(0, K45, 0.1, 300, true);
+await setParam(0, 25, 0.1, 300, true);
+check('3.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5 (K45 = ${K45.toFixed(2)})`);
+
+// ── 3.3 Swing equation ────────────────────────────────────────────────────────
+await open('3.3');
+fb = await predict((f) => 0.583 - 0.166 * (1 - Math.exp(-8 * f))); // monotonic
+check('3.3 misconception: the rotor overshoots and swings', /dépasse/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await setParam(1, 0.3, -0.4, 0.6);
+await setParam(1, 0.5, -0.4, 0.6);
+check('3.3 loss of synchronism shown', (await page.getByText('perte de synchronisme').count()) > 0);
+await setParam(1, 0.05, -0.4, 0.6);
+await setParam(2, 0.7, 0.6, 2);
+await setParam(4, 12, 0, 30);
+check('3.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// ── 3.4 PLL ───────────────────────────────────────────────────────────────────
+await open('3.4');
+fb = await predict(() => 0.5); // flat: "the frequency did not change"
+check('3.4 misconception: a phase jump spikes the frequency estimate', /accélérer/.test(fb), fb.slice(0, 70));
+await setParam(2, 60, 2, 100, true);
+await setParam(2, 20, 2, 100, true);
+await setParam(1, 1, -2, 2);
+await page.getByRole('radio', { name: 'P seul' }).click();
+await page.getByRole('radio', { name: 'PI', exact: true }).click();
+await setParam(0, 70, -90, 90);
+await setParam(4, 2, 1, 50, true);
+await page.getByRole('radio', { name: 'Sans', exact: true }).click();
+await page.getByRole('radio', { name: 'Anti-emballement' }).click();
+check('3.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8']) {
+for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

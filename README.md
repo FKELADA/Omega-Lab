@@ -15,7 +15,7 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | Solver and model unit tests (closed forms, energy conservation, eigenvalues, RMS, phasors) |
+| `npm test` | Solver and model unit tests (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL) |
 | `npm run check` | Svelte + TypeScript type check |
 | `npm run smoke` | Walks every lesson in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
@@ -23,7 +23,7 @@ npm run dev        # http://localhost:5173
 
 ## Status
 
-Eleven lessons are complete (Modules 1 and 2), in French and English. Open one directly with its number in the URL,
+Fifteen lessons are complete (Modules 1–3), in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -39,6 +39,10 @@ e.g. `http://localhost:5173/#1.4`.
 | **2.6 Per-unit** | Changes the base, loads the feeder out of the ±5 % band, recovers with the tap changer and the power factor | One-line diagram across 11/132/33 kV, bases per zone, voltage profile |
 | **2.7 Harmonics** | Builds a square wave, meets Gibbs, compares the triangle, finds the 6k±1 rectifier spectrum, listens to timbre | Fourier epicycles, spectrum with THD and audio |
 | **2.8 Symmetrical components** | Rebalances, swaps two phases, isolates the zero sequence, analyses a phase-to-ground fault, hits the 2 % limit | Positive/negative/zero wheels with fault presets |
+| **3.1 Poles and zeros** | Predicts a lightly damped response, drags poles into a design target, meets a right-half-plane zero | Draggable s-plane with the target region, measured performance table |
+| **3.2 Bode and Nyquist** | Shrinks the margins, crosses into instability, tunes for 45° PM, trades accuracy for stability | Block diagram, Bode with margins, Nyquist around −1, root locus |
+| **3.3 State space and linearisation** | Predicts a generator's swing, compares linear and nonlinear models, loses synchronism, weakens the grid | Rotor-angle dial, P–δ curve with the tangent, phase portrait |
+| **3.4 PI control and the PLL** | Predicts the frequency spike after a phase jump, tunes bandwidth, P versus PI, windup and anti-windup | PLL block diagram, phase tracker |
 
 Shared by every lesson:
 
@@ -56,7 +60,7 @@ Shared by every lesson:
 
 ```
 web/src/
-  lib/core/        linear algebra, LTI simulation (expm discretisation)
+  lib/core/        linear algebra, LTI simulation (expm discretisation), RK4 for nonlinear models
   lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
                    impedance, power, three-phase, Park, per-unit, Fourier, sequences;
                    G2ELin-backed models later)
