@@ -3,7 +3,7 @@
   import { onMount, untrack } from 'svelte';
   import type { Lab } from '../lab/lab.svelte';
   import { cssVar, S, tr, ui } from '../ui/ui.svelte';
-  import { si } from '../ui/format';
+  import { si, time } from '../ui/format';
   import { renderMath } from '../ui/markdown';
 
   let { lab }: { lab: Lab } = $props();
@@ -67,7 +67,13 @@
       scales[u] =
         u === predictUnit && predictRange
           ? { range: () => predictRange }
-          : { range: (_u, min, max) => uPlot.rangeNum(Math.min(min, 0), Math.max(max, 0), 0.1, true) };
+          : {
+              // Include zero only when the data comes near it: a frequency around 50 Hz should not be squashed against 0.
+              range: (_u, min, max) => {
+                const far = min > 0 ? min > 0.4 * max : max < 0 ? max < 0.4 * min : false;
+                return far ? uPlot.rangeNum(min, max, 0.1, true) : uPlot.rangeNum(Math.min(min, 0), Math.max(max, 0), 0.1, true);
+              },
+            };
     }
     const axis = (scale: string, side: number): uPlot.Axis => ({
       scale,
@@ -76,14 +82,14 @@
       grid: { stroke: grid, width: 1, show: side === 3 || units.length === 1 },
       ticks: { stroke: grid },
       size: 62,
-      values: (_u, ticks) => ticks.map((v) => si(v, scale, 2)),
+      values: (_u, ticks) => ticks.map((v) => si(v, scale, 4)),
     });
     const axes: uPlot.Axis[] = [
       {
         stroke: ink,
         grid: { stroke: grid, width: 1 },
         ticks: { stroke: grid },
-        values: (_u, ticks) => ticks.map((v) => si(v, 's', 2)),
+        values: (_u, ticks) => ticks.map((v) => time(v, lab.exp.timeUnit, 2)),
       },
       ...units.map((u, k) => axis(u, k === 0 ? 3 : 1)),
     ];

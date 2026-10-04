@@ -10,17 +10,19 @@
 
 ## Status (4 October 2026)
 
-**Modules 1 to 3 are built: 15 lessons, in French and English.** Code is on
+**Modules 0 to 3 are built: 19 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
 | Lesson | Status | Commit |
 |---|---|---|
-| 1.1 R, L, C as energy elements | Not built (its content is covered inside 1.2) | — |
+| 0.1 A day on the grid | ✅ Done | (this commit) |
+| 0.2 Replay a blackout | ✅ Done | (this commit) |
+| 1.1 R, L, C as energy elements | ✅ Done | (this commit) |
 | 1.2 RLC transients | ✅ Done | `84cf27a` |
 | 1.3 AC sources and RMS | ✅ Done | `a9b0b3e` |
 | 1.4 Resonance | ✅ Done | `a9b0b3e` |
-| 1.5 DC versus AC | Not built | — |
+| 1.5 DC versus AC | ✅ Done | (this commit) |
 | 2.1 Euler and the rotating vector | ✅ Done | `a9b0b3e` |
 | 2.2 Phasors and impedance | ✅ Done | `07b14a7` |
 | 2.3 AC power, P, Q, S | ✅ Done | `07b14a7` |
@@ -29,14 +31,14 @@ tests are in [documentation.md](documentation.md).
 | 2.6 Per-unit system | ✅ Done | `f446195` |
 | 2.7 Harmonics and Fourier | ✅ Done | `f446195` |
 | 2.8 Symmetrical components | ✅ Done | `f446195` |
-| 3.1 Laplace, poles and zeros | ✅ Done | (this commit) |
-| 3.2 Bode and Nyquist | ✅ Done | (this commit) |
-| 3.3 State space and linearisation | ✅ Done | (this commit) |
-| 3.4 PI control and the PLL | ✅ Done | (this commit) |
-| Module 0, Modules 4–8 | Not started | — |
+| 3.1 Laplace, poles and zeros | ✅ Done | `86c5bb2` |
+| 3.2 Bode and Nyquist | ✅ Done | `86c5bb2` |
+| 3.3 State space and linearisation | ✅ Done | `86c5bb2` |
+| 3.4 PI control and the PLL | ✅ Done | `86c5bb2` |
+| Modules 4–8 | Not started | — |
 
-**Verification:** 60 solver and model unit tests, and a browser test that walks all 15 lessons
-(57 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 74 solver and model unit tests, and a browser test that walks all 19 lessons
+(68 checks: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -50,7 +52,7 @@ no console errors).
 | 5. Freeze and compare | ✅ Ghost traces. Split view (two cases side by side) not yet |
 | 6. Synchronised time scrubber | ✅ Every panel follows the cursor, including rotating phasors, helix, epicycles, dq camera |
 | 7. Inverse design (drag an eigenvalue) | ✅ Lesson 3.1: drag poles into a design target region |
-| 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3 |
+| 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3, energy dots plant-to-socket in 0.1, reversing power arrow in 1.1 |
 | 9. Sound | ✅ Lesson 2.7 (WebAudio) |
 | 10. Break-it / fix-it challenges | ✅ As step checks. No scoring or leaderboard yet |
 | 11. Misconception detectors | ✅ 8 lessons |
@@ -68,14 +70,14 @@ no console errors).
 - **No three.js:** the Euler helix is an SVG orthographic projection, which is lighter and enough.
 - **Plots:** uPlot for the oscilloscope; plain SVG for everything else. A first uPlot version of
   the frequency response had unreadable log axes.
-- **Lessons 1.1 and 1.5** were skipped for now: 1.2 already covers R, L and C as energy
-  elements. 1.5 (DC versus AC) fits better just before Module 6.
+- **Module 0** uses deliberately simple, illustrative models (a synthetic demand curve, one
+  aggregated machine for the blackout). The 2019 GB replay reproduces the sequence of events with
+  rounded figures, not the details.
 
 ### Next
 
-1. **Module 0** (the hook) and **lessons 1.1 and 1.5**.
-2. **P2:** connect the G2ELin API for Module 8.
-3. **Module 4**, conventional elements, starting with the synchronous machine (builds on 2.5 and 3.3).
+1. **P2:** connect the G2ELin API for Module 8.
+2. **Module 4**, conventional elements, starting with the synchronous machine (builds on 2.5 and 3.3).
 
 ---
 
@@ -247,13 +249,13 @@ changes:
 
 ### Module 1: Circuits, DC vs AC
 
-- 1.1 R, L, C as energy elements: energy bars, constitutive laws.
+- ✅ 1.1 R, L, C as energy elements: energy bars, constitutive laws.
 - ✅ 1.2 DC transients: RC, RL, RLC step response; τ; underdamped, critical and overdamped cases
   shown as a **damping-ratio cursor** on an s-plane preview. This is the first view of
   eigenvalues, planted early on purpose.
 - ✅ 1.3 AC sources: sine, RMS (the shaded-area animation shows *why* it's √2), average vs RMS.
 - ✅ 1.4 Resonance: frequency sweep, Q factor, bandwidth, and resonance by ear.
-- 1.5 DC vs AC: why AC won (transformers), why DC is coming back (HVDC, PV, batteries). This
+- ✅ 1.5 DC vs AC: why AC won (transformers), why DC is coming back (HVDC, PV, batteries). This
   sets up Module 6.
 
 ### Module 2: The AC toolbox
@@ -437,9 +439,9 @@ The concept map is a **prerequisite graph**, not a linear book. An engineer can 
 | Phase | Content | Why at this point |
 |---|---|---|
 | **P0 (2–3 wk)** ✅ | Lesson format, layout shell, live-equation component, client solver, one complete lesson (RLC step response) | Validates the core interaction before scaling up |
-| **P1** 🟡 | Modules 0–2 (Modules 1–2 done except 1.1 and 1.5; Module 0 not started) | Simple physics, large audience, mostly client-side |
+| **P1** ✅ | Modules 0–2 | Simple physics, large audience, mostly client-side |
 | **P2** | Module 8 wired to the G2ELin API, plus the case library | The engine already exists, so this pays off quickly and suits researchers and engineers |
-| **P3** | Modules 3–5 | The spine plus conventional elements |
+| **P3** 🟡 | Modules 3–5 (Module 3 done) | The spine plus conventional elements |
 | **P4** | Modules 6–7, plus the switched-circuit solver and an impedance-scan endpoint | The heaviest new engineering |
 | **P5** | AI tutor, challenges/leaderboards, classroom mode (teacher dashboard, assignments), FR/EN localisation | Scaling up |
 

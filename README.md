@@ -15,22 +15,26 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | Solver and model unit tests (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL) |
+| `npm test` | 74 solver and model unit tests (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks every lesson in a real Chrome (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 19 lessons in a real Chrome, 68 checks (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Fifteen lessons are complete (Modules 1–3), in French and English. Open one directly with its number in the URL,
+Nineteen lessons are complete (Modules 0–3), in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
 |---|---|---|
+| **0.1 A day on the grid** | Predicts daily demand, picks a transmission voltage, meets the solar duck curve, balances the day | Plant-to-socket chain with energy flow, 24 h stacked chart, losses per voltage |
+| **0.2 Replay a blackout** | Predicts the frequency after a 1 GW trip, replays the 2019 GB cascade, lowers inertia, fixes protection settings | Frequency meter, event timeline, nadir versus inertia |
+| **1.1 R, L, C as energy elements** | Predicts an inductor's voltage for a triangle current, stores and returns energy, cuts a current abruptly | Energy tank with a reversing power arrow, energy meter |
 | **1.2 RLC transients** | Predicts the step response, finds critical damping, watches energy move between L and C | s-plane with root locus, energy balance |
 | **1.3 AC sources and RMS** | Predicts p(t) for a 1 kW heater, finds the DC equivalent (230 V), fools an average-responding meter | Glowing heater, true-RMS vs average meters |
 | **1.4 Resonance** | Watches the transient lock onto the phasor solution, tunes to f₀, gets Q·V across C | Clickable frequency response, rotating phasor diagram |
+| **1.5 DC versus AC** | Compares AC and DC at the same insulation, finds the break-even distance, hits the AC cable limit | AC and DC corridors, cost versus distance, usable AC current |
 | **2.1 Euler** | Predicts the sum of two sinusoids, turns the Euler helix, adds and cancels phasors, previews three-phase | 3D Euler helix |
 | **2.2 Phasors and impedance** | Predicts the current in an inductor, compares R, L and C, finds the 45° corner of an RL circuit | Impedance plane with the Z triangle and its frequency locus |
 | **2.3 AC power** | Predicts p(t) for a motor (it goes negative), splits it into active and reactive parts, corrects the power factor, overcompensates | Power triangle, cos φ dial, cable-loss meter |

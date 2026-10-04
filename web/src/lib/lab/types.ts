@@ -114,6 +114,8 @@ export interface Experiment {
   phasors?: PhasorSpec;
   /** Source symbol for circuit canvases. */
   source?: 'dc' | 'ac';
+  /** Unit of the model's time axis. Default: seconds. */
+  timeUnit?: 's' | 'h';
 }
 
 export type LabComponent = Component<{ lab: Lab }>;

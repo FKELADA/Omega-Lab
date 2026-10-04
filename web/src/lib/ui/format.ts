@@ -14,7 +14,7 @@ const PREFIXES: [number, string, string][] = [
 ];
 
 /** Units that take no SI prefix. */
-const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu']);
+const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu', 'km', 'GW', 'MW', 'Hz/s']);
 
 /** Below this, a value is round-off (e.g. the sum of balanced currents) and shown as 0. */
 const NOISE = 1e-11;
@@ -38,6 +38,11 @@ export function num(v: number, digits = 3): string {
     ? { notation: 'scientific', maximumSignificantDigits: digits }
     : { maximumSignificantDigits: digits };
   return new Intl.NumberFormat(ui.lang === 'fr' ? 'fr-FR' : 'en-GB', opts).format(v).replace('-', '−');
+}
+
+/** A time value in the experiment's own unit: seconds (with prefixes) or hours of a day. */
+export function time(v: number, unit: 's' | 'h' = 's', digits = 3): string {
+  return unit === 'h' ? `${num(v, digits)} h` : si(v, 's', digits);
 }
 
 /** Plain-text value with unit, e.g. "31,4 mA". */

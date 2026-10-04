@@ -3,6 +3,10 @@
 import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
 import { acRms } from './ac-rms/experiment';
+import { blackoutLesson } from './blackout/experiment';
+import { dayLesson } from './day/experiment';
+import { dcAcLesson } from './dc-ac/experiment';
+import { energyLesson } from './energy/experiment';
 import { loopLesson } from './loop/experiment';
 import { pllLesson } from './pll/experiment';
 import { polesLesson } from './poles/experiment';
@@ -36,17 +40,20 @@ export const curriculum: ModuleEntry[] = [
   {
     n: 0,
     title: { fr: 'Le réseau en 10 minutes', en: 'The grid in 10 minutes' },
-    lessons: [soon('0.1', 'De la turbine à la prise', 'From turbine to socket'), soon('0.2', 'Rejouer un blackout', 'Replay a blackout')],
+    lessons: [
+      { id: '0.1', title: { fr: 'De la turbine à la prise', en: 'From turbine to socket' }, experiment: dayLesson },
+      { id: '0.2', title: { fr: 'Rejouer un blackout', en: 'Replay a blackout' }, experiment: blackoutLesson },
+    ],
   },
   {
     n: 1,
     title: { fr: 'Circuits, continu et alternatif', en: 'Circuits, DC vs AC' },
     lessons: [
-      soon('1.1', 'R, L, C : éléments d’énergie', 'R, L, C as energy elements'),
+      { id: '1.1', title: { fr: 'R, L, C : éléments d’énergie', en: 'R, L, C as energy elements' }, experiment: energyLesson },
       { id: '1.2', title: { fr: 'Régimes transitoires RLC', en: 'RLC transients' }, experiment: rlcStep },
       { id: '1.3', title: { fr: 'Sources alternatives, valeur efficace', en: 'AC sources and RMS' }, experiment: acRms },
       { id: '1.4', title: { fr: 'Résonance', en: 'Resonance' }, experiment: resonance },
-      soon('1.5', 'Continu contre alternatif', 'DC versus AC'),
+      { id: '1.5', title: { fr: 'Continu contre alternatif', en: 'DC versus AC' }, experiment: dcAcLesson },
     ],
   },
   {

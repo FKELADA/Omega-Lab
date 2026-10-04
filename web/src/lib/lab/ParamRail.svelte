@@ -3,7 +3,7 @@
   import type { Lab } from './lab.svelte';
   import type { ParamSpec } from './types';
   import { S, tr } from '../ui/ui.svelte';
-  import { si } from '../ui/format';
+  import { si, time } from '../ui/format';
   import { renderMath } from '../ui/markdown';
 
   let { lab }: { lab: Lab } = $props();
@@ -61,7 +61,7 @@
       value={lab.frac * 1000}
       oninput={(e) => lab.setFrac(+e.currentTarget.value / 1000)}
     />
-    <span class="mono">{si(lab.t, 's')} / {si(lab.tEnd, 's')}</span>
+    <span class="mono">{time(lab.t, lab.exp.timeUnit)} / {time(lab.tEnd, lab.exp.timeUnit)}</span>
   </div>
 
   <div class="params">

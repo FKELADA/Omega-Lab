@@ -267,13 +267,66 @@ await page.getByRole('radio', { name: 'Sans', exact: true }).click();
 await page.getByRole('radio', { name: 'Anti-emballement' }).click();
 check('3.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
+// ── 0.1 A day on the grid ─────────────────────────────────────────────────────
+await open('0.1');
+fb = await predict(() => 0.5); // flat demand
+check('0.1 misconception: demand varies over the day', /varie/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await page.getByRole('radio', { name: '400 kV', exact: true }).click();
+await setParam(2, 30, 0, 40); // lots of PV
+await setParam(2, 10, 0, 40);
+await setParam(0, 45, 0, 60); // nuclear 45 GW balances the day
+check('0.1 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 0.2 Blackout replay ───────────────────────────────────────────────────────
+await open('0.2');
+const fy = (v) => (50.3 - v) / 2; // y-range [48.3, 50.3]
+fb = await predict((f) => (f < 1 / 60 ? fy(50) : fy(48.8))); // an instant step down
+check('0.2 misconception: frequency cannot drop instantly', /instantanément/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await setParam(1, 2, 1.5, 8); // low inertia
+await setParam(1, 4, 1.5, 8);
+await page.getByRole('radio', { name: 'Protections RoCoF : non' }).click();
+await page.getByRole('radio', { name: 'Protections RoCoF : oui' }).click();
+await setParam(1, 8, 1.5, 8);
+await setParam(2, 2500, 200, 2500);
+await setParam(3, 1, 1, 20, true);
+check('0.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 1.1 R, L, C as energy elements ────────────────────────────────────────────
+await open('1.1');
+const tri = (f) => {
+  const ph = (2 * f) % 1;
+  return ph < 0.25 ? 4 * ph : ph < 0.75 ? 2 - 4 * ph : 4 * ph - 4;
+};
+fb = await predict((f) => 0.5 - 0.3 * tri(f)); // copies the current's triangle
+check('1.1 misconception: v_L follows the slope, not the current', /pente/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: 'Sinus' }).click();
+await scrubToEnd();
+await page.getByRole('radio', { name: 'Condensateur' }).click();
+await page.getByRole('radio', { name: 'Triangle' }).click();
+await page.getByRole('radio', { name: 'Résistance' }).click();
+await page.getByRole('radio', { name: 'Bobine' }).click();
+await page.getByRole('radio', { name: 'Trapèze' }).click();
+await setParam(2, 1e-4, 5e-5, 2e-2, true);
+check('1.1 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 1.5 DC versus AC ──────────────────────────────────────────────────────────
+await open('1.5');
+await scrubToEnd();
+await setParam(0, 30, 10, 2000, true);
+await setParam(0, 800, 10, 2000, true);
+await page.getByRole('radio', { name: /Câble/ }).click();
+await setParam(0, 150, 10, 2000, true);
+check('1.5 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

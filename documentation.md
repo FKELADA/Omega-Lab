@@ -14,11 +14,12 @@ contributors who extend them or check the physics.
 2. [Numerical core](#2-numerical-core)
 3. [The lesson format and shared features](#3-the-lesson-format-and-shared-features)
 4. [Testing](#4-testing)
-5. [Module 1 — Circuits, DC vs AC](#5-module-1--circuits-dc-vs-ac)
-6. [Module 2 — The AC toolbox](#6-module-2--the-ac-toolbox)
-7. [Module 3 — Signals and control](#7-module-3--signals-and-control)
-8. [Modules not yet built](#8-modules-not-yet-built)
-9. [Standards and figures quoted in the lessons](#9-standards-and-figures-quoted-in-the-lessons)
+5. [Module 0 — The grid in 10 minutes](#5-module-0--the-grid-in-10-minutes)
+6. [Module 1 — Circuits, DC vs AC](#6-module-1--circuits-dc-vs-ac)
+7. [Module 2 — The AC toolbox](#7-module-2--the-ac-toolbox)
+8. [Module 3 — Signals and control](#8-module-3--signals-and-control)
+9. [Modules not yet built](#9-modules-not-yet-built)
+10. [Standards and figures quoted in the lessons](#10-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -35,6 +36,7 @@ contributors who extend them or check the physics.
 | Clarke | Amplitude-invariant: $v_\alpha = \tfrac23(v_a - \tfrac12 v_b - \tfrac12 v_c)$, $v_\beta = \tfrac1{\sqrt3}(v_b - v_c)$. So $p = \tfrac32(v_d i_d + v_q i_q)$. |
 | Park | $v_d + j v_q = (v_\alpha + j v_\beta)\,e^{-j\theta_{dq}}$, with $d$ aligned with $\alpha$ at $\theta_{dq} = 0$. |
 | Per-unit | One power base $S_b$ (three-phase); voltage bases follow the transformer ratios; $I_b = S_b/(\sqrt3 V_b)$, $Z_b = V_b^2/S_b$. |
+| Time | Seconds by default; lesson 0.1 runs in hours of a day (`timeUnit: 'h'`). |
 | Numbers | Shown with 3 significant digits and SI prefixes, in the reader's language (decimal comma in French). Values below $10^{-11}$ are round-off and shown as 0. |
 
 ---
@@ -101,6 +103,9 @@ fourth-order Runge–Kutta (`lib/core/ode.ts`): each output interval is split in
 For the PLL at 100 Hz bandwidth, that gives $omega_n h approx 0.03$, well inside RK4's
 accuracy range. Linear models keep the exact step of §2.1.
 
+The blackout replay (0.2) uses explicit Euler with a 2 ms step instead, because its protection
+events (RoCoF trip, load shedding) must be checked at every step.
+
 ### 2.5 Sketch analysis
 
 - **Phase of a sketch** (lesson 2.2): least-squares fit of $a\cos\omega t - b\sin\omega t$ to the
@@ -160,14 +165,245 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 60 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts` and `lib/models/module3.test.ts`: the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 74 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts` and `lib/models/module01.test.ts`: the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 15 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors. 57 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 19 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors. 68 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
 
-## 5. Module 1 — Circuits, DC vs AC
+## 5. Module 0 — The grid in 10 minutes
+
+The hook: two short lessons that show why the rest of the course matters before any equation is
+needed. Both models are deliberately simple and their figures are illustrative.
+
+### 0.1 A day on the grid · `#0.1` · `lessons/day`
+
+**Objectives.** After this lesson the learner can:
+- state that generation must match demand at every instant;
+- describe a daily demand curve (night trough, morning ramp, evening peak);
+- explain why power is transmitted at high voltage (losses ∝ 1/U²);
+- recognise the solar "duck curve" and why storage becomes necessary.
+
+**Model.** Time is in hours (the lab's `timeUnit: 'h'`).
+- Demand: an illustrative winter-weekday shape for a large European system, between about 52 and
+  71 GW, peaking near 19 h:
+
+  $P_{load}(t) = 60 + 7e^{-((t-9)/2.5)^2} + 11e^{-((t-19)/2)^2} - 8e^{-((t-4)/2.5)^2}$
+
+  This is not a measured curve.
+- Solar: $P_{PV}\sin^{1.5}(\pi(t-7)/12)$ between 7 h and 19 h.
+- Wind: $P_{wind}(1 + 0.3\sin(2\pi t/24 + 1))$.
+- Nuclear: constant.
+- Flexible generation closes the balance: $P_{flex} = P_{load} - P_{nuc} - P_{wind} - P_{PV}$. Its
+  capacity is $[0, 25]$ GW.
+- Transmission example, separate from the daily balance: 1 GW over 300 km with $0.01\ \Omega$/km
+  per phase. $I = P/(\sqrt3 U)$ and $P_{loss} = 3RI^2$.
+
+**Formulas.**
+- The balance with live values.
+- $I$ and $P_{loss}$ at the chosen voltage.
+- The range of flexible generation against its capacity.
+- *Engineer, Researcher:* $\dfrac{2HS}{f_0}\dfrac{df}{dt} = P_{gen} - P_{load}$, as a preview of 0.2.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Nuclear | 0–60 GW | 40 |
+| Wind (average) | 0–20 GW | 5 |
+| PV (peak) | 0–40 GW | 10 |
+| Transmission voltage | 20 / 63 / 225 / 400 kV | 63 kV |
+
+Line losses for the transmission example: 20 kV > 100 % (impossible), 63 kV 75.6 %,
+225 kV 5.9 %, 400 kV 1.9 %.
+
+**Panels.**
+- Chain from plants to houses: nuclear, wind (rotor turns with time), PV (sun dims at night) and
+  flexible generation; step-up transformer, line with pylons, step-down, houses. Energy dots move
+  with time, and the line turns orange when losses exceed 10 %.
+- Stacked 24 h chart under the demand curve: flexible generation within capacity, surplus (orange)
+  and shortfall above 25 GW (red).
+- Losses per voltage level.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the demand | Prediction revealed |
+| 2 | Following the day | Cursor has reached 90 % |
+| 3 | Choosing the transmission voltage | 400 kV selected |
+| 4 | Lots of sunshine | PV ≥ 30 GW |
+| 5 | Balancing the day | Flexible generation within $[0, 25]$ GW all day |
+
+For step 5, the evening peak requires nuclear ≥ 41.5 GW (with 5 GW wind and no sun). At 10 GW of
+PV, the midday floor allows nuclear up to 47 GW. At 20 GW of PV or more, no setting balances the
+day, which is the point of the step text about storage.
+
+**Misconception detected** (y-range 30–90 GW): flat demand. Triggers when the sketch's spread is
+under half the true spread.
+
+**Tests.**
+- The balance closes at every sample.
+- Demand peaks between 18 h and 20 h.
+- Losses are 1.87 % at 400 kV and above 100 % at 20 kV, and scale as $(400/225)^2$ between 225
+  and 400 kV.
+- Nuclear at 45 GW balances the default day; 30 GW of PV pushes flexible generation below zero.
+
+---
+
+### 0.2 Replay a blackout · `#0.2` · `lessons/blackout`
+
+**Objectives.** After this lesson the learner can:
+- explain why frequency falls gradually after a loss (inertia, RoCoF);
+- describe how primary reserve arrests the fall and how load shedding protects the grid;
+- explain how a protection setting (RoCoF tripping of embedded generation) can turn a contained
+  event into a cascade;
+- relate low inertia to deeper nadirs.
+
+**Model.** One aggregated machine for the whole system: 30 GW of load, $f_0 = 50$ Hz, load damping
+$k = 2\ \%/\mathrm{Hz}$.
+
+$
+\frac{2HS}{f_0}\frac{d\Delta f}{dt} = P_{res} - P_{lost} + P_{shed} - kL\,\Delta f,\qquad
+\frac{dP_{res}}{dt} = \frac{\min\big(R,\ \max(0, -\Delta f/0.5)\,R\big) - P_{res}}{T_g}.
+$
+
+- **Events:**
+  - the loss $\Delta P$ at $t = 1$ s;
+  - if RoCoF protection is on and $\lvert df/dt\rvert > 0.125$ Hz/s, 500 MW of embedded
+    generation trips, once;
+  - if load shedding is on and $f < 48.8$ Hz, 1000 MW of load is shed, once.
+- **Integration:** explicit Euler with a 2 ms step over 60 s, which is ample for these time
+  constants. Events are checked at every step.
+- **Source:** inspired by GB, 9 August 2019, with rounded figures. It is a teaching model of the
+  sequence, not a reconstruction.
+
+**Formulas.**
+- The aggregated swing equation.
+- $\left.df/dt\right|_{0^+} = f_0\,\Delta P/(2HS)$, with numbers.
+- Nadir and time, and the settling condition $\min(R, -\Delta f/0.5\,R) + kL\lvert\Delta f\rvert = \Delta P$.
+- *Engineer, Researcher:* the 2019 event (≈ 737 + 244 MW, then ≈ 500 MW embedded, 48.8 Hz,
+  ≈ 1 GW shed, ≈ 1 million customers). RoCoF settings have since been raised to 1 Hz/s.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Generation lost | 200–2000 MW | 1000 |
+| Inertia H | 1.5–8 s | 4 |
+| Primary reserve | 200–2500 MW | 1000 |
+| Reserve response time $T_g$ | 1–20 s (log) | 8 s |
+| RoCoF protection | on / off | on |
+| Load shedding | on / off | on |
+
+The defaults reproduce the cascade:
+- initial RoCoF 0.208 Hz/s, so embedded generation trips at once;
+- 1.5 GW lost in total;
+- 48.8 Hz reached at about 8.8 s, then 1 GW shed.
+
+**Panels.**
+- Analogue frequency meter (48–50.5 Hz) with operating bands, a nadir marker, live RoCoF and the
+  total lost.
+- Timeline of events, with initial RoCoF, nadir and stored kinetic energy $HS$.
+- Nadir against H: 14 full simulations with the other settings unchanged. Points that trigger
+  shedding are orange, so the cliff where protection cascades is visible.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency | Prediction revealed |
+| 2 | The cascade | Cursor has reached 90 % and shedding happened |
+| 3 | Less inertia | H ≤ 2.5 s |
+| 4 | Changing protection settings | RoCoF protection off, loss ≥ 1000 MW, no shedding |
+| 5 | Inertia and fast reserve | RoCoF protection on, loss ≥ 1000 MW, nadir > 49.2 Hz |
+
+For step 5, H ≥ 6.7 s keeps the initial RoCoF under 0.125 Hz/s; more reserve or a faster
+response then lifts the nadir.
+
+**Misconceptions detected** (y-range 48.3–50.3 Hz):
+- an instant drop: the sketch loses more than 60 % of the true depth within 0.5 s of the loss;
+- no recovery: the sketch stays near the nadir after 40 s.
+
+**Tests.**
+- Initial RoCoF equals $f_0\Delta P/(2HS)$.
+- The defaults give the events loss → embedded → shedding, in that order.
+- Without RoCoF tripping, the nadir stays above 48.8 Hz.
+- Lower H gives a deeper nadir.
+- The final deviation satisfies the settling condition (2 decimals).
+
+---
+
+## 6. Module 1 — Circuits, DC vs AC
+
+### 1.1 R, L, C as energy elements · `#1.1` · `lessons/energy`
+
+**Objectives.** After this lesson the learner can:
+- apply the element laws $v = Ri$, $v = L\,di/dt$, $i = C\,dv/dt$, in particular that L responds
+  to the **slope** of current;
+- distinguish dissipation (R, $p \ge 0$) from storage (L, C: energy goes in and comes back);
+- use the L–C, v–i duality;
+- explain why fast current interruption in an inductance creates overvoltages.
+
+**Model.** R and L are driven by a current source $i(t)$, and C by a voltage source $v(t)$. The
+other quantity is computed from the element law with the **analytic** derivative of the drive, so
+the square edges of $v_L$ are exact.
+
+| Drive | Shape (amplitude A, frequency f) |
+|---|---|
+| Triangle | $0 \to A \to -A \to 0$ over one period; slope $\pm 4Af$ |
+| Sine | $A\sin\omega t$ |
+| Trapezoid | Edges of duration $t_r$ (capped at $T/8$); holds at $\pm A$ |
+
+- Power: $p = vi$.
+- Energy: $w_L = \tfrac12 Li^2$, $w_C = \tfrac12 Cv^2$, or $w_R = \int Ri^2\,dt$ (trapezoidal).
+
+**Formulas.**
+- The law of the selected element, with live $v$ and $i$.
+- $p = vi$ and the energy, with a note on its sign.
+- *Researcher:* the duality table v↔i, L↔C, series↔parallel, $\tfrac12Li^2$↔$\tfrac12Cv^2$.
+- *Engineer, Researcher:* $v_{max} = L\,\Delta i/t_r$, the reason for breaker arcs, freewheeling
+  diodes and surge arresters.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Element | R / L / C | L |
+| Drive | triangle / sine / trapezoid | triangle |
+| A | 0.5–10 (A for R and L, V for C) | 2 |
+| f | 1–200 Hz (log) | 50 Hz |
+| $t_r$ | 0.05–20 ms (log) | 2 ms |
+| R | 1–100 Ω (log) | 10 Ω |
+| L | 1 mH–1 H (log) | 0.1 H |
+| C | 10 µF–10 mF (log) | 100 µF |
+
+**Panels.**
+- Source and element, with an energy tank (stored for L and C, heat for R) and a power arrow that
+  reverses when energy flows back to the source.
+- Energy meter: energy delivered to the element, energy given back, and the net.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict an inductor's voltage | Prediction revealed |
+| 2 | Store and give back | L with a sine drive, cursor at 90 % |
+| 3 | The capacitor, mirrored | C with a triangle drive |
+| 4 | The resistor gives nothing back | R selected |
+| 5 | Cutting abruptly | L with a trapezoid drive, $t_r \le 0.2$ ms |
+
+**Misconception detected** (y-range $\pm 1.4 \times 4LAf$): the voltage copies the current. The
+sketch's correlation with the triangular current exceeds 0.7.
+
+**Tests.**
+- A triangle current through L gives exactly $\pm 4LAf$.
+- Over one sine period, L and C return their energy (net below $10^{-3}$ of the peak stored); R
+  has $p \ge 0$.
+- A trapezoid edge of $t_r$ gives $v_{max} = LA/t_r$.
+
+---
 
 ### 1.2 RLC transients · `#1.2` · `lessons/rlc-step`
 
@@ -378,7 +614,70 @@ The defaults give $f_0 = 159$ Hz and $Q = 2$.
 
 ---
 
-## 6. Module 2 — The AC toolbox
+### 1.5 DC versus AC · `#1.5` · `lessons/dc-ac`
+
+**Objectives.** After this lesson the learner can:
+- explain why AC won in the 1880s (the transformer) and where DC wins today;
+- show that for the same insulation (peak voltage), DC carries about √2 times more power;
+- compute an AC link's charging current and critical length, and explain why long cables are DC;
+- reason with a break-even distance between terminal costs and per-km costs.
+
+**Model.**
+- The oscilloscope shows $v_{AC} = \hat U\sin\omega t$, its RMS value $\hat U/\sqrt2$, and
+  $V_{DC} = \hat U$, all at the same insulation level $\hat U$.
+- Costs are illustrative and relative, per GW:
+
+  | Link | AC terminals | AC per km | DC terminals | DC per km | Break-even |
+  |---|---|---|---|---|---|
+  | Overhead | 50 | 1.0 | 250 | 0.6 | 500 km |
+  | Cable | 50 | 4.0 | 250 | 2.0 | 100 km |
+
+- Charging current: $I_c = \omega C' (U/\sqrt3)\,d$, with $C' = 0.012$ µF/km (overhead) and
+  $0.2$ µF/km (cable), against a rating of $I_{max} = 1500$ A.
+  - The usable AC current fraction is $\sqrt{1 - (I_c/I_{max})^2}$.
+  - The critical length is $I_{max}/(\omega C' U/\sqrt3)$: about 105 km for a 400 kV cable and
+    about 1700 km overhead. Overhead lines hit stability limits long before that.
+
+**Formulas.**
+- $P_{DC}/P_{AC} = \sqrt2$ at the same insulation.
+- Charging current per km and critical length.
+- Break-even $d^* = (T_{DC} - T_{AC})/(c_{AC} - c_{DC})$.
+- History: Edison against Tesla and Westinghouse.
+- *Engineer, Researcher:* examples, IFA (FR–UK, 1986, 2 GW, ±270 kV) and Changji–Guquan
+  (CN, 2019, 12 GW, ±1100 kV, ≈ 3300 km).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Distance | 10–2000 km (log) | 300 km |
+| Link | overhead / cable | overhead |
+| Insulation | 225 / 400 / 525 kV | 400 kV |
+
+**Panels.**
+- The same corridor drawn as AC and as DC. The cheaper option is highlighted, and AC is marked
+  impossible beyond the critical length.
+- Cost against distance with the break-even point.
+- Usable AC current against length, for overhead and cable.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Same insulation | Cursor has reached 90 % |
+| 2 | Why AC won | Distance < 50 km and AC cheaper |
+| 3 | Very long distance | Overhead, beyond break-even, DC cheaper |
+| 4 | Under the sea | Cable, beyond the critical length |
+
+There is no prediction in this lesson: it is a reasoning lesson about costs and constraints.
+
+**Tests.**
+- Break-even is 500 km overhead and 100 km in cable.
+- A 400 kV cable has a critical length between 90 and 120 km, and no usable AC current at 150 km.
+
+---
+
+## 7. Module 2 — The AC toolbox
 
 ### 2.1 Euler and the rotating vector · `#2.1` · `lessons/euler`
 
@@ -885,7 +1184,7 @@ hint for step 5.
 
 ---
 
-## 7. Module 3 — Signals and control
+## 8. Module 3 — Signals and control
 
 Module 3 is the spine between the AC toolbox and the machines and converters of Modules 4–7.
 Every lesson reuses the s-plane of 1.2 and the phasors of Module 2. The two nonlinear models
@@ -1187,11 +1486,9 @@ by more than 30 % of the step and the sketch by less than 15 %.
 
 ---
 
-## 8. Modules not yet built
+## 9. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
-- Module 0 (hook);
-- lessons 1.1 and 1.5;
 - Modules 4 (conventional elements), 5 (steady-state network), 6 (power electronics),
   7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
 
@@ -1199,7 +1496,7 @@ Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 9. Standards and figures quoted in the lessons
+## 10. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.

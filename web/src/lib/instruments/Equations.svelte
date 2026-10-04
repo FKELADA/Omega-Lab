@@ -2,7 +2,7 @@
   import type { Lab } from '../lab/lab.svelte';
   import type { EqContext } from '../lab/types';
   import { S, tr, ui } from '../ui/ui.svelte';
-  import { si, tex } from '../ui/format';
+  import { time, tex } from '../ui/format';
   import { renderMarkdown, renderMath } from '../ui/markdown';
 
   let { lab }: { lab: Lab } = $props();
@@ -32,7 +32,7 @@
   <header>
     <span>{tr(S.equations)}</span>
     <span class="spacer"></span>
-    <span class="t">t = {si(lab.t, 's')}</span>
+    <span class="t">t = {time(lab.t, lab.exp.timeUnit)}</span>
   </header>
   {#if lab.concealed}<div class="concealed">{tr(S.hiddenUntilReveal)}</div>{/if}
   <div class="body scroll" role="presentation" onmouseover={onOver} onfocus={() => {}} onmouseleave={() => (lab.hover = null)}>
