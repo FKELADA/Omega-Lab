@@ -136,8 +136,195 @@ export function polyRoots(c: number[]): Complex[] {
   return z.map((r) => ({ re: r.re, im: Math.abs(r.im) < 1e-9 * (Math.abs(r.re) + 1) ? 0 : r.im }));
 }
 
-/** Eigenvalues; closed form for 2×2, polynomial roots otherwise. */
+/**
+ * Eigenvalues of a general real matrix by balancing, reduction to Hessenberg
+ * form and the Francis double-shift QR algorithm (after Numerical Recipes,
+ * balanc/elmhes/hqr). Robust when eigenvalues span many orders of magnitude.
+ */
+export function eigenvaluesQR(M: Mat): Complex[] {
+  const n = M.length;
+  const a = M.map((r) => [...r]);
+  // Balance: scale rows and columns by powers of 2 to equalise their norms.
+  const RADIX = 2;
+  let done = false;
+  while (!done) {
+    done = true;
+    for (let i = 0; i < n; i++) {
+      let r = 0, c = 0;
+      for (let j = 0; j < n; j++)
+        if (j !== i) {
+          c += Math.abs(a[j][i]);
+          r += Math.abs(a[i][j]);
+        }
+      if (c !== 0 && r !== 0) {
+        let g = r / RADIX, f = 1;
+        const s = c + r;
+        while (c < g) {
+          f *= RADIX;
+          c *= RADIX * RADIX;
+        }
+        g = r * RADIX;
+        while (c > g) {
+          f /= RADIX;
+          c /= RADIX * RADIX;
+        }
+        if ((c + r) / f < 0.95 * s) {
+          done = false;
+          g = 1 / f;
+          for (let j = 0; j < n; j++) a[i][j] *= g;
+          for (let j = 0; j < n; j++) a[j][i] *= f;
+        }
+      }
+    }
+  }
+  // Reduce to upper Hessenberg form by stabilised elimination.
+  for (let m = 1; m < n - 1; m++) {
+    let x = 0, i = m;
+    for (let j = m; j < n; j++)
+      if (Math.abs(a[j][m - 1]) > Math.abs(x)) {
+        x = a[j][m - 1];
+        i = j;
+      }
+    if (i !== m) {
+      for (let j = m - 1; j < n; j++) [a[i][j], a[m][j]] = [a[m][j], a[i][j]];
+      for (let j = 0; j < n; j++) [a[j][i], a[j][m]] = [a[j][m], a[j][i]];
+    }
+    if (x !== 0)
+      for (i = m + 1; i < n; i++) {
+        let y = a[i][m - 1];
+        if (y !== 0) {
+          y /= x;
+          a[i][m - 1] = y;
+          for (let j = m; j < n; j++) a[i][j] -= y * a[m][j];
+          for (let j = 0; j < n; j++) a[j][m] += y * a[j][i];
+        }
+      }
+  }
+  for (let i = 2; i < n; i++) for (let j = 0; j < i - 1; j++) a[i][j] = 0;
+  // Shifted QR iterations on the Hessenberg matrix.
+  const wr = new Array(n).fill(0), wi = new Array(n).fill(0);
+  let anorm = 0;
+  for (let i = 0; i < n; i++) for (let j = Math.max(i - 1, 0); j < n; j++) anorm += Math.abs(a[i][j]);
+  let nn = n - 1, t = 0;
+  let p = 0, q = 0, r = 0, s = 0, w = 0, x = 0, y = 0, z = 0;
+  while (nn >= 0) {
+    let its = 0, l: number;
+    do {
+      for (l = nn; l >= 1; l--) {
+        s = Math.abs(a[l - 1][l - 1]) + Math.abs(a[l][l]);
+        if (s === 0) s = anorm;
+        if (Math.abs(a[l][l - 1]) + s === s) {
+          a[l][l - 1] = 0;
+          break;
+        }
+      }
+      x = a[nn][nn];
+      if (l === nn) {
+        wr[nn] = x + t;
+        wi[nn--] = 0;
+      } else {
+        y = a[nn - 1][nn - 1];
+        w = a[nn][nn - 1] * a[nn - 1][nn];
+        if (l === nn - 1) {
+          p = 0.5 * (y - x);
+          q = p * p + w;
+          z = Math.sqrt(Math.abs(q));
+          x += t;
+          if (q >= 0) {
+            z = p + (p >= 0 ? Math.abs(z) : -Math.abs(z));
+            wr[nn - 1] = wr[nn] = x + z;
+            if (z) wr[nn] = x - w / z;
+            wi[nn - 1] = wi[nn] = 0;
+          } else {
+            wr[nn - 1] = wr[nn] = x + p;
+            wi[nn - 1] = -(wi[nn] = z);
+          }
+          nn -= 2;
+        } else {
+          if (its === 60) throw new Error('eigenvaluesQR: no convergence');
+          if (its === 10 || its === 20) {
+            t += x;
+            for (let i = 0; i <= nn; i++) a[i][i] -= x;
+            s = Math.abs(a[nn][nn - 1]) + Math.abs(a[nn - 1][nn - 2]);
+            y = x = 0.75 * s;
+            w = -0.4375 * s * s;
+          }
+          ++its;
+          let m: number;
+          for (m = nn - 2; m >= l; m--) {
+            z = a[m][m];
+            r = x - z;
+            s = y - z;
+            p = (r * s - w) / a[m + 1][m] + a[m][m + 1];
+            q = a[m + 1][m + 1] - z - r - s;
+            r = a[m + 2][m + 1];
+            s = Math.abs(p) + Math.abs(q) + Math.abs(r);
+            p /= s;
+            q /= s;
+            r /= s;
+            if (m === l) break;
+            const u = Math.abs(a[m][m - 1]) * (Math.abs(q) + Math.abs(r));
+            const v = Math.abs(p) * (Math.abs(a[m - 1][m - 1]) + Math.abs(z) + Math.abs(a[m + 1][m + 1]));
+            if (u + v === v) break;
+          }
+          for (let i = m + 2; i <= nn; i++) {
+            a[i][i - 2] = 0;
+            if (i !== m + 2) a[i][i - 3] = 0;
+          }
+          for (let k = m; k <= nn - 1; k++) {
+            if (k !== m) {
+              p = a[k][k - 1];
+              q = a[k + 1][k - 1];
+              r = 0;
+              if (k !== nn - 1) r = a[k + 2][k - 1];
+              if ((x = Math.abs(p) + Math.abs(q) + Math.abs(r)) !== 0) {
+                p /= x;
+                q /= x;
+                r /= x;
+              }
+            }
+            const sq = Math.sqrt(p * p + q * q + r * r);
+            if ((s = p >= 0 ? sq : -sq) !== 0) {
+              if (k === m) {
+                if (l !== m) a[k][k - 1] = -a[k][k - 1];
+              } else a[k][k - 1] = -s * x;
+              p += s;
+              x = p / s;
+              y = q / s;
+              z = r / s;
+              q /= p;
+              r /= p;
+              for (let j = k; j <= nn; j++) {
+                p = a[k][j] + q * a[k + 1][j];
+                if (k !== nn - 1) {
+                  p += r * a[k + 2][j];
+                  a[k + 2][j] -= p * z;
+                }
+                a[k + 1][j] -= p * y;
+                a[k][j] -= p * x;
+              }
+              const mmin = nn < k + 3 ? nn : k + 3;
+              for (let i = l; i <= mmin; i++) {
+                p = x * a[i][k] + y * a[i][k + 1];
+                if (k !== nn - 1) {
+                  p += z * a[i][k + 2];
+                  a[i][k + 2] -= p * r;
+                }
+                a[i][k + 1] -= p * q;
+                a[i][k] -= p;
+              }
+            }
+          }
+        }
+      }
+    } while (l < nn - 1);
+  }
+  return wr.map((re, i) => ({ re, im: wi[i] }));
+}
+
+/** Eigenvalues; closed form for 2×2, polynomial roots up to 4×4, QR beyond. */
 export function eigenvalues(A: Mat): Complex[] {
+  if (A.length >= 5) return eigenvaluesQR(A);
   if (A.length === 1) return [{ re: A[0][0], im: 0 }];
   if (A.length === 2) {
     const tr = A[0][0] + A[1][1];

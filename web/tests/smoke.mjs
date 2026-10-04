@@ -633,6 +633,148 @@ await setParam(0, 0.5, 0, 0.9);
 await setParam(3, 0.3, 0.2, 20, true); // slow recovery
 check('7.7 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
+// ── Module 8 ──────────────────────────────────────────────────────────────────
+// A mock G2ELin API, so lesson 8.7's live panel is exercised without the server.
+const g2json = (body) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
+await page.route(/\/g2elin\/api\/presets$/, (r) => r.fulfill(g2json([{ id: 'kundur2', name: 'Kundur two-area' }])));
+await page.route(/\/g2elin\/api\/presets\/kundur2\/modal$/, (r) =>
+  r.fulfill(
+    g2json({
+      n_states: 52,
+      stable: true,
+      modes: [
+        { mode: 7, real: -0.08, imag: 3.9, damped_hz: 0.62, damping_pct: 2.1, category: 'synchronisation', state1: 'dw_r_{SM_1}', state2: 'dw_r_{SM_3}', state3: '' },
+        { mode: 9, real: -0.6, imag: 7.0, damped_hz: 1.11, damping_pct: 8.5, category: 'synchronisation', state1: 'dw_r_{SM_1}', state2: 'dw_r_{SM_2}', state3: '' },
+      ],
+    }),
+  ),
+);
+await page.route(/\/modal\/mode_shape$/, (r) => r.fulfill(g2json({ states: ['dw_r_{SM_1}', 'dw_r_{SM_2}', 'dw_r_{SM_3}', 'dw_r_{SM_4}'], angles_deg: [0, 12, 172, 180] })));
+await page.route(/\/modal\/free_response$/, (r) =>
+  r.fulfill(g2json({ t: Array.from({ length: 101 }, (_, j) => j / 10), series: { 'dw_r_{SM_1}': Array.from({ length: 101 }, (_, j) => Math.exp(-j / 80) * Math.sin(j / 2.6)) } })),
+);
+const panelText = async () => (await page.locator('.panel').first().textContent()) ?? '';
+
+// 8.1 Transient stability
+await open('8.1');
+fb = await predict(() => 0.86); // angle stays put
+check('8.1 misconception: the rotor accelerates', /accélère/.test(fb), fb.slice(0, 70));
+await setParam(0, 400, 20, 400); // far too long
+// Bisect the fault duration on the chart verdict, to sit just below the critical time.
+{
+  let lo = 0, hi = 1000;
+  const stableAt = async (pos) => {
+    await page.evaluate((pos) => {
+      const el = document.querySelectorAll('.params input[type=range]')[0];
+      el.value = String(pos);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, pos);
+    return (await page.getByText(/^Stable : l’aire/).count()) > 0;
+  };
+  for (let k = 0; k < 11; k++) {
+    const m = Math.round((lo + hi) / 2);
+    if (await stableAt(m)) lo = m;
+    else hi = m;
+  }
+  await stableAt(lo);
+}
+await setParam(2, 8, 2, 8);
+await setParam(1, 0.6, 0.3, 1);
+await page.getByRole('radio', { name: 'En milieu de ligne' }).click();
+check('8.1 classification tree links every leaf', (await page.locator('svg a[href^="#8."]').count()) === 7);
+check('8.1 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 8.2 Small-signal stability
+await open('8.2');
+fb = await predict((f) => 0.5 - 0.4 * Math.exp(-4 * f) * Math.sin(20 * Math.PI * f)); // decaying swing
+check('8.2 misconception: the AVR gives negative damping', /négatif/.test(fb), fb.slice(0, 70));
+await setParam(0, 10, 10, 400, true); // gentle regulator
+await setParam(0, 200, 10, 400, true);
+await setParam(1, 10, 0, 40); // PSS
+await setParam(2, 0.95, 0.2, 1); // weak link
+await setParam(1, 0, 0, 40);
+await setParam(3, 0.6, 0.4, 1); // less load
+check('8.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 8.3 Long-term voltage stability
+await open('8.3');
+fb = await predict((f) => (f < 0.03 ? 0.1 : 0.3)); // HV voltage holds after the trip
+check('8.3 misconception: the tap changer drags HV down', /enfonce/.test(fb), fb.slice(0, 70));
+await scrubToEnd();
+await page.getByRole('radio', { name: 'Hors service' }).click();
+await page.getByRole('radio', { name: 'Bloqué si V_HT < 0,9' }).click();
+await page.getByRole('radio', { name: 'Normal' }).click();
+await setParam(1, 0.3, 0, 0.5); // capacitors
+await setParam(1, 0, 0, 0.5);
+await page.getByRole('radio', { name: 'Bloqué si V_HT < 0,9' }).click();
+await setParam(2, 1, 0, 1); // all thermostatic
+check('8.3 collapse shown', /effondrement/.test(await panelText()));
+check('8.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 8.4 Frequency stability
+await open('8.4');
+fb = await predict((f) => {
+  const v = f < 0.025 ? 50 : f < 0.2 ? 50 - (0.8 * (f - 0.025)) / 0.175 : Math.min(50, 49.2 + (0.8 * (f - 0.2)) / 0.5);
+  return (50.2 - v) / 1.7;
+}); // dips then returns to 50 Hz
+check('8.4 misconception: primary control leaves an offset', /secondaire/.test(fb), fb.slice(0, 70));
+await setParam(0, 0.65, 0, 0.9); // load shedding
+await setParam(0, 0.85, 0, 0.9); // RoCoF relays
+await setParam(2, 800, 0, 1500);
+await setParam(0, 0.8, 0, 0.9); // fast reserve at 80 %
+await setParam(2, 0, 0, 1500);
+await setParam(1, 0.3, 0, 1); // grid-forming
+check('8.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 8.5 Converter-driven stability
+await open('8.5');
+fb = await predict((f) => (f < 0.1 ? 0.8 : 0.4)); // clean step to 1 pu
+check('8.5 misconception: the PLL sees its own action', /diverge/.test(fb), fb.slice(0, 70));
+check('8.5 instability shown', /instable/.test(await panelText()));
+await setParam(1, 20, 5, 150, true); // slower PLL
+await setParam(1, 60, 5, 150, true);
+await setParam(0, 3, 1.2, 10, true); // stronger grid
+await setParam(0, 2, 1.2, 10, true);
+await setParam(2, 0.5, 0.2, 1); // curtail
+await setParam(2, 1, 0.2, 1);
+await setParam(1, 20, 5, 150, true);
+await setParam(0, 1.35, 1.2, 10, true); // minimum SCR
+check('8.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 8.6 Subsynchronous resonance
+await open('8.6');
+fb = await predict((f) => 0.5 - 0.3 * Math.exp(-3 * f) * Math.sin(16 * Math.PI * f)); // decays
+check('8.6 misconception: resonance grows (Mohave)', /Mohave/.test(fb), fb.slice(0, 70));
+await setParam(0, 0.4, 0.1, 0.8); // detune
+await setParam(1, 20, 10, 30);
+await setParam(0, 0.36, 0.1, 0.8); // 20 Hz resonance
+await setParam(2, 0.5, 0.05, 2.5, true); // more shaft damping
+await page.getByRole('radio', { name: 'TCSC' }).click();
+await setParam(0, 0.5, 0.1, 0.8);
+check('8.6 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 8.7 Inter-area oscillations and G2ELin
+await open('8.7');
+fb = await predict(() => 0.5); // G3 does not move
+check('8.7 misconception: the inter-area mode reaches G3', /inter-zones/.test(fb), fb.slice(0, 70));
+await page.getByRole('radio', { name: 'local 1' }).click();
+await setParam(0, 1.8, 0.4, 2); // weak tie
+await setParam(0, 1, 0.4, 2);
+await setParam(1, 0.85, 0, 0.9); // heavy transfer
+await page.getByRole('radio', { name: 'G3', exact: true }).click();
+await page.getByRole('radio', { name: 'local 2' }).click();
+await setParam(3, 10, 0, 10); // damping
+check('8.7 all checked steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+await page.waitForSelector('text=connecté');
+await page.waitForSelector('table tbody tr');
+check('8.7 G2ELin panel lists the modes', (await page.locator('table tbody tr').count()) === 2);
+await page.waitForSelector('svg.compass line.arm', { state: 'attached' });
+check('8.7 G2ELin mode shape drawn', (await page.locator('svg.compass line.arm').count()) === 4);
+await page.getByRole('button', { name: 'Simuler' }).click();
+await page.waitForSelector('svg.free path.tr', { state: 'attached' });
+check('8.7 G2ELin free response drawn', (await page.locator('svg.free path.tr').count()) === 1);
+await page.screenshot({ path: `${out}/smoke-8.7.png` });
+
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
 await page.reload();
@@ -669,7 +811,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

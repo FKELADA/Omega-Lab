@@ -88,7 +88,9 @@
           <line x1={X(v.x)} x2={X(v.x)} y1={M.t} y2={H - M.b} class="vline" />
         {/each}
         {#each paths as p, j (j)}
-          {#if p.s.fill}
+          {#if !p.d}
+            <!-- nothing to draw (e.g. an empty decelerating area) -->
+          {:else if p.s.fill}
             <path d="{p.d}Z" class="area" style="fill: var({p.s.color})" />
           {:else}
             <path d={p.d} class="curve" class:dash={p.s.dash} style="stroke: var({p.s.color}); stroke-width: {p.s.width ?? 2}" />

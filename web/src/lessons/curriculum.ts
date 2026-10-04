@@ -26,6 +26,13 @@ import { windLesson } from './wind/experiment';
 import { bessLesson } from './bess/experiment';
 import { mmcLesson } from './mmc/experiment';
 import { frtLesson } from './frt/experiment';
+import { eacLesson } from './eac/experiment';
+import { pssLesson } from './pss/experiment';
+import { ltvsLesson } from './ltvs/experiment';
+import { fsysLesson } from './fsys/experiment';
+import { cdsLesson } from './cds/experiment';
+import { ssrLesson } from './ssr/experiment';
+import { g2Lesson } from './g2/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -154,11 +161,13 @@ export const curriculum: ModuleEntry[] = [
     n: 8,
     title: { fr: 'Stabilité des réseaux', en: 'Power system stability' },
     lessons: [
-      soon('8.1', 'Stabilité angulaire', 'Rotor-angle stability'),
-      soon('8.2', 'Stabilité de tension', 'Voltage stability'),
-      soon('8.3', 'Stabilité de fréquence', 'Frequency stability'),
-      soon('8.4', 'Stabilité liée aux convertisseurs', 'Converter-driven stability'),
-      soon('8.5', 'Résonances', 'Resonance stability'),
+      { id: '8.1', title: { fr: 'Stabilité transitoire', en: 'Transient stability' }, experiment: eacLesson },
+      { id: '8.2', title: { fr: 'Stabilité aux petits signaux', en: 'Small-signal stability' }, experiment: pssLesson },
+      { id: '8.3', title: { fr: 'Stabilité de tension', en: 'Voltage stability' }, experiment: ltvsLesson },
+      { id: '8.4', title: { fr: 'Stabilité de fréquence', en: 'Frequency stability' }, experiment: fsysLesson },
+      { id: '8.5', title: { fr: 'Stabilité liée aux convertisseurs', en: 'Converter-driven stability' }, experiment: cdsLesson },
+      { id: '8.6', title: { fr: 'Résonances', en: 'Resonance stability' }, experiment: ssrLesson },
+      { id: '8.7', title: { fr: 'Réseaux réels avec G2ELin', en: 'Real networks with G2ELin' }, experiment: g2Lesson },
     ],
   },
 ];

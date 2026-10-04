@@ -22,7 +22,7 @@ contributors who extend them or check the physics.
 10. [Module 5 — The network in steady state](#10-module-5--the-network-in-steady-state)
 11. [Module 6 — Power electronics](#11-module-6--power-electronics)
 12. [Module 7 — Inverter-based resources and HVDC](#12-module-7--inverter-based-resources-and-hvdc)
-13. [Modules not yet built](#13-modules-not-yet-built)
+13. [Module 8 — Power-system stability](#13-module-8--power-system-stability)
 14. [Standards and figures quoted in the lessons](#14-standards-and-figures-quoted-in-the-lessons)
 
 ---
@@ -199,9 +199,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 161 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts`, `lib/models/module5.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 255 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 31 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 114 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 49 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. Lesson 8.7 runs against a mocked G2ELin API. 175 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -3049,12 +3049,418 @@ when the sketch stays under 0.2 pu between 50 and 100 ms into the dip.
 
 ---
 
-## 13. Modules not yet built
+## 13. Module 8 — Power-system stability
 
-The plan ([plan.md](plan.md) §5) lists:
-- Module 8 (stability, on the G2ELin engine).
+Module 8 follows the IEEE/CIGRE 2020 classification. A clickable tree (`lessons/eac/StabilityTree.svelte`)
+appears in lessons 8.1–8.6; each leaf opens its lesson. The models run in the browser:
+- `lib/models/module8.ts`: SMIB, Heffron–Phillips, long-term voltage, system frequency, GFL on a
+  weak grid (reusing Module 7's averaged model) and SSR.
+- `lib/models/module8b.ts`: the two-area, four-machine system of lesson 8.7.
+- `lib/models/g2elin.svelte.ts`: the client for a local G2ELin API (lesson 8.7).
 
-Each lesson will be documented here, in the same format, when it is built.
+They are tested in `lib/models/module8.test.ts`. Every guided step has a test showing it can be
+completed with the sliders.
+
+### 8.1 Transient stability · `#8.1` · `lessons/eac`
+
+**Objectives.** After this lesson the learner can:
+- explain why a rotor accelerates during a fault;
+- apply the equal-area criterion;
+- relate the critical clearing time to inertia, loading and fault location.
+
+**Model.** A machine behind $E = 1.1$ pu on an infinite bus through two lines: $X = 0.65$ pu
+before the fault, $0.95$ pu after one line is lost. During the fault, $P_{max} = 0$ (fault at the
+bus) or $EV/2.6$ (mid-line). The fault starts at 0.1 s. RK4 over 3 s, 1500 × 4 steps. Unstable once
+$\delta \ge 180°$. The critical clearing time is found by bisection (18 iterations).
+
+**Formulas.**
+- The swing equation $\frac{2H}{\omega_0}\ddot\delta = P_m - P_{max}\sin\delta$.
+- The two areas, live.
+- $t_{cr}$ and $t_c$, live.
+- *Researcher, Engineer:* converters and transient stability (PLL loss of lock, GFM current limit).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $t_c$ | 20–400 ms | 150 ms |
+| $P_m$ | 0.3–1 pu | 0.8 pu |
+| $H$ | 2–8 s | 4 s |
+| Fault location | at the bus / mid-line | at the bus |
+
+**Panels.**
+- SMIB schematic.
+- Oscilloscope: δ, $P_e$, $P_m$, rotor frequency.
+- Equal-area chart: the three $P$–δ curves, both areas filled, δc and δmax.
+- Classification tree.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the rotor angle | Prediction revealed |
+| 2 | Too late | Unstable |
+| 3 | On the edge | Stable and $t_{cr} - t_c < 10$ ms |
+| 4 | More inertia | $H \ge 7.9$ s |
+| 5 | Less loaded | $P_m \le 0.6$ pu |
+| 6 | A more distant fault | Fault mid-line |
+
+**Misconception detected** (y-range 0–200°): the angle stays put during the fault. Triggers when
+the sketch stays within 2° of δ0 between 0.1 and 0.25 s while the true angle rises by over 10°.
+
+**Tests.**
+- $t_{cr}$ lies in the slider range; 5 ms before it the run is stable, 10 ms after it unstable.
+- The area margin changes sign at the same point.
+- Doubling $H$ multiplies $t_{cr}$ by 1.3–1.5.
+- Less load and a mid-line fault both lengthen $t_{cr}$.
+
+### 8.2 Small-signal stability · `#8.2` · `lessons/pss`
+
+**Objectives.** After this lesson the learner can:
+- identify the electromechanical mode and its damping;
+- explain how a fast AVR gives negative damping;
+- tune a PSS and check it on a weaker link.
+
+**Model.** Heffron–Phillips constants $K_1$–$K_6$ for Kundur's machine: $X_d = 1.81$,
+$X_q = 1.76$, $X'_d = 0.3$, $T'_{d0} = 8$ s, $H = 3.5$ s, $E_t = 1$, $Q = 0.3$. A first-order AVR
+($T_A = 0.05$ s) and a PSS (washout 1.4 s, lead–lag 0.154/0.033 s). Six states. Eigenvalues by QR.
+The response is an exact LTI simulation of a 0.05 pu step of $T_m$ at 0.5 s.
+
+**Formulas.**
+- $\Delta T_e = K_1\Delta\delta + K_2\Delta E'_q$, with live constants.
+- The mode $\lambda$, $f$ and $\zeta$, live.
+- Synchronising and damping torques.
+- The PSS transfer function.
+- *Researcher, Engineer:* why grids require PSSs.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $K_A$ | 10–400 (log) | 200 |
+| $K_{PSS}$ | 0–40 | 0 |
+| $X_e$ | 0.2–1 pu | 0.65 pu |
+| $P$ | 0.4–1 pu | 0.9 pu |
+
+**Panels.**
+- Block diagram with live $K$ values; the PSS path greys out when off.
+- s-plane with 5 % and 15 % damping lines.
+- Damping against $K_A$, with and without the PSS.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the oscillation | Prediction revealed |
+| 2 | A gentler regulator | No PSS, stable |
+| 3 | Adding a PSS | $K_A \ge 150$, $\zeta \ge 15$ % |
+| 4 | A weaker grid | $X_e \ge 0.9$, $K_{PSS} \ge 5$, $\zeta > 5$ % |
+| 5 | Less load | No PSS, $K_A \ge 150$, $P \le 0.6$ |
+
+**Misconception detected** (y-range ±60 mHz): the oscillation decays. Triggers when the true swing
+grows (8–10 s against 1–3 s) while the sketch decays.
+
+**Tests.**
+- $K_1, K_2 > 0$ and $K_5 < 0$ at high load.
+- With $K_A = 200$ the mode is unstable, between 0.6 and 2 Hz.
+- $K_A = 10$ is stable.
+- $K_{PSS} = 10$ gives over 15 % damping, and over 5 % with $X_e = 0.95$.
+- Less load improves damping.
+
+### 8.3 Long-term voltage stability · `#8.3` · `lessons/ltvs`
+
+**Objectives.** After this lesson the learner can:
+- explain how tap changers and thermostats restore load after an incident;
+- recognise a slow voltage collapse;
+- compare countermeasures.
+
+**Model.** A source $E = 1.05$ pu feeds an HV bus through two lines ($X = 0.38$ pu each), then
+an OLTC transformer ($X_t = 0.07$) to an LV load. One line trips at 10 s.
+- Load: constant impedance, plus a recovering part $T_p\dot x = -x + P_0(1 - V^2)$ with
+  $T_p = 30$ s, $\tan\varphi = 0.3$.
+- OLTC: ±1.25 % steps in [0.8; 1.25], dead band ±1.5 %, first delay 20 s then 5 s.
+- Quasi-static: the network is solved every 0.5 s over 300 s. Collapse is declared when no
+  solution exists; instability when $V_{HV} < 0.85$ pu at the end.
+
+**Formulas.**
+- The voltage-dependent, recovering load.
+- The OLTC and its final ratio, live.
+- The post-incident transfer limit against $P_0$, live.
+- *Researcher, Engineer:* countermeasures.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $P_0$ | 0.6–1.2 pu | 1 pu |
+| OLTC | normal / out of service / blocked if $V_{HV} < 0.9$ | normal |
+| $B$ (HV capacitors) | 0–0.5 pu | 0 |
+| Recovering share $a_D$ | 0–1 | 0 |
+
+**Panels.**
+- Radial schematic with live voltages, the tap ratio and the tripped line.
+- P–V curves before and after the trip, with the trajectory.
+- Classification tree.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the HV voltage | Prediction revealed |
+| 2 | Step after step | Cursor past 90 % and unstable |
+| 3 | Without the tap changer | Out of service, stable |
+| 4 | Automatic blocking | Blocked mode, stable |
+| 5 | Capacitors | Normal OLTC, $B \ge 0.3$, stable |
+| 6 | Thermostats | OLTC not normal, $a_D \ge 0.95$, $B < 0.05$, collapse |
+
+**Misconception detected** (y-range 0.6–1.1 pu): the HV voltage holds after the trip. Triggers when
+the true end voltage is over 0.04 pu below its post-trip value while the sketch is not.
+
+**Tests.**
+- With the OLTC: several tap moves and a degraded HV voltage.
+- Out of service or blocked: stable, with a low LV voltage.
+- 0.3 pu of capacitors: stable.
+- OLTC blocked with fully recovering load: collapse.
+
+### 8.4 Frequency stability · `#8.4` · `lessons/fsys`
+
+**Objectives.** After this lesson the learner can:
+- relate inertia, RoCoF and nadir;
+- explain why primary control leaves an offset;
+- compare fast frequency response and grid-forming inverters as remedies.
+
+**Model.** One aggregated system: $S = 30$ GW, loss of 1320 MW at 1 s, load damping $D = 1$.
+- Inertia $H_{sys} = 5(1 - s_{IBR}) + 4\,s_{IBR}s_{GFM}$ s.
+- Governors: 2400 MW/Hz scaled by the synchronous share, time constant 6 s, reserve 2000 MW.
+- Fast reserve: full output from 15 mHz to 0.5 Hz below 50 Hz, with a 0.2 s lag.
+- Grid-forming units: a fast droop of 4000 MW/Hz per unit share.
+- RK4 over 40 s. RoCoF at $0^+$ from the swing equation.
+- Limits: load shedding at 48.8 Hz, RoCoF relays at 1 Hz/s.
+
+**Formulas.**
+- The system swing equation and $H_{sys}$, live.
+- RoCoF, live.
+- Nadir and the steady-state offset.
+- *Researcher, Engineer:* GB 9 August 2019 and operators' responses.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $s_{IBR}$ | 0–0.9 (step 0.05) | 0.3 |
+| $s_{GFM}$ | 0–1 (step 0.05) | 0 |
+| $P_{FFR}$ | 0–1500 MW | 0 |
+
+**Panels.**
+- Fleet bar (synchronous, grid-following, grid-forming), $H_{sys}$, the tripped unit, and a
+  frequency gauge at the cursor.
+- Oscilloscope with an all-synchronous reference trace.
+- Nadir against inverter share, with the grid-following-only curve.
+- RoCoF against inverter share.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency | Prediction revealed |
+| 2 | Down to load shedding | No GFM, no FFR, nadir < 48.8 Hz |
+| 3 | RoCoF relays | No GFM, RoCoF > 1 Hz/s |
+| 4 | Fast batteries | $s_{IBR} \ge 0.8$, no GFM, no shedding |
+| 5 | Grid-forming inverters | $s_{IBR} \ge 0.8$, no FFR, both limits met |
+
+**Misconception detected** (y-range 48.5–50.2 Hz): the frequency returns to 50 Hz. Triggers when
+the true end value is under 49.85 Hz and the sketch ends above 49.93 Hz.
+
+**Tests.**
+- $H$ and RoCoF match the formulas.
+- The final frequency lies between 49.2 and 49.8 Hz.
+- Shedding from 60 % inverters, RoCoF relays from 80 %.
+- 600 MW of FFR avoids shedding at 80 % without changing the RoCoF.
+- 20 % grid-forming meets both limits.
+
+### 8.5 Converter-driven stability · `#8.5` · `lessons/cds`
+
+**Objectives.** After this lesson the learner can:
+- define the SCR and recognise a weak grid;
+- explain the PLL–grid interaction;
+- find a plant's minimum SCR.
+
+**Model.** Module 7's grid-following VSC (current loop 500 Hz, outer loops 10 Hz).
+- The operating point: a short RK4 settle, then Newton.
+- Eigenvalues by QR of a numerical Jacobian (10 states).
+- Stable if every eigenvalue has $\mathrm{Re} < 0$.
+- The boundary: minimum SCR for nine PLL bandwidths, by geometric bisection, cached per 0.05 pu
+  of $P$.
+- The oscilloscope shows the nonlinear RK4 run (P step at 50 ms).
+
+**Formulas.**
+- $\mathrm{SCR} = 1/X_g$, live.
+- The static limit $P_{max} \approx \mathrm{SCR}$.
+- $v_{PCC} = v_g + Z_g i$ and the PLL law.
+- *Researcher, Engineer:* impedance-based (Nyquist) analysis, and remedies.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| SCR | 1.2–10 (log) | 2 |
+| $f_{PLL}$ | 5–150 Hz (log) | 60 Hz |
+| $P$ | 0.2–1 pu | 1 pu |
+
+**Panels.**
+- Plant and grid schematic: the grid reactance grows as the SCR falls, and the PLL feedback path
+  is drawn.
+- Stability boundary (minimum SCR against $f_{PLL}$).
+- Slow eigenvalues (σ from −200 to 150 1/s, below 200 Hz).
+- Classification tree.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the power | Prediction revealed |
+| 2 | Slow the PLL down | SCR ≤ 2.05, $P \ge 0.95$, stable |
+| 3 | Strengthen the grid | $f_{PLL} \ge 55$, $P \ge 0.95$, stable |
+| 4 | Curtail the power | SCR ≤ 2.05, $f_{PLL} \ge 55$, stable |
+| 5 | The minimum SCR | $P \ge 0.95$, $f_{PLL} \le 25$, SCR < 1.4, stable |
+
+**Misconception detected** (y-range −0.5 to 2 pu): a clean step. Triggers when the true run
+diverges or keeps oscillating while the sketch settles after 0.3 s.
+
+**Tests.**
+- At SCR 2, 60 Hz, $P = 1$: unstable in the eigenvalues and in the simulation.
+- A 20 Hz PLL, SCR 3 or $P = 0.5$ each stabilise it; the stable case settles at 1 pu.
+- The minimum SCR rises with $f_{PLL}$; a 20 Hz PLL is stable at SCR 1.35.
+
+### 8.6 Resonance stability · `#8.6` · `lessons/ssr`
+
+**Objectives.** After this lesson the learner can:
+- compute the electrical resonance of a series-compensated line;
+- predict when it meets a torsional mode;
+- explain the remedies (detuning, TCSC).
+
+**Model.** One torsional mode $f_m$ of a turbine shaft, on a radial line with $X = 0.6$,
+$R = 0.02$ pu, compensated at $k = X_C/X_L$.
+- Growth rate
+  $\sigma = -(\zeta_0 + \zeta_m)2\pi f_m + K_E[\mathrm{Re}\,Y(50 - f_m) - \mathrm{Re}\,Y(50 + f_m)]$,
+  with $\zeta_0 = 0.15$ % and $K_E = 0.025$.
+- A TCSC looks inductive ($-0.15X$) below 45 Hz.
+- The response is the envelope $A_0e^{\sigma t}$ (capped at 5 pu) times $\sin 2\pi f_m t$.
+
+**Formulas.**
+- $f_{er} = 50\sqrt k$, live.
+- $50 - f_{er}$ against $f_m$, live.
+- The damping balance, live.
+- *Researcher, Engineer:* SSCI (ERCOT 2009) and countermeasures.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $k$ | 0.1–0.8 (step 0.01) | 0.5 |
+| $f_m$ | 10–30 Hz | 14.6 Hz |
+| $\zeta_m$ | 0.05–2.5 % (log) | 0.1 % |
+| Compensation | fixed capacitor / TCSC | fixed |
+
+**Panels.**
+- Shaft masses (HP, LP, generator) twisting with the torque at the cursor; the line with its
+  capacitor or TCSC; $f_{er}$ and $50 - f_{er}$, highlighted near resonance.
+- Growth rate against $k$.
+- Frequency coincidence: $50 - 50\sqrt k$ against $f_m$.
+- Classification tree.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the torsion | Prediction revealed |
+| 2 | Detuning | Fixed capacitor, decaying |
+| 3 | Another shaft | $f_m$ ≈ 20 Hz, fixed capacitor, growing |
+| 4 | More mechanical damping? | $\zeta_m \ge 0.45$ %, fixed capacitor, growing |
+| 5 | A TCSC | TCSC, $k \ge 0.45$, decaying |
+
+**Misconception detected** (y-range ±0.3 pu): the torsion decays. Triggers when the true
+amplitude in the last second is more than twice that of the first, while the sketch does not grow.
+
+**Tests.**
+- At $k = 0.5$: $50 - f_{er}$ ≈ 14.6 Hz and the mode grows.
+- At 0.4 and 0.6 it decays.
+- A 20 Hz mode grows at $k = 0.36$.
+- 0.5 % mechanical damping is not enough; a TCSC damps for $k$ = 0.45–0.7.
+- The envelope grows exactly as $e^{\sigma t}$.
+
+### 8.7 Real networks with G2ELin · `#8.7` · `lessons/g2`
+
+**Objectives.** After this lesson the learner can:
+- tell local from inter-area modes;
+- read a mode shape;
+- relate the inter-area frequency to tie strength and transfer;
+- run the same analysis on a full model with G2ELin.
+
+**Model.** Two areas of two classical machines, in the spirit of Kundur's two-area system.
+- Area 1: $H = 6.5$ s. Area 2: $H_2$.
+- Machine reactances to their area bus: 0.25 and 0.35 pu. Each machine produces 0.7 pu.
+- Line weights $\cos\Delta\theta/X$, Kron-reduced onto the machines to give $K$.
+- Eigenvalues by QR of the 8-state matrix. Mode shapes from the symmetric undamped problem
+  $M^{-1/2}KM^{-1/2}$ (Jacobi).
+- The response: an exact LTI simulation of a $10^{-3}$ pu speed kick, over 12 s.
+
+**G2ELin panel.** It looks for the API at `/g2elin` (proxied by Vite to `localhost:8000`) or at
+`VITE_G2ELIN_URL`, and:
+- lists the presets from `/api/presets`;
+- runs `/api/presets/{id}/modal` and lists the 0.1–3 Hz synchronisation modes (under 5 %
+  damping highlighted);
+- draws the mode shape (`/modal/mode_shape`) as a compass;
+- plots a free response (`/modal/free_response`) after a speed kick on a chosen machine.
+
+Offline, it explains how to start the API and offers a retry. The rest of the lesson works without
+it.
+
+**Formulas.**
+- The linear model, with a derivation showing $K$ live.
+- The three modes, live.
+- The selected mode shape, live.
+- *Researcher, Engineer:* what G2ELin adds.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $X_t$ | 0.4–2 pu | 1 pu |
+| $P_{tie}$ | 0–0.9 pu | 0.4 pu |
+| $H_2$ | 2–12 s | 6.175 s |
+| $D$ | 0–10 pu | 1 pu |
+| Machine kicked | G1–G4 | G1 |
+| Mode shown | inter-area / local 1 / local 2 | inter-area |
+
+**Panels.**
+- Two-area schematic with mode-shape bars; machines tinted by their speed at the cursor.
+- s-plane of the three modes.
+- Inter-area frequency against $X_t$, with the 0.1–0.8 Hz band.
+- The G2ELin panel.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict G3's speed | Prediction revealed |
+| 2 | Area against area | A local mode shown |
+| 3 | A weaker tie | $X_t \ge 1.8$, inter-area < 0.5 Hz |
+| 4 | More transfer | $X_t$ ≈ 1, $P_{tie} \ge 0.8$ |
+| 5 | Exciting a local mode | Kick G3, local 2 shown |
+| 6 | Damping | Inter-area $\zeta \ge 5$ % |
+| 7 | A real network | Informational (G2ELin) |
+
+**Misconception detected** (y-range ±40 mHz): the distant machine does not move. Triggers when the
+true G3 swing exceeds 5 mHz while the sketch stays under 2 mHz.
+
+**Tests.**
+- $K$ is symmetric with zero row sums.
+- One inter-area mode at 0.5–0.8 Hz with the areas in opposition, and two local modes above 1 Hz.
+- A weaker or more loaded tie slows the inter-area mode.
+- $D = 10$ exceeds 5 % damping.
+- A kick on G1 reaches G3.
+- The smoke test mocks the G2ELin API and checks the mode table, mode shape and free response.
 
 ---
 
@@ -3083,3 +3489,10 @@ before using them in a formal context.
 | Peak factor $kappa = 1.02 + 0.98e^{-3R/X}$ | 5.3 | IEC 60909 |
 | Nodal (locational marginal) pricing | 5.4 | PJM, ERCOT market design |
 | Voltage 230 V ± 10 % (planning ± 5 % here); inverter Q(V), cos φ(P), P(V) capabilities | 5.5 | EN 50160; VDE-AR-N 4105/4110, IEEE 1547-2018, EN 50549 |
+| Breakers clear transmission faults in 80–120 ms | 8.1 | Typical protection practice |
+| PSSs required on large generators; WECC 1996, Italy 2003 | 8.2 | NERC/ENTSO-E requirements; incident reports |
+| Slow voltage collapses (Sweden 1983, France 1987) | 8.3 | CIGRE TF 38.02.10 |
+| RoCoF relays ≈ 1 Hz/s; load shedding from 48.8 Hz; GB 9 August 2019 | 8.4 | ENTSO-E/National Grid ESO technical report (2019) |
+| Weak-grid SCR thresholds (< 3 weak, < 2 very weak); ERCOT and Xinjiang (2015) oscillations | 8.5 | CIGRE TB 671; IEEE PES TR-80 |
+| SSCI at ERCOT (2009) | 8.6 | IEEE SSR working group; ERCOT incident report |
+| Inter-area modes 0.1–0.8 Hz, ≈ 0.2 Hz east–west in continental Europe | 8.7 | ENTSO-E inter-area oscillation analysis |

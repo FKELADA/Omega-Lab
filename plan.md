@@ -10,7 +10,7 @@
 
 ## Status (4 October 2026)
 
-**Modules 0 to 5 are built: 31 lessons, in French and English.** Code is on
+**All nine modules (0 to 8) are built: 49 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -47,10 +47,27 @@ tests are in [documentation.md](documentation.md).
 | 5.3 Faults | ✅ Done | `9ba10f5` |
 | 5.4 Economic dispatch | ✅ Done | `9ba10f5` |
 | 5.5 A day on a feeder | ✅ Done | `9ba10f5` |
-| Modules 6–8 | Not started | — |
+| 6.1 Choppers | ✅ Done | `ca70a97` |
+| 6.2 Rectifiers | ✅ Done | `ca70a97` |
+| 6.3 PWM | ✅ Done | `ca70a97` |
+| 6.4 Averaged model and LCL filter | ✅ Done | `ca70a97` |
+| 7.1 VSC control | ✅ Done | `c6c3613` |
+| 7.2 Grid-following vs grid-forming | ✅ Done | `c6c3613` |
+| 7.3 PV and MPPT | ✅ Done | `c6c3613` |
+| 7.4 Wind | ✅ Done | `c6c3613` |
+| 7.5 Storage (BESS) | ✅ Done | `c6c3613` |
+| 7.6 HVDC and MMC | ✅ Done | `c6c3613` |
+| 7.7 Grid codes | ✅ Done | `c6c3613` |
+| 8.1 Transient stability | ✅ Done | Module 8 commit |
+| 8.2 Small-signal stability | ✅ Done | Module 8 commit |
+| 8.3 Long-term voltage stability | ✅ Done | Module 8 commit |
+| 8.4 Frequency stability | ✅ Done | Module 8 commit |
+| 8.5 Converter-driven stability | ✅ Done | Module 8 commit |
+| 8.6 Resonance stability (SSR) | ✅ Done | Module 8 commit |
+| 8.7 Real networks with G2ELin | ✅ Done | Module 8 commit |
 
-**Verification:** 161 unit tests (solver, models, note completeness), and a browser test that walks
-all 31 lessons, the documentation page and the teaching notes (114 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 255 unit tests (solver, models, note completeness), and a browser test that walks
+all 49 lessons, the documentation page and the teaching notes (175 checks, G2ELin mocked: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -102,10 +119,22 @@ no console errors).
   - The NR "mismatch surface" became a replay of the network iteration by iteration, with a
     convergence chart.
 
+- **Module 8** runs in the browser, with the G2ELin API as an optional live panel:
+  - 8.1–8.6 use reduced client-side models (SMIB, Heffron–Phillips, quasi-static OLTC and load
+    recovery, one-bus frequency, Module 7's GFL model linearised numerically, a one-mode SSR
+    damping balance).
+  - 8.7 runs a classical two-area, four-machine system in the browser and, when G2ELin is running
+    locally (`/g2elin` proxy or `VITE_G2ELIN_URL`), lists its presets, modes, mode shapes and free
+    responses. Preset names are read from `/api/presets`, not hard-coded.
+  - Not built from §5: EMT vs RMS vs linear comparison, the 100 % IBR island, PSS design on the
+    full two-area system and the blackout replay capstones.
+
 ### Next
 
-1. **P2:** connect the G2ELin API for Module 8.
-2. **Module 6**, power electronics fundamentals (choppers, rectifiers, PWM, averaged models).
+1. **G2ELin depth:** case library, participation factors and PSS design on G2ELin's full
+   two-area model; check the panel against the real API (it was written against its documented
+   endpoints and tested with a mock).
+2. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
 
 ---
 

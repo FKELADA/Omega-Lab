@@ -15,15 +15,16 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 161 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder) |
+| `npm test` | 255 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, and every Module 8 stability step) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 31 lessons, the documentation page and the teaching notes in a real Chrome, 114 checks (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 49 lessons, the documentation page and the teaching notes in a real Chrome, 175 checks, with a mocked G2ELin API (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Thirty-one lessons are complete (Modules 0–5), in French and English. Open one directly with its number in the URL,
+Forty-nine lessons are complete (Modules 0–8), in French and English. Module 8 can also query a local
+G2ELin API (`start-windows.bat`, port 8000, proxied at `/g2elin`; set `VITE_G2ELIN_URL` for another server). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -59,6 +60,13 @@ e.g. `http://localhost:5173/#1.4`.
 | **5.3 Faults** | Predicts a fault current, compares fault types, isolates the neutral, finds a ground fault larger than three-phase, adds fault resistance | Sequence-network connections, fault phasors, current versus distance |
 | **5.4 Economic dispatch** | Predicts the price over a day, calls the peaker, checks equal marginal costs, congests a line, adds solar until it is curtailed | Three-bus network with nodal prices, merit order, marginal-cost curves |
 | **5.5 A day on a feeder** | Predicts the feeder-end voltage with PV, finds reverse flow and overvoltage, compares Q(V), the tap changer and curtailment | Feeder with voltage bars, daily profile envelope, hosting capacity by control |
+| **8.1 Transient stability** | Predicts the rotor angle after a fault, exceeds the critical clearing time, sits just below it, adds inertia, unloads, moves the fault | Equal-area chart with both areas, IEEE/CIGRE classification tree |
+| **8.2 Small-signal stability** | Predicts a growing swing, softens the AVR, tunes a PSS to 15 %, checks it on a weak link | Heffron–Phillips block diagram, s-plane, damping versus AVR gain |
+| **8.3 Voltage stability** | Predicts the HV voltage after a line trip, watches the tap changer drag it down, blocks it, adds capacitors, meets thermostats | Radial supply with OLTC, P–V curves with the trajectory |
+| **8.4 Frequency stability** | Predicts the frequency after a 1.3 GW trip, replaces machines by inverters until shedding and RoCoF trips, fixes it with batteries or grid-forming | Fleet bar and frequency gauge, nadir and RoCoF versus inverter share |
+| **8.5 Converter-driven stability** | Predicts a GFL plant on a weak grid, slows the PLL, strengthens the grid, curtails, finds the minimum SCR | Stability boundary (SCR versus PLL bandwidth), slow eigenvalues |
+| **8.6 Resonance stability** | Predicts a shaft's torsion on a compensated line, detunes, finds another resonance, tries mechanical damping, installs a TCSC | Twisting shaft masses, growth rate and frequency-coincidence charts |
+| **8.7 Real networks with G2ELin** | Predicts a distant machine's swing, reads inter-area and local mode shapes, weakens and loads the tie, damps the mode, then explores G2ELin's networks | Two-area mode-shape bars, live G2ELin modes, compass and free response |
 
 Shared by every lesson:
 
@@ -84,8 +92,9 @@ web/src/
   lib/core/        linear algebra, LTI simulation (expm discretisation), RK4 for nonlinear models,
                    power flow (Y-bus, Newton–Raphson, Gauss–Seidel, DC)
   lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
-                   impedance, power, three-phase, Park, per-unit, Fourier, sequences;
-                   G2ELin-backed models later)
+                   impedance, power, three-phase, Park, per-unit, Fourier, sequences,
+                   grid elements, converters, IBRs, stability; g2elin.svelte.ts is the
+                   G2ELin API client)
   lib/lab/         lesson format (types.ts), shared experiment state, lesson + parameter panels
   lib/instruments/ oscilloscope, s-plane, energy balance, frequency response, phasor diagram,
                    live equations, x–y characteristic charts (XYChart)
@@ -95,7 +104,7 @@ web/src/
                    lesson-specific panels (heater, meters, Euler helix, impedance plane,
                    power triangle, three-phase schematic, phase balance, line, transformer,
                    machines, loads, compensation, FACTS, power-flow networks, faults,
-                   dispatch, feeder)
+                   dispatch, feeder, converters, IBRs, stability tree, G2ELin panel)
 ```
 
 ## Adding a lesson
