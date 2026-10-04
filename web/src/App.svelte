@@ -9,6 +9,8 @@
   import Equations from './lib/instruments/Equations.svelte';
   import TopBar from './lib/ui/TopBar.svelte';
   import CourseMap from './lib/ui/CourseMap.svelte';
+  import DocsPage from './lib/ui/DocsPage.svelte';
+  import NoteView from './lib/ui/NoteView.svelte';
   import { ui } from './lib/ui/ui.svelte';
 
   /** Lessons are addressed by their course number in the URL hash, e.g. #1.4. */
@@ -16,6 +18,14 @@
 
   let lab = $state(new Lab(fromHash().experiment!));
   let mapOpen = $state(false);
+  let view = $state<'lab' | 'docs'>(location.hash === '#docs' ? 'docs' : 'lab');
+  /** Open teaching note: a module, optionally scrolled to one of its lessons. */
+  let note = $state<{ module: number; lesson?: string } | null>(null);
+  const openNote = (module: number, lesson?: string) => {
+    mapOpen = false;
+    note = { module, lesson };
+  };
+  const currentLesson = () => lessons.find((l) => l.experiment === lab.exp);
 
   function open(e: Experiment) {
     if (e.id !== lab.exp.id) lab = new Lab(e);
@@ -28,7 +38,14 @@
   }
 
   $effect(() => {
-    const onHash = () => open(fromHash().experiment!);
+    const onHash = () => {
+      if (location.hash === '#docs') {
+        view = 'docs';
+        return;
+      }
+      view = 'lab';
+      open(fromHash().experiment!);
+    };
     addEventListener('hashchange', onHash);
     return () => removeEventListener('hashchange', onHash);
   });
@@ -50,13 +67,19 @@
 </script>
 
 <div class="app" data-hover={lab.hover ?? ''}>
-  <TopBar exp={lab.exp} onmap={() => (mapOpen = true)} />
+  <TopBar exp={lab.exp} onmap={() => (mapOpen = true)} ondocs={() => (location.hash = 'docs')} docs={view === 'docs'} />
 
+  {#if view === 'docs'}
+    <DocsPage onback={() => (location.hash = currentLesson()?.id ?? '')} />
+  {:else}
   {#key lab}
     <main>
       <div class="col left">
         <lab.exp.canvas {lab} />
-        <LessonPanel {lab} />
+        <LessonPanel {lab} onnote={() => {
+          const id = currentLesson()?.id;
+          if (id) openNote(+id.split('.')[0], id);
+        }} />
       </div>
       <div class="col mid">
         <Scope {lab} />
@@ -73,9 +96,13 @@
 
     <ParamRail {lab} />
   {/key}
+  {/if}
 
   {#if mapOpen}
-    <CourseMap current={lab.exp.id} onpick={pick} onclose={() => (mapOpen = false)} />
+    <CourseMap current={lab.exp.id} onpick={pick} onclose={() => (mapOpen = false)} onnote={openNote} />
+  {/if}
+  {#if note}
+    <NoteView module={note.module} focus={note.lesson} onclose={() => (note = null)} />
   {/if}
 </div>
 

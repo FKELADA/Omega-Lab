@@ -156,7 +156,14 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
   - *Researcher* adds the mathematical-structure cards (state space, transfer functions,
     conventions).
 - **URLs:** each lesson has one (`#1.4`), and the last step links to the next lesson.
-- **Languages:** French and English throughout. The default follows the browser and is
+- **Teaching notes:** an ⓘ button next to each module and lesson in the course map, and a
+  "Teaching note" button in the lesson panel, open a plain-language note (`lessons/notes.ts`,
+  French and English). It gives the summary, the objective, each formula with its meaning, the
+  objective of every guided step, and the automated tests with why each one matters. A unit test
+  checks that every lesson has a complete note with one objective per step.
+- **Documentation:** this document is rendered in the app at `#docs` (📖 button in the top
+  bar), with a table of contents. Links to other files point to the GitHub repository.
+- **Languages:** French and English throughout. This technical document is in English. The default follows the browser and is
   remembered per viewer.
 
 ---
@@ -165,9 +172,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 74 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts` and `lib/models/module01.test.ts`: the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 94 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 19 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors. 68 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 19 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 75 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---

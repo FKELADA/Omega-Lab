@@ -2,7 +2,7 @@
   import type { Experiment } from '../lab/types';
   import { S, savePrefs, tr, ui, type Persona, type Theme } from './ui.svelte';
 
-  let { exp, onmap }: { exp: Experiment; onmap: () => void } = $props();
+  let { exp, onmap, ondocs, docs = false }: { exp: Experiment; onmap: () => void; ondocs: () => void; docs?: boolean } = $props();
 
   const personas: Persona[] = ['learner', 'research', 'utility'];
   const themes: Theme[] = ['auto', 'light', 'dark'];
@@ -34,6 +34,7 @@
   </button>
 
   <div class="controls">
+    <button class="btn" class:on={docs} onclick={ondocs} title="Documentation">📖 Documentation</button>
     <div class="seg" role="group" aria-label={tr(S.persona)}>
       {#each personas as p (p)}
         <button class:on={ui.persona === p} onclick={() => set('persona', p)}>{tr(S[p])}</button>

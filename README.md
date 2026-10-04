@@ -15,9 +15,9 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 74 solver and model unit tests (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC) |
+| `npm test` | 94 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 19 lessons in a real Chrome, 68 checks (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 19 lessons, the documentation page and the teaching notes in a real Chrome, 75 checks (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
@@ -49,6 +49,11 @@ e.g. `http://localhost:5173/#1.4`.
 | **3.4 PI control and the PLL** | Predicts the frequency spike after a phase jump, tunes bandwidth, P versus PI, windup and anti-windup | PLL block diagram, phase tracker |
 
 Shared by every lesson:
+
+- **Teaching notes:** an ⓘ next to every module and lesson (course map and lesson panel) opens a
+  plain-language note: what the lesson is about, its objective, each formula in words, the
+  objective of each exercise, and what each automated test guarantees.
+- **Documentation in the app:** `#docs` (📖 in the top bar) renders [documentation.md](documentation.md).
 
 - **Layout:** each experiment declares its own canvas and instruments. Lessons are addressed by
   URL, and the last step links to the next lesson.

@@ -320,6 +320,36 @@ await page.getByRole('radio', { name: /Câble/ }).click();
 await setParam(0, 150, 10, 2000, true);
 check('1.5 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
 
+// ── Documentation page and teaching notes ─────────────────────────────────────
+await page.goto(`${URL}#1.2`);
+await page.reload();
+await page.waitForSelector('.u-over');
+await page.getByRole('button', { name: /Documentation/ }).click();
+await page.waitForSelector('article h2');
+check('docs page opens from the top bar', (await page.evaluate(() => location.hash)) === '#docs');
+check('docs render formulas and tables', (await page.locator('article .katex').count()) > 50 && (await page.locator('article table').count()) > 20);
+await page.locator('nav a', { hasText: '3.4 PI control and the PLL' }).click();
+await page.waitForTimeout(800);
+const top = await page.locator('[id="34-pi-control-and-the-pll--34--lessonspll"]').evaluate((el) => el.getBoundingClientRect().top);
+check('contents link scrolls to its section, URL unchanged', top < 200 && (await page.evaluate(() => location.hash)) === '#docs', `top ${Math.round(top)}`);
+await page.screenshot({ path: `${out}/smoke-docs.png` });
+await page.getByRole('button', { name: /Retour aux leçons/ }).click();
+await page.waitForSelector('.u-over');
+check('back button returns to the lesson', (await page.evaluate(() => location.hash)) === '#1.2');
+await page.getByRole('button', { name: /Note pédagogique/ }).click();
+await page.waitForSelector('[role="dialog"]');
+check('lesson note opens on its lesson', (await page.locator('[role="dialog"] .formulas li').count()) >= 3);
+await page.screenshot({ path: `${out}/smoke-note-lesson.png` });
+await page.getByRole('button', { name: 'Close' }).click();
+await page.locator('.crumbs').click();
+await page.getByRole('button', { name: 'Note pédagogique — module 3' }).click();
+await page.waitForSelector('[role="dialog"]');
+check('module note opens from the course map', (await page.locator('[role="dialog"] .lesson').count()) === 4);
+await page.locator('[role="dialog"] .lh', { hasText: '3.3' }).click();
+check('a lesson note lists one objective per exercise', (await page.locator('[role="dialog"] .exercises li').count()) === 6);
+await page.screenshot({ path: `${out}/smoke-note-module.png` });
+await page.getByRole('button', { name: 'Close' }).click();
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light

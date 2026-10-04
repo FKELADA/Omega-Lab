@@ -37,8 +37,8 @@ tests are in [documentation.md](documentation.md).
 | 3.4 PI control and the PLL | ✅ Done | `86c5bb2` |
 | Modules 4–8 | Not started | — |
 
-**Verification:** 74 solver and model unit tests, and a browser test that walks all 19 lessons
-(68 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 94 unit tests (solver, models, note completeness), and a browser test that walks
+all 19 lessons, the documentation page and the teaching notes (75 checks: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -60,6 +60,7 @@ no console errors).
 | 13. Export to code | Not yet |
 | 14. Time-scale map | Not yet |
 | Thread view, fidelity slider (§2) | Not yet. The fidelity slider becomes useful from Module 4 |
+| Teaching notes and in-app documentation | ✅ ⓘ notes per module and lesson (FR/EN, plain language); `#docs` renders documentation.md |
 
 ### What changed from the plan
 

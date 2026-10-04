@@ -3,8 +3,14 @@
   import type { Experiment } from '../lab/types';
   import { S, tr } from './ui.svelte';
 
-  let { current, onpick, onclose }: { current: string; onpick: (e: Experiment) => void; onclose: () => void } =
+  let {
+    current,
+    onpick,
+    onclose,
+    onnote,
+  }: { current: string; onpick: (e: Experiment) => void; onclose: () => void; onnote: (module: number, lesson?: string) => void } =
     $props();
+  const NOTE = { fr: 'Note pédagogique', en: 'Teaching note' };
 </script>
 
 <div class="scrim" role="presentation" onclick={onclose}></div>
@@ -16,14 +22,20 @@
   <ol class="modules">
     {#each curriculum as m (m.n)}
       <li>
-        <div class="mod"><span class="n">{m.n}</span>{tr(m.title)}</div>
+        <div class="mod">
+          <span class="n">{m.n}</span>{tr(m.title)}
+          <button class="info" title={tr(NOTE)} aria-label="{tr(NOTE)} — module {m.n}" onclick={() => onnote(m.n)}>ⓘ</button>
+        </div>
         <ul>
           {#each m.lessons as l (l.id)}
             <li>
               {#if l.experiment}
-                <button class="lesson" class:cur={l.experiment.id === current} onclick={() => onpick(l.experiment!)}>
-                  <span class="id">{l.id}</span>{tr(l.title)}
-                </button>
+                <div class="row">
+                  <button class="lesson" class:cur={l.experiment.id === current} onclick={() => onpick(l.experiment!)}>
+                    <span class="id">{l.id}</span>{tr(l.title)}
+                  </button>
+                  <button class="info" title={tr(NOTE)} aria-label="{tr(NOTE)} — {l.id}" onclick={() => onnote(m.n, l.id)}>ⓘ</button>
+                </div>
               {:else}
                 <span class="lesson off"><span class="id">{l.id}</span>{tr(l.title)}<em>{tr(S.soon)}</em></span>
               {/if}
@@ -89,6 +101,23 @@
     list-style: none;
     padding: 0 0 0 30px;
     margin: 0;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .info {
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 15px;
+    padding: 0 6px;
+    margin-left: auto;
+    border-radius: 6px;
+  }
+  .info:hover {
+    background: var(--accent-soft);
   }
   .lesson {
     display: flex;

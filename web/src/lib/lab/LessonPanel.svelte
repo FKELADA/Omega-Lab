@@ -4,7 +4,7 @@
   import { renderMarkdown } from '../ui/markdown';
   import { lessons } from '../../lessons/curriculum';
 
-  let { lab }: { lab: Lab } = $props();
+  let { lab, onnote }: { lab: Lab; onnote?: () => void } = $props();
 
   let showHint = $state(false);
 
@@ -30,6 +30,7 @@
 <section class="panel lesson">
   <header>
     <span>{tr(S.step)} {lab.stepIndex + 1}/{steps.length}</span>
+    {#if onnote}<button class="note-btn" onclick={onnote}>ⓘ {tr({ fr: 'Note pédagogique', en: 'Teaching note' })}</button>{/if}
     <span class="spacer"></span>
     <div class="dots">
       {#each steps as s, k (s.id)}
@@ -92,6 +93,17 @@
 <style>
   .lesson {
     flex: 1;
+  }
+  .note-btn {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 1px 10px;
+    font-size: 11.5px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
   }
   .scroll {
     overflow-y: auto;
