@@ -35,13 +35,13 @@ tests are in [documentation.md](documentation.md).
 | 3.2 Bode and Nyquist | ✅ Done | `86c5bb2` |
 | 3.3 State space and linearisation | ✅ Done | `86c5bb2` |
 | 3.4 PI control and the PLL | ✅ Done | `86c5bb2` |
-| 4.1 Transmission lines | ✅ Done | `M4` |
-| 4.2 Transformers | ✅ Done | `M4` |
-| 4.3 Synchronous machine | ✅ Done | `M4` |
-| 4.4 Loads | ✅ Done | `M4` |
-| 4.5 Induction motor | ✅ Done | `M4` |
-| 4.6 Shunt and series compensation | ✅ Done | `M4` |
-| 4.7 FACTS | ✅ Done | `M4` |
+| 4.1 Transmission lines | ✅ Done | `2e3694f` |
+| 4.2 Transformers | ✅ Done | `2e3694f` |
+| 4.3 Synchronous machine | ✅ Done | `2e3694f` |
+| 4.4 Loads | ✅ Done | `2e3694f` |
+| 4.5 Induction motor | ✅ Done | `2e3694f` |
+| 4.6 Shunt and series compensation | ✅ Done | `2e3694f` |
+| 4.7 FACTS | ✅ Done | `2e3694f` |
 | Modules 5–8 | Not started | — |
 
 **Verification:** 127 unit tests (solver, models, note completeness), and a browser test that walks
