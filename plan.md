@@ -8,6 +8,75 @@
 
 ---
 
+## Status (4 October 2026)
+
+**Modules 1 and 2 are built: 11 lessons, in French and English.** Code is on
+[GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
+tests are in [documentation.md](documentation.md).
+
+| Lesson | Status | Commit |
+|---|---|---|
+| 1.1 R, L, C as energy elements | Not built (its content is covered inside 1.2) | — |
+| 1.2 RLC transients | ✅ Done | `84cf27a` |
+| 1.3 AC sources and RMS | ✅ Done | `a9b0b3e` |
+| 1.4 Resonance | ✅ Done | `a9b0b3e` |
+| 1.5 DC versus AC | Not built | — |
+| 2.1 Euler and the rotating vector | ✅ Done | `a9b0b3e` |
+| 2.2 Phasors and impedance | ✅ Done | `07b14a7` |
+| 2.3 AC power, P, Q, S | ✅ Done | `07b14a7` |
+| 2.4 Three-phase systems | ✅ Done | `07b14a7` |
+| 2.5 Clarke and Park | ✅ Done | `f446195` |
+| 2.6 Per-unit system | ✅ Done | `f446195` |
+| 2.7 Harmonics and Fourier | ✅ Done | `f446195` |
+| 2.8 Symmetrical components | ✅ Done | `f446195` |
+| Module 0, Modules 3–8 | Not started | — |
+
+**Verification:** 45 solver and model unit tests, and a browser test that walks all 11 lessons
+(42 checks: predictions, misconception feedback, every step check, both languages, phone width,
+no console errors).
+
+### Which interaction ideas (§4) exist so far
+
+| Idea | Status |
+|---|---|
+| 1. Live equations (colour-coded terms, live numbers, term bars, derivations) | ✅ All lessons |
+| 2. Probes and virtual instruments | ✅ Oscilloscope with click-to-probe; frequency response, phasor diagram, s-plane, spectrum, meters. No PMU or impedance scanner yet |
+| 3. Sweep cursors | ✅ Sweep fans and root locus. Stability region maps not yet |
+| 4. Predict, then reveal | ✅ 8 lessons, with scoring |
+| 5. Freeze and compare | ✅ Ghost traces. Split view (two cases side by side) not yet |
+| 6. Synchronised time scrubber | ✅ Every panel follows the cursor, including rotating phasors, helix, epicycles, dq camera |
+| 7. Inverse design (drag an eigenvalue) | Not yet (planned for Module 3) |
+| 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3 |
+| 9. Sound | ✅ Lesson 2.7 (WebAudio) |
+| 10. Break-it / fix-it challenges | ✅ As step checks. No scoring or leaderboard yet |
+| 11. Misconception detectors | ✅ 8 lessons |
+| 12. AI tutor | Not yet |
+| 13. Export to code | Not yet |
+| 14. Time-scale map | Not yet |
+| Thread view, fidelity slider (§2) | Not yet. The fidelity slider becomes useful from Module 4 |
+
+### What changed from the plan
+
+- **Order:** Modules 1–2 were built first, before connecting G2ELin (P2). The AC toolbox turned
+  out to be the foundation every later module reuses: phasors, RMS, dq frames, per-unit.
+- **Lessons are TypeScript data files**, not MyST + JSON. Type checking catches mistakes in step
+  checks and equations, which plain JSON could not. A lesson still touches no interface code.
+- **No three.js:** the Euler helix is an SVG orthographic projection, which is lighter and enough.
+- **Plots:** uPlot for the oscilloscope; plain SVG for everything else. A first uPlot version of
+  the frequency response had unreadable log axes.
+- **Lessons 1.1 and 1.5** were skipped for now: 1.2 already covers R, L and C as energy
+  elements. 1.5 (DC versus AC) fits better just before Module 6.
+
+### Next
+
+1. **Module 3, Signals and control:** 3.1 Laplace and a drag-the-pole playground (inverse
+   design), 3.2 Bode and Nyquist, 3.3 state space and linearisation, 3.4 PI control and the PLL
+   (builds directly on 2.5).
+2. **Module 0** (the hook) and **lesson 1.5**.
+3. **P2:** connect the G2ELin API for Module 8.
+
+---
+
 ## 0. Name
 
 **Omega Lab** (*Oméga Lab* in French).
@@ -177,28 +246,28 @@ changes:
 ### Module 1: Circuits, DC vs AC
 
 - 1.1 R, L, C as energy elements: energy bars, constitutive laws.
-- 1.2 DC transients: RC, RL, RLC step response; τ; underdamped, critical and overdamped cases
+- ✅ 1.2 DC transients: RC, RL, RLC step response; τ; underdamped, critical and overdamped cases
   shown as a **damping-ratio cursor** on an s-plane preview. This is the first view of
   eigenvalues, planted early on purpose.
-- 1.3 AC sources: sine, RMS (the shaded-area animation shows *why* it's √2), average vs RMS.
-- 1.4 Resonance: frequency sweep, Q factor, bandwidth, and resonance by ear.
+- ✅ 1.3 AC sources: sine, RMS (the shaded-area animation shows *why* it's √2), average vs RMS.
+- ✅ 1.4 Resonance: frequency sweep, Q factor, bandwidth, and resonance by ear.
 - 1.5 DC vs AC: why AC won (transformers), why DC is coming back (HVDC, PV, batteries). This
   sets up Module 6.
 
 ### Module 2: The AC toolbox
 
-- 2.1 Euler and the rotating vector: a 3D helix showing e^{jωt}, with its shadows giving cos and
+- ✅ 2.1 Euler and the rotating vector: a 3D helix showing e^{jωt}, with its shadows giving cos and
   sin.
-- 2.2 Phasors and impedance, with the time ↔ phasor duality synchronised on the scrubber.
-- 2.3 AC power: p(t) decomposed into P and Q, S, PF, the power triangle, and PF correction as a
+- ✅ 2.2 Phasors and impedance, with the time ↔ phasor duality synchronised on the scrubber.
+- ✅ 2.3 AC power: p(t) decomposed into P and Q, S, PF, the power triangle, and PF correction as a
   game.
-- 2.4 Three-phase systems: balanced/unbalanced, Y/Δ, why three phases give constant power (watch
-  p(t) flatten as phases are added).
-- 2.5 Clarke and Park (αβ, dq): a "camera riding the rotating frame" animation in which AC
+- ✅ 2.4 Three-phase systems: balanced/unbalanced, Y/Δ, why three phases give constant power (watch
+  p(t) flatten as phases are added). (Built with a star load and a broken-neutral fault; Δ connections are not covered yet.)
+- ✅ 2.5 Clarke and Park (αβ, dq): a "camera riding the rotating frame" animation in which AC
   becomes DC. This is the key that unlocks machines and converters.
-- 2.6 Per-unit system: a base-change calculator (reusing `pu_base.py`).
-- 2.7 Harmonics and Fourier: build a square wave from harmonics, THD.
-- 2.8 Symmetrical components: decompose an unbalanced set into rotating sequence sets.
+- ✅ 2.6 Per-unit system: a base-change calculator. (Built client-side; G2ELin's `pu_base.py` was not needed.)
+- ✅ 2.7 Harmonics and Fourier: build a square wave from harmonics, THD.
+- ✅ 2.8 Symmetrical components: decompose an unbalanced set into rotating sequence sets.
 
 ### Module 3: Signals & Control toolkit (spine)
 
@@ -351,14 +420,20 @@ The concept map is a **prerequisite graph**, not a linear book. An engineer can 
   - HF Space, as for G2ELin
   - an offline desktop bundle for classrooms
 
+> **As built (Modules 1–2):** Svelte 5 + TypeScript + Vite in `web/`. Client-side solver with
+> exact zero-order-hold discretisation by the matrix exponential (sinusoidal sources are extra
+> oscillator states, so AC is exact too). KaTeX for equations, uPlot for the oscilloscope, SVG for
+> every other instrument. Lessons are typed TypeScript data. The G2ELin backend is not connected
+> yet. Details in [documentation.md](documentation.md).
+
 ---
 
 ## 8. Roadmap
 
 | Phase | Content | Why at this point |
 |---|---|---|
-| **P0 (2–3 wk)** | Lesson format, layout shell, live-equation component, client solver, one complete lesson (RLC step response) | Validates the core interaction before scaling up |
-| **P1** | Modules 0–2 | Simple physics, large audience, mostly client-side |
+| **P0 (2–3 wk)** ✅ | Lesson format, layout shell, live-equation component, client solver, one complete lesson (RLC step response) | Validates the core interaction before scaling up |
+| **P1** 🟡 | Modules 0–2 (Modules 1–2 done except 1.1 and 1.5; Module 0 not started) | Simple physics, large audience, mostly client-side |
 | **P2** | Module 8 wired to the G2ELin API, plus the case library | The engine already exists, so this pays off quickly and suits researchers and engineers |
 | **P3** | Modules 3–5 | The spine plus conventional elements |
 | **P4** | Modules 6–7, plus the switched-circuit solver and an impedance-scan endpoint | The heaviest new engineering |
@@ -371,9 +446,9 @@ exactly which concepts Modules 3–5 must build up to.
 
 ## 9. Open decisions
 
-1. **Languages:** French, English, or both from the start?
-2. **Delivery:** extend G2ELin's web front end, or keep Omega Lab as a separate project in
-   `Pedagogie/` with G2ELin as a backend dependency? The recommendation is a separate project.
+1. ~~**Languages:** French, English, or both from the start?~~ **Decided:** both, from the start.
+2. ~~**Delivery:** extend G2ELin's web front end, or keep Omega Lab as a separate project?~~
+   **Decided:** a separate project, with G2ELin to be used as a backend.
 3. **Switching-level detail:** how far should Modules 6–7 go (MMC sub-module level? DC breaker
    internals?). This drives most of the new engine work.
 4. **First audience:** students, utility training, or both? This decides whether P1 or P2 ships
