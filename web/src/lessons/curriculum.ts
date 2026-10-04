@@ -3,6 +3,13 @@
 import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
 import { acRms } from './ac-rms/experiment';
+import { compLesson } from './comp/experiment';
+import { factsLesson } from './facts/experiment';
+import { lineLesson } from './line/experiment';
+import { loadsLesson } from './loads/experiment';
+import { motorLesson } from './motor/experiment';
+import { smLesson } from './sm/experiment';
+import { trafoLesson } from './trafo/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -84,13 +91,13 @@ export const curriculum: ModuleEntry[] = [
     n: 4,
     title: { fr: 'Éléments conventionnels', en: 'Conventional elements' },
     lessons: [
-      soon('4.1', 'Lignes', 'Lines'),
-      soon('4.2', 'Transformateurs', 'Transformers'),
-      soon('4.3', 'Machine synchrone', 'Synchronous machine'),
-      soon('4.4', 'Charges', 'Loads'),
-      soon('4.5', 'Machine asynchrone', 'Induction motor'),
-      soon('4.6', 'Compensation', 'Compensation'),
-      soon('4.7', 'FACTS', 'FACTS'),
+      { id: '4.1', title: { fr: 'Lignes', en: 'Lines' }, experiment: lineLesson },
+      { id: '4.2', title: { fr: 'Transformateurs', en: 'Transformers' }, experiment: trafoLesson },
+      { id: '4.3', title: { fr: 'Machine synchrone', en: 'Synchronous machine' }, experiment: smLesson },
+      { id: '4.4', title: { fr: 'Charges', en: 'Loads' }, experiment: loadsLesson },
+      { id: '4.5', title: { fr: 'Machine asynchrone', en: 'Induction motor' }, experiment: motorLesson },
+      { id: '4.6', title: { fr: 'Compensation', en: 'Compensation' }, experiment: compLesson },
+      { id: '4.7', title: { fr: 'FACTS', en: 'FACTS' }, experiment: factsLesson },
     ],
   },
   {

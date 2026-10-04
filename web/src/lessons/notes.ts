@@ -4,6 +4,7 @@
 // and the automated tests that guarantee the physics, with why each matters.
 
 import type { L } from '../lib/ui/ui.svelte';
+import { module4Note, module4Notes } from './notes4';
 
 const r = String.raw;
 
@@ -75,6 +76,7 @@ export const moduleNotes: Record<number, ModuleNote> = {
       en: '2.1 Euler → 2.2 impedance → 2.3 power → 2.4 three-phase → 2.5 Park → 2.6 per-unit → 2.7 harmonics → 2.8 symmetrical components.',
     },
   },
+  4: module4Note,
   3: {
     summary: {
       fr: 'La colonne vertébrale de la commande : pôles, marges de stabilité, linéarisation et régulateurs. Indispensable pour comprendre machines et onduleurs.',
@@ -605,4 +607,5 @@ export const lessonNotes: Record<string, LessonNote> = {
       { what: { fr: 'Un saut de 30° fait bondir la fréquence estimée de plus de 2 Hz.', en: 'A 30° jump makes the estimated frequency leap by more than 2 Hz.' }, why: { fr: 'Garantit le phénomène au cœur de la leçon.', en: 'Guarantees the phenomenon at the heart of the lesson.' } },
     ],
   },
+  ...module4Notes,
 };

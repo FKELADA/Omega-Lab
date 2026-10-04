@@ -83,7 +83,7 @@
       </div>
       <div class="col mid">
         <Scope {lab} />
-        <div class="instruments" style="--n: {lab.exp.instruments.length}">
+        <div class="instruments" style="--n: {lab.exp.instruments.length}; flex: {lab.exp.instruments.length >= 3 ? 1.4 : 1}">
           {#each lab.exp.instruments as Instrument, k (k)}
             <Instrument {lab} />
           {/each}

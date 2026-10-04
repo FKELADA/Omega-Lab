@@ -10,7 +10,7 @@
 
 ## Status (4 October 2026)
 
-**Modules 0 to 3 are built: 19 lessons, in French and English.** Code is on
+**Modules 0 to 4 are built: 26 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -35,10 +35,17 @@ tests are in [documentation.md](documentation.md).
 | 3.2 Bode and Nyquist | ✅ Done | `86c5bb2` |
 | 3.3 State space and linearisation | ✅ Done | `86c5bb2` |
 | 3.4 PI control and the PLL | ✅ Done | `86c5bb2` |
-| Modules 4–8 | Not started | — |
+| 4.1 Transmission lines | ✅ Done | `M4` |
+| 4.2 Transformers | ✅ Done | `M4` |
+| 4.3 Synchronous machine | ✅ Done | `M4` |
+| 4.4 Loads | ✅ Done | `M4` |
+| 4.5 Induction motor | ✅ Done | `M4` |
+| 4.6 Shunt and series compensation | ✅ Done | `M4` |
+| 4.7 FACTS | ✅ Done | `M4` |
+| Modules 5–8 | Not started | — |
 
-**Verification:** 94 unit tests (solver, models, note completeness), and a browser test that walks
-all 19 lessons, the documentation page and the teaching notes (75 checks: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 127 unit tests (solver, models, note completeness), and a browser test that walks
+all 26 lessons, the documentation page and the teaching notes (96 checks: predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -46,16 +53,16 @@ no console errors).
 | Idea | Status |
 |---|---|
 | 1. Live equations (colour-coded terms, live numbers, term bars, derivations) | ✅ All lessons |
-| 2. Probes and virtual instruments | ✅ Oscilloscope with click-to-probe; frequency response, phasor diagram, s-plane, spectrum, meters. No PMU or impedance scanner yet |
+| 2. Probes and virtual instruments | ✅ Oscilloscope with click-to-probe; frequency response, phasor diagram, s-plane, spectrum, meters, and x–y characteristic charts (line profile, B–H, capability, V-curves, P–V, torque–speed, V–I). No PMU or impedance scanner yet |
 | 3. Sweep cursors | ✅ Sweep fans and root locus (in R, K, D, ζ). Stability region maps not yet |
-| 4. Predict, then reveal | ✅ 8 lessons, with scoring |
+| 4. Predict, then reveal | ✅ 13 lessons, with scoring |
 | 5. Freeze and compare | ✅ Ghost traces. Split view (two cases side by side) not yet |
 | 6. Synchronised time scrubber | ✅ Every panel follows the cursor, including rotating phasors, helix, epicycles, dq camera |
 | 7. Inverse design (drag an eigenvalue) | ✅ Lesson 3.1: drag poles into a design target region |
 | 8. Animated power flow | Partial: charge dots in 1.2, heater glow in 1.3, energy dots plant-to-socket in 0.1, reversing power arrow in 1.1 |
 | 9. Sound | ✅ Lesson 2.7 (WebAudio) |
 | 10. Break-it / fix-it challenges | ✅ As step checks. No scoring or leaderboard yet |
-| 11. Misconception detectors | ✅ 8 lessons |
+| 11. Misconception detectors | ✅ 13 lessons |
 | 12. AI tutor | Not yet |
 | 13. Export to code | Not yet |
 | 14. Time-scale map | Not yet |
@@ -74,11 +81,19 @@ no console errors).
 - **Module 0** uses deliberately simple, illustrative models (a synthetic demand curve, one
   aggregated machine for the blackout). The 2019 GB replay reproduces the sequence of events with
   rounded figures, not the details.
+- **Module 4** uses client-side models (ABCD lines, saturating-core RK4, the classical
+  short-circuit expression, ZIP/Karlsson–Hill loads, the induction-motor equivalent circuit, nose
+  curves, SVC/STATCOM controllers), not G2ELin's `sm.py`. Deferred from the plan:
+  - the travelling-wave animation;
+  - tap changers and phase shifters;
+  - the generator's dq model and its fidelity slider, AVR, governor and PSS (better placed with
+    Module 8 on G2ELin);
+  - TCSC and UPFC as simulations (they appear as equation cards only).
 
 ### Next
 
 1. **P2:** connect the G2ELin API for Module 8.
-2. **Module 4**, conventional elements, starting with the synchronous machine (builds on 2.5 and 3.3).
+2. **Module 5**, the network in steady state (power flow), building on 4.1 and 4.6.
 
 ---
 
@@ -293,6 +308,8 @@ Each tool is introduced on a circuit the learner already knows from Modules 1–
 
 ### Module 4: Conventional power-system elements
 
+✅ Built as seven lessons: 4.1 lines (models, Ferranti, SIL) · 4.2 transformers (inrush, efficiency) · 4.3 synchronous machine (short circuit, excitation, capability) · 4.4 loads (ZIP, recovery, CVR) · 4.5 induction motor (start-up, FIDVR stall) · 4.6 compensation (nose curve) · 4.7 SVC versus STATCOM. See "What changed from the plan" for the parts deferred.
+
 - **4.1 Lines:**
   - distributed → π model
   - SIL and the Ferranti effect
@@ -442,7 +459,7 @@ The concept map is a **prerequisite graph**, not a linear book. An engineer can 
 | **P0 (2–3 wk)** ✅ | Lesson format, layout shell, live-equation component, client solver, one complete lesson (RLC step response) | Validates the core interaction before scaling up |
 | **P1** ✅ | Modules 0–2 | Simple physics, large audience, mostly client-side |
 | **P2** | Module 8 wired to the G2ELin API, plus the case library | The engine already exists, so this pays off quickly and suits researchers and engineers |
-| **P3** 🟡 | Modules 3–5 (Module 3 done) | The spine plus conventional elements |
+| **P3** 🟡 | Modules 3–5 (Modules 3 and 4 done) | The spine plus conventional elements |
 | **P4** | Modules 6–7, plus the switched-circuit solver and an impedance-scan endpoint | The heaviest new engineering |
 | **P5** | AI tutor, challenges/leaderboards, classroom mode (teacher dashboard, assignments), FR/EN localisation | Scaling up |
 

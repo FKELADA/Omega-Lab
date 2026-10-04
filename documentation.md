@@ -18,8 +18,9 @@ contributors who extend them or check the physics.
 6. [Module 1 — Circuits, DC vs AC](#6-module-1--circuits-dc-vs-ac)
 7. [Module 2 — The AC toolbox](#7-module-2--the-ac-toolbox)
 8. [Module 3 — Signals and control](#8-module-3--signals-and-control)
-9. [Modules not yet built](#9-modules-not-yet-built)
-10. [Standards and figures quoted in the lessons](#10-standards-and-figures-quoted-in-the-lessons)
+9. [Module 4 — Grid elements](#9-module-4--grid-elements)
+10. [Modules not yet built](#10-modules-not-yet-built)
+11. [Standards and figures quoted in the lessons](#11-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -103,6 +104,10 @@ fourth-order Runge–Kutta (`lib/core/ode.ts`): each output interval is split in
 For the PLL at 100 Hz bandwidth, that gives $omega_n h approx 0.03$, well inside RK4's
 accuracy range. Linear models keep the exact step of §2.1.
 
+Module 4 uses the same RK4 for the transformer flux (4.2), the recovering load (4.4), the motor
+mechanics (4.5) and the FACTS controllers (4.7). The line (4.1), the generator (4.3) and the
+compensation (4.6) are solved as phasors or closed forms.
+
 The blackout replay (0.2) uses explicit Euler with a 2 ms step instead, because its protection
 events (RoCoF trip, load shedding) must be checked at every step.
 
@@ -141,6 +146,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 | `steps` | Guided steps: Markdown text, an optional `hint`, and a `check(lab)` that marks the step done. |
 | `predict` | Optional predict-then-reveal: which signal, a y-range that does not give the answer away, and a `diagnose` function that returns misconception feedback. |
 | `bode`, `phasors` | Optional specifications for the frequency-response and phasor-diagram instruments. |
+| `charts` | Optional characteristic charts (x–y curves, operating points, bands, markers), drawn by `XYChart` and placed with the `Chart0`–`Chart2` instruments. |
 
 **Behaviour shared by every lesson:**
 
@@ -172,9 +178,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 94 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 127 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 19 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 75 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 26 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. 96 checks. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -1493,17 +1499,477 @@ by more than 30 % of the step and the sketch by less than 15 %.
 
 ---
 
-## 9. Modules not yet built
+## 9. Module 4 — Grid elements
+
+Module 4 builds the components of the grid one at a time: the line, the transformer, the
+generator, the loads, the motor, and the devices that compensate them. Each lesson combines the
+time-domain oscilloscope with one or two **characteristic charts** (profile, magnetising curve,
+capability, P–V, torque–speed…). These charts are declared as data (`charts` in the lesson's
+`Experiment`) and drawn by the shared `XYChart` instrument. All models are in
+`lib/models/module4.ts` and tested in `lib/models/module4.test.ts`.
+
+All quantities are per unit on the element's own rating, except in 4.1, which uses kV, MW and
+km.
+
+### 4.1 Transmission lines · `#4.1` · `lessons/line`
+
+**Objectives.** After this lesson the learner can:
+- describe a line as series impedance and shunt admittance distributed along its length;
+- explain the Ferranti effect and estimate it with $1/\cos\beta L$;
+- define the surge impedance load (SIL) and say what happens above and below it;
+- choose between the short-line, nominal-π and exact models from the line length.
+
+**Model.** Typical overhead-line constants per km:
+- 400 kV: $r = 0.03\ \Omega$, $l = 1.05$ mH, $c = 11.5$ nF.
+- 225 kV: $r = 0.06\ \Omega$, $l = 1.3$ mH, $c = 9$ nF.
+
+The sending end is held at rated voltage. The load is a constant impedance sized to draw $P$ at
+rated voltage and the chosen power factor, $Z_L = U^2/S^*$. The line is reduced to its ABCD
+matrix:
+- short line: $A = 1$, $B = Z$, $C = 0$;
+- nominal π: $A = 1 + ZY/2$, $B = Z$, $C = Y(1 + ZY/4)$;
+- exact: $A = \cosh\gamma L$, $B = Z_c\sinh\gamma L$, $C = \sinh(\gamma L)/Z_c$.
+
+Then $V_r = V_s/(A + B/Z_L)$. The profile along the line uses the exact solution
+$V(x) = V_r\cosh\gamma x + Z_c I_r\sinh\gamma x$, with $x$ measured from the receiving end, in
+61 points. The oscilloscope shows the phasors as waveforms over 40 ms.
+
+**Formulas.**
+- $z = r + j\omega l$, $y = j\omega c$, $\gamma = \sqrt{zy} = \alpha + j\beta$, $Z_c = \sqrt{z/y}$,
+  with $Z_c$ live (≈ 302 Ω at 400 kV).
+- The exact solution $V(x)$ above.
+- $\mathrm{SIL} = U^2/Z_c$ (≈ 529 MW at 400 kV), and the no-load ratio
+  $V_r/V_s = 1/\lvert\cosh\gamma L\rvert \approx 1/\cos\beta L$, live.
+- The π model, nominal and exact: $Z' = Z_c\sinh\gamma L$, $Y'/2 = \tanh(\gamma L/2)/Z_c$.
+- *Engineer, Researcher:* loadability (St Clair curve): about 3 SIL at 80 km, 1 SIL at 500 km.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Length $L$ | 10–1000 km (log) | 600 km |
+| Load $P$ | 0–2000 MW | 0 |
+| $\cos\varphi$ | 0.8–1 | 1 |
+| Voltage | 225 / 400 kV | 400 kV |
+| Model | short / nominal π / exact | exact |
+
+**Panels.**
+- Line diagram: source, six π sections, load, $V_r$ in pu, SIL and $Z_c$.
+- Voltage profile along the line: no load, at SIL, and at the present load; the dot marks the
+  chosen model's receiving voltage.
+- The three models side by side: $\lvert V_r\rvert$, error against the exact model, and
+  $\lvert I_s\rvert$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | An unloaded line (predict $v_r$) | Prediction revealed |
+| 2 | The natural load | $P$ within 5 % of SIL, $\cos\varphi > 0.99$ |
+| 3 | Too much load | $\lvert V_r\rvert < 0.9$ pu |
+| 4 | The model that is too simple | Short-line model, $L \ge 400$ km |
+| 5 | When the π model is enough | Nominal π, $L \le 200$ km |
+
+**Misconception detected** (y-range ±1.6 × the sending peak): the far end is no higher than the
+sending end. Triggers when the fitted 50 Hz amplitude of the sketch is at most 1.02 × the sending
+amplitude.
+
+**Tests.**
+- SIL of the 400 kV line is about 530 MW.
+- At no load, $V_r/V_s \approx 1/\cos\beta L$.
+- At SIL the profile is nearly flat.
+- The nominal π matches the exact model at short length, not at 1000 km.
+
+### 4.2 Transformers · `#4.2` · `lessons/trafo`
+
+**Objectives.** After this lesson the learner can:
+- state the ideal transformer relations;
+- explain inrush current from flux integration and core saturation;
+- name the effect of switching instant, residual flux and winding resistance on inrush;
+- read the equivalent circuit from nameplate data ($u_k$, $i_0$, $p_0$) and compute regulation
+  and efficiency.
+
+**Model.** Single-phase, no load, per unit on the transformer rating.
+- Flux: $\dot\psi = \omega\,(\sin(\omega t + \theta_0) - r\,i)$, starting at $\psi(0) = \psi_r$.
+  In steady state, $\psi = -\cos(\omega t + \theta_0)$.
+- Magnetising curve, two slopes: $i = 0.01\,\psi$ below the knee $\psi_{sat}$, then
+  $\psi_{sat}\cdot 0.01 + (\lvert\psi\rvert - \psi_{sat})/0.25$ above it (air-core inductance
+  0.25 pu).
+- RK4, 4000 samples × 4 substeps over 0.4 s.
+- Steady state: $u_k = 10\,\%$, $u_R = 1\,\%$, $i_0 = 1\,\%$, $p_0 = 0.2\,\%$.
+
+**Formulas.**
+- Ideal: $V_1/V_2 = N_1/N_2$, $I_1/I_2 = N_2/N_1$, $S_1 = S_2$.
+- Flux at switch-on: $\psi(t) = \psi_r + \cos\theta_0 - \cos(\omega t + \theta_0)$, so
+  $\psi_{max} = \psi_r + \cos\theta_0 + 1$ (live), with the peak current.
+- Equivalent circuit values from the nameplate.
+- Regulation $\varepsilon \approx S\,(u_R\cos\varphi + u_X\sin\varphi)$ and efficiency
+  $\eta = \dfrac{S\cos\varphi}{S\cos\varphi + p_0 + S^2u_R}$, live.
+- *Engineer, Researcher:* vector group Dyn11 and why the delta blocks zero sequence.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Switching angle $\theta_0$ | 0–180° | 0° |
+| Residual flux $\psi_r$ | −0.8 to 0.8 pu | 0.6 pu |
+| Saturation knee $\psi_{sat}$ | 1.05–1.4 pu | 1.2 pu |
+| Winding resistance $r$ | 0.002–0.05 pu (log) | 0.01 pu |
+| Load $S$ | 0–1.2 pu | 1 pu |
+| $\cos\varphi$ | 0.6–1 | 0.8 |
+
+**Panels.**
+- Core and windings, with the core turning red when saturated, the live current and flux, and
+  the vector-group clock.
+- Magnetising curve (ψ against i) with the linear zone shaded and the operating point.
+- Efficiency against load, with the maximum marked.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the switch-on current | Prediction revealed |
+| 2 | Switching at the right moment | Peak inrush < 0.05 pu |
+| 3 | Residual flux | $\theta_0 \ge 85°$ and peak inrush > 1 pu |
+| 4 | The inrush decays | $r \ge 0.03$ pu |
+| 5 | Efficiency | Load within 0.05 pu of $\sqrt{p_0/u_R}$ (≈ 0.45) |
+
+**Misconception detected** (y-range −2 to 7 pu): the no-load current stays small. Triggers when
+the true peak exceeds 2 pu and the sketch's peak is under 40 % of it.
+
+**Tests.**
+- Switching at the voltage peak with no residual flux gives no inrush.
+- Switching at voltage zero with residual flux gives a large inrush.
+- The inrush decays.
+- Efficiency peaks where copper losses equal iron losses.
+
+### 4.3 Synchronous machine · `#4.3` · `lessons/sm`
+
+**Objectives.** After this lesson the learner can:
+- describe the three periods of a terminal short circuit and the reactances that govern them;
+- explain the DC offset and its dependence on the fault instant;
+- draw the phasor diagram $E = V + jX_dI$ of a round-rotor machine on an infinite bus;
+- link excitation to reactive power (over- and under-excitation, V-curves);
+- read a capability chart and its limits.
+
+**Model.** Two modes.
+- **Short circuit** (3 s): a three-phase fault at the terminals of a machine at no load,
+  $E = 1$ pu:
+  - $i_a = \sqrt2\left[(1/X''_d - 1/X'_d)e^{-t/T''_d} + (1/X'_d - 1/X_d)e^{-t/T'_d} + 1/X_d\right]\cos(\omega t + \theta) - (\sqrt2/X''_d)\cos\theta\,e^{-t/T_a}$;
+  - $T''_d = 30$ ms, $T'_d = 0.8$ s, $T_a = 0.15$ s;
+  - the AC envelope and DC term are shown as separate traces.
+- **Steady state** (40 ms): round rotor on an infinite bus, $V = 1$ pu:
+  - $\sin\delta = PX_d/(EV)$, $I = (E\angle\delta - V)/(jX_d)$;
+  - $Q = (EV\cos\delta - V^2)/X_d$;
+  - no equilibrium when $PX_d > EV$.
+- Capability chart:
+  - stator limit $\lvert S\rvert = 1$;
+  - field limit $E \le 2.6$ pu;
+  - turbine limit $P \le 0.9$ pu;
+  - practical stability limit δ = 70°.
+
+**Formulas.**
+- The short-circuit current above.
+- $\underline E = \underline V + jX_d\underline I$ with live $\lvert E\rvert$, δ and $\lvert I\rvert$.
+- $P = \dfrac{EV}{X_d}\sin\delta$ and $Q = \dfrac{EV\cos\delta - V^2}{X_d}$, live.
+- *Engineer, Researcher:* breaker duty $i_{peak} \approx 2\sqrt2E/X''_d$, and the much lower
+  fault current of inverters (1.1–1.5 pu).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Mode | short circuit / steady state | short circuit |
+| $P$ | 0–1 pu | 0.8 pu |
+| $E$ | 0.3–2.8 pu | 1.8 pu |
+| $X_d$ | 0.8–2.2 pu | 1.8 pu |
+| $X'_d$ | 0.2–0.5 pu | 0.3 pu |
+| $X''_d$ | 0.1–0.35 pu | 0.2 pu |
+| Fault instant θ | 0–90° | 0° |
+
+**Panels.**
+- Machine and fault: the field bar shows $E$, with the fault or the infinite bus.
+- Phasor diagram of $V$, $jX_dI$, $E$ and $I$.
+- Capability chart with the operating point.
+- V-curves ($\lvert I\rvert$ against $E$) at $P = 0$ and at the present $P$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the short-circuit current | Prediction revealed |
+| 2 | The DC component | Short circuit, θ ≥ 85° |
+| 3 | Exporting reactive power | Steady state, $Q \ge 0.3$ pu |
+| 4 | Absorbing reactive power | Steady state, stable, $Q \le -0.2$ pu |
+| 5 | The minimum current | Steady state, $\lvert Q\rvert < 0.03$ pu |
+| 6 | The stability limit | Steady state, δ ≥ 70° |
+
+**Misconception detected** (y-range $\pm 2.2\sqrt2/X''_d$): the fault current is constant.
+Triggers when the sketch's largest value before 150 ms is under 1.5 × its largest value after
+2 s.
+
+**Tests.**
+- $Q = 0$ when $E = \sqrt{1 + (PX_d)^2}$.
+- Over-excited exports Q; under-excited absorbs it.
+- There is no equilibrium when $PX_d > EV$.
+- The short-circuit current starts at zero whatever θ, peaks above $1.8\sqrt2/X''_d$, and is
+  within 15 % of $\sqrt2/X_d$ after 3 s.
+
+### 4.4 Loads · `#4.4` · `lessons/loads`
+
+**Objectives.** After this lesson the learner can:
+- describe the ZIP and exponential load models;
+- predict how each type of load reacts to a voltage drop, in power and in current;
+- explain load recovery (thermostats, tap changers) and why it matters for voltage stability;
+- estimate the energy saved by conservation voltage reduction (CVR).
+
+**Model.** The voltage steps from 1 pu to $V_2$ at $t = 5$ s; the window is 60 s.
+- Static part, ZIP: $P = a_ZV^2 + a_IV + a_P$, with $a_P = 1 - a_Z - a_I$ (clamped at 0, then
+  normalised).
+- Recovering part (Karlsson–Hill):
+  - $T_p\dot x = -x + (V^{\alpha_s} - V^{\alpha_t})$, with $P_d = x + V^{\alpha_t}$;
+  - $\alpha_s = 0$ (it recovers to constant power), $\alpha_t = 2$ (it behaves as an impedance
+    right after the step);
+  - RK4.
+- Total: $P = (1 - a_D)P_{ZIP} + a_DP_d$, and $I = P/V$.
+
+**Formulas.**
+- The ZIP model, with the live coefficients.
+- The exponential model $P/P_0 = V^\alpha$: α = 2 (Z), 1 (I), 0 (P).
+- The recovery equation above.
+- *Engineer, Researcher:* $\mathrm{CVR} = (\Delta P/P)/(\Delta V/V) \approx 2a_Z + a_I$, live.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $V_2$ (after the step) | 0.85–1.05 pu | 0.9 pu |
+| $a_Z$ | 0–1 | 0.4 |
+| $a_I$ | 0–1 | 0.3 |
+| Recovering share $a_D$ | 0–1 | 0 |
+| $T_p$ | 1–60 s (log) | 15 s |
+
+**Panels.**
+- Load composition: live V, P and I, with a bar for each share.
+- P against V: the Z, I and P references, the mix, and the operating point.
+- I against V: constant power (1/V), constant impedance (V), the mix.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the consumption | Prediction revealed |
+| 2 | Heating only | Constant-impedance share > 0.99, $a_D < 0.01$ |
+| 3 | Electronics only | Constant-power share > 0.99 and the current trace shown |
+| 4 | The load comes back | $a_D \ge 0.8$, time cursor beyond 90 % |
+| 5 | Saving by lowering the voltage | $a_D < 0.01$, $0.95 \le V_2 \le 0.97$, $a_Z \ge 0.7$ |
+
+**Misconception detected** (y-range 0.7–1.1 pu): the power stays at 1 pu. Triggers when every
+sketched point after 7 s is above 0.985 while the true final power is under 0.97.
+
+**Tests.**
+- A constant-impedance load draws $V^2$.
+- The weights are normalised, and the CVR factor is $2a_Z + a_I$.
+- A recovering load dips to $V^2$, then returns to its constant power.
+
+### 4.5 Induction motor · `#4.5` · `lessons/motor`
+
+**Objectives.** After this lesson the learner can:
+- define slip and read the torque–speed curve (starting torque, breakdown torque);
+- predict the starting current (5–7 times rated);
+- explain why a motor may not start, and why a dip can stall a running motor (FIDVR);
+- relate rotor resistance to starting torque and running slip.
+
+**Model.** Steady-state equivalent circuit:
+- $R_s = 0.01$, $X_s = 0.1$, $X_m = 3$, $X_r = 0.1$ pu, rotor branch $R_r/g + jX_r$.
+- Torque from the Thevenin equivalent seen by the rotor:
+  $T_e = \dfrac{V_{th}^2R_r/g}{(R_{th} + R_r/g)^2 + (X_{th} + X_r)^2}$.
+- Mechanics: $2H\dot g = T_L - T_e$, integrated with RK4 over 6 s.
+  - A stalled rotor does not turn backwards.
+- Load torque: fan $T_0\omega^2$, or constant $T_0$.
+- Initial state:
+  - at rest: $g = 1$;
+  - running: the stable operating slip, found by bisection below the breakdown slip.
+- A dip to $V_{dip}$ starts at 2.5 s.
+- "Stalled" means a final speed under 0.5 pu.
+
+**Formulas.**
+- $g = (\omega_s - \omega)/\omega_s$, live.
+- $T_e$ above, with live $T_{max}$, its slip, and $T_{start}$.
+- $2H\,d\omega/dt = T_e - T_L$.
+- *Researcher, Engineer:* the equivalent-circuit values and FIDVR.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Load torque $T_0$ | 0–1.5 pu | 0.8 pu |
+| Load type | fan / constant torque | fan |
+| Initial state | at rest / running | at rest |
+| $V$ | 0.7–1.1 pu | 1 pu |
+| $V_{dip}$ | 0.3–1 pu | 1 (no dip) |
+| Dip duration | 0.05–1 s (log) | 0.2 s |
+| $R_r$ | 0.005–0.1 pu (log) | 0.02 pu |
+| $H$ | 0.2–3 s | 0.8 s |
+
+**Panels.**
+- Motor and load, with a rotor turning at the simulated speed, live ω, g, I and V, and the state:
+  starting, running, slowing, recovering or stalled.
+- Torque against speed: the motor at rated voltage and during the dip, the load, and both
+  operating points.
+- Current against speed.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the starting current | Prediction revealed |
+| 2 | Too heavy to start | At rest, constant torque, no dip, stalled |
+| 3 | A voltage dip | Running, constant torque, a dip, stalled (for example 0.9 pu, H = 0.2 s, 0.5 pu for 0.5 s) |
+| 4 | The fan rides through | Running, fan, $V_{dip} \le 0.5$, duration ≥ 0.5 s, not stalled |
+| 5 | Rotor resistance | $R_r \ge 0.06$ pu |
+
+**Misconception detected** (y-range 0–9 pu): the starting current is about rated. Triggers when
+the sketch's peak is under half the true peak.
+
+**Tests.**
+- Breakdown torque > 2 × starting torque; starting current > 4 pu.
+- A fan load starts and runs near synchronous speed.
+- A constant-torque load above the starting torque never starts.
+- A running constant-torque motor with H = 0.2 s stalls in a 0.5 pu, 0.5 s dip; a fan
+  rides through it.
+- The same dip cleared in 0.3 s is ridden through.
+
+### 4.6 Compensation · `#4.6` · `lessons/comp`
+
+**Objectives.** After this lesson the learner can:
+- explain why voltage depends mainly on reactive power on a line where $X \gg R$;
+- use a shunt capacitor or reactor to correct voltage at heavy or light load;
+- explain how series compensation raises the transfer limit;
+- read a P–V (nose) curve and identify the collapse point.
+
+**Model.**
+- Sending end 1 pu, line $R + jX(1 - k)$ with $R = 0.03$ and $X = 0.3$ pu.
+- Load $P(1 + j\tan\varphi)$ at the receiving end, with a shunt susceptance $B$ there
+  ($B > 0$ is a capacitor).
+- For each $V$ from 1.5 down to 0.1 pu, the load $P$ that gives $\lvert V_s\rvert = 1$ is the
+  root of a quadratic. This traces the nose curve.
+- The operating point is the upper-branch intersection with the chosen $P$. Beyond the tip
+  there is none, which is collapse.
+- The oscilloscope shows $v_s$ and $v_r$ (40 ms).
+
+**Formulas.**
+- $\Delta V \approx (RP + XQ)/V$, with the live $V_r$.
+- Shunt: $Q_C = BV^2$, live.
+- Series: $X_{eff} = X(1 - k)$, with the live $P_{max}$.
+- *Researcher, Engineer:* subsynchronous resonance, $f_{er} = f_0\sqrt k$ (Mohave 1970–71,
+  SSCI).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Load $P$ | 0–2.2 pu | 0.6 pu |
+| $\cos\varphi$ | 0.8–1 | 0.95 |
+| Shunt $B$ | −0.5 to 1 pu | 0 |
+| Series $k$ | 0–0.7 | 0 |
+
+**Panels.**
+- One-line diagram with the shunt and series devices, live $V_r$, $P$ and $P_{max}$.
+- Nose curve, uncompensated against the present setting, with the 0.95–1.05 pu band, the
+  operating point and the tip $P_{max}$.
+- $P_{max}$ against $k$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | A heavy load | $V < 0.9$ pu with $B = 0$, $k = 0$ |
+| 2 | A shunt capacitor | $B > 0$, $V \ge 0.98$ pu, $P \ge 0.8$ pu |
+| 3 | At night, at light load | $P \le 0.2$, $B \ge 0.5$, $V > 1.1$ pu |
+| 4 | A series capacitor | $k \ge 0.4$ |
+| 5 | Collapse | No operating point |
+
+No prediction in this lesson.
+
+**Tests.**
+- A shunt capacitor raises the receiving voltage.
+- 50 % series compensation roughly doubles the transfer limit.
+- Beyond the nose (1.05 $P_{max}$) there is no solution.
+
+### 4.7 FACTS · `#4.7` · `lessons/facts`
+
+**Objectives.** After this lesson the learner can:
+- explain how injecting capacitive current raises the voltage behind a grid reactance;
+- compare an SVC (variable susceptance) with a STATCOM (current source) during a dip;
+- relate the effect to grid strength (SCR) and the device rating;
+- recognise the role of the droop and the response time.
+
+**Model.**
+- The grid is a Thevenin source $E$ behind $X = 1/\mathrm{SCR}$. $E$ drops to $E_{dip}$ from
+  0.5 to 1.5 s.
+- The two devices are simulated in separate copies of the system:
+  - **STATCOM:** $V = E + XI$. The current target is $\mathrm{clamp}((V_{ref} - V)/k, \pm I_{max})$.
+  - **SVC:** $V = E/(1 - XB)$. The susceptance target is $\mathrm{clamp}((V_{ref} - V)/k, \pm B_{max})$.
+- Both follow their target with a first-order lag $T_r$, integrated with RK4 over 2.5 s.
+- $Q = VI$ for the STATCOM and $BV^2$ for the SVC.
+- The reported voltages and reactive powers are taken 50 ms before the dip clears, once the
+  response has settled.
+
+**Formulas.**
+- $V = E + XI_c$, $X = 1/\mathrm{SCR}$, live.
+- SVC: $I = BV$, $Q = BV^2$; STATCOM: $I \le I_{max}$, $Q = VI$.
+- Droop: $V = V_{ref} - kI$.
+- During the dip: V and Q for none, SVC and STATCOM, live.
+- *Researcher, Engineer:* TCSC and UPFC.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $E_{dip}$ | 0.4–0.95 pu | 0.7 pu |
+| SCR | 1.5–10 | 3 |
+| Rating $S_n$ | 0.2–1 pu | 0.5 pu |
+| Droop $k$ | 0.01–0.08 | 0.03 |
+| Response time $T_r$ | 5–200 ms (log) | 30 ms |
+
+**Panels.**
+- The two systems side by side with live V and Q, and a dip warning.
+- V–I characteristics of both devices with the normal and dip grid lines; the intersections are
+  the operating points.
+- Maximum reactive power against voltage: STATCOM $\propto V$, SVC $\propto V^2$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Compare during a dip | Time cursor beyond 90 % |
+| 2 | A deep dip | $E_{dip} \le 0.5$ pu |
+| 3 | A strong grid | SCR ≥ 8 |
+| 4 | Speed | $T_r \le 10$ ms |
+| 5 | Sizing | SCR ≤ 4, $E_{dip} \le 0.7$, STATCOM voltage during the dip ≥ 0.9 pu |
+
+No prediction in this lesson.
+
+**Tests.**
+- Both devices raise the voltage during the dip.
+- In a deep dip, the STATCOM delivers more reactive power than the SVC.
+- On a weak grid (SCR 3) with a 0.7 pu dip, a 0.5 pu STATCOM does not hold 0.9 pu, and a 0.7 pu
+  one does.
+
+---
+
+## 10. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
-- Modules 4 (conventional elements), 5 (steady-state network), 6 (power electronics),
-  7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
+- Modules 5 (steady-state network), 6 (power electronics), 7 (IBR and HVDC) and 8 (stability,
+  on the G2ELin engine).
 
 Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 10. Standards and figures quoted in the lessons
+## 11. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.
@@ -1517,4 +1983,10 @@ before using them in a formal context.
 | Reactive energy billed beyond $\tan\varphi = 0.4$ (MV customers, France) | 2.3 | French network tariff (TURPE) |
 | 230/400 V low-voltage networks | 2.4 | IEC 60038 |
 | Capacitor-bank detuning near $h \approx 4.3$ | 1.4 | Common industry practice |
-| Typical pu values of transformers and generators | 2.6 | Standard textbook ranges |
+| Typical pu values of transformers and generators | 2.6, 4.2, 4.3 | Standard textbook ranges |
+| Line constants, SIL ≈ 530 MW at 400 kV | 4.1 | Typical overhead-line data (Kundur, *Power System Stability and Control*) |
+| Loadability ≈ 3 SIL at 80 km, 1 SIL at 500 km | 4.1 | St Clair curve (Dunlop et al., 1979) |
+| Inverter fault current 1.1–1.5 pu | 4.3 | Common inverter ratings |
+| ZIP and exponential load models, CVR factor | 4.4 | IEEE Task Force on load representation (1993, 1995) |
+| Starting current 5–7 × rated, FIDVR | 4.5 | NERC FIDVR technical reference |
+| Mohave subsynchronous-resonance failures (1970–71) | 4.6 | IEEE SSR working group |

@@ -116,6 +116,45 @@ export interface Experiment {
   source?: 'dc' | 'ac';
   /** Unit of the model's time axis. Default: seconds. */
   timeUnit?: 's' | 'h';
+  /** Characteristic charts, shown by the Chart0/1/2 instruments in this order. */
+  charts?: ChartSpec[];
+}
+
+export interface ChartSeries {
+  label?: L;
+  color: string; // CSS custom property, e.g. '--c-p'
+  pts: [number, number][];
+  dash?: boolean;
+  width?: number;
+}
+
+export interface ChartPoint {
+  x: number;
+  y: number;
+  color: string;
+  label?: string;
+  hollow?: boolean;
+}
+
+export interface ChartAxis {
+  label: string;
+  unit?: string;
+  range: [number, number] | ((lab: Lab) => [number, number]);
+  log?: boolean;
+}
+
+/** A characteristic curve (torque–slip, nose curve, V–I, capability…) with live operating points. */
+export interface ChartSpec {
+  title: L;
+  x: ChartAxis;
+  y: ChartAxis;
+  series: (lab: Lab) => ChartSeries[];
+  points?: (lab: Lab) => ChartPoint[];
+  /** Horizontal shaded bands, e.g. an acceptable voltage range. */
+  bands?: (lab: Lab) => { y0: number; y1: number }[];
+  /** Vertical marker lines. */
+  vlines?: (lab: Lab) => { x: number; label?: string }[];
+  note?: (lab: Lab) => L | null;
 }
 
 export type LabComponent = Component<{ lab: Lab }>;

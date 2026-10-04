@@ -15,15 +15,15 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 94 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC) |
+| `npm test` | 127 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 19 lessons, the documentation page and the teaching notes in a real Chrome, 75 checks (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 26 lessons, the documentation page and the teaching notes in a real Chrome, 96 checks (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Nineteen lessons are complete (Modules 0–3), in French and English. Open one directly with its number in the URL,
+Twenty-six lessons are complete (Modules 0–4), in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -47,6 +47,13 @@ e.g. `http://localhost:5173/#1.4`.
 | **3.2 Bode and Nyquist** | Shrinks the margins, crosses into instability, tunes for 45° PM, trades accuracy for stability | Block diagram, Bode with margins, Nyquist around −1, root locus |
 | **3.3 State space and linearisation** | Predicts a generator's swing, compares linear and nonlinear models, loses synchronism, weakens the grid | Rotor-angle dial, P–δ curve with the tangent, phase portrait |
 | **3.4 PI control and the PLL** | Predicts the frequency spike after a phase jump, tunes bandwidth, P versus PI, windup and anti-windup | PLL block diagram, phase tracker |
+| **4.1 Transmission lines** | Predicts the far-end voltage of an unloaded line (Ferranti), loads it at SIL, overloads it, compares short, π and exact models | Voltage profile along the line, three-model table |
+| **4.2 Transformers** | Predicts the inrush current, switches at the right instant, meets residual flux, finds the efficiency peak | Saturating core, magnetising curve, efficiency versus load |
+| **4.3 Synchronous machine** | Predicts a terminal short circuit, finds the DC offset, over- and under-excites, reaches the stability limit | Phasor diagram, capability chart, V-curves |
+| **4.4 Loads** | Predicts consumption after a voltage step, compares Z, I and P loads, watches load recovery, estimates CVR savings | P–V and I–V curves, load composition |
+| **4.5 Induction motor** | Predicts the starting current, fails to start a heavy load, stalls a compressor in a dip (FIDVR), lets a fan ride through | Torque–speed and current–speed curves, turning rotor |
+| **4.6 Compensation** | Drops the voltage with load, restores it with a shunt capacitor, overshoots at night, adds series compensation, collapses past the nose | Nose curve, P_max versus series compensation |
+| **4.7 FACTS** | Compares an SVC and a STATCOM in a dip, deepens it, strengthens the grid, sizes the STATCOM | Side-by-side systems, V–I characteristics, Q_max versus V |
 
 Shared by every lesson:
 
@@ -75,12 +82,13 @@ web/src/
                    G2ELin-backed models later)
   lib/lab/         lesson format (types.ts), shared experiment state, lesson + parameter panels
   lib/instruments/ oscilloscope, s-plane, energy balance, frequency response, phasor diagram,
-                   live equations
+                   live equations, x–y characteristic charts (XYChart)
   lib/canvas/      circuit schematics
   lib/ui/          i18n, formatting, markdown + math, top bar, course map
   lessons/         curriculum.ts (course map) and one folder per lesson, with any
                    lesson-specific panels (heater, meters, Euler helix, impedance plane,
-                   power triangle, three-phase schematic, phase balance)
+                   power triangle, three-phase schematic, phase balance, line, transformer,
+                   machines, loads, compensation, FACTS)
 ```
 
 ## Adding a lesson
