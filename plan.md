@@ -58,13 +58,13 @@ tests are in [documentation.md](documentation.md).
 | 7.5 Storage (BESS) | ✅ Done | `c6c3613` |
 | 7.6 HVDC and MMC | ✅ Done | `c6c3613` |
 | 7.7 Grid codes | ✅ Done | `c6c3613` |
-| 8.1 Transient stability | ✅ Done | Module 8 commit |
-| 8.2 Small-signal stability | ✅ Done | Module 8 commit |
-| 8.3 Long-term voltage stability | ✅ Done | Module 8 commit |
-| 8.4 Frequency stability | ✅ Done | Module 8 commit |
-| 8.5 Converter-driven stability | ✅ Done | Module 8 commit |
-| 8.6 Resonance stability (SSR) | ✅ Done | Module 8 commit |
-| 8.7 Real networks with G2ELin | ✅ Done | Module 8 commit |
+| 8.1 Transient stability | ✅ Done | `fe3f5c5` |
+| 8.2 Small-signal stability | ✅ Done | `fe3f5c5` |
+| 8.3 Long-term voltage stability | ✅ Done | `fe3f5c5` |
+| 8.4 Frequency stability | ✅ Done | `fe3f5c5` |
+| 8.5 Converter-driven stability | ✅ Done | `fe3f5c5` |
+| 8.6 Resonance stability (SSR) | ✅ Done | `fe3f5c5` |
+| 8.7 Real networks with G2ELin | ✅ Done | `fe3f5c5` |
 
 **Verification:** 255 unit tests (solver, models, note completeness), and a browser test that walks
 all 49 lessons, the documentation page and the teaching notes (175 checks, G2ELin mocked: predictions, misconception feedback, every step check, both languages, phone width,
