@@ -42,11 +42,11 @@ tests are in [documentation.md](documentation.md).
 | 4.5 Induction motor | ✅ Done | `2e3694f` |
 | 4.6 Shunt and series compensation | ✅ Done | `2e3694f` |
 | 4.7 FACTS | ✅ Done | `2e3694f` |
-| 5.1 Y-bus and power flow | ✅ Done | `M5` |
-| 5.2 P–V and Q–V curves | ✅ Done | `M5` |
-| 5.3 Faults | ✅ Done | `M5` |
-| 5.4 Economic dispatch | ✅ Done | `M5` |
-| 5.5 A day on a feeder | ✅ Done | `M5` |
+| 5.1 Y-bus and power flow | ✅ Done | `9ba10f5` |
+| 5.2 P–V and Q–V curves | ✅ Done | `9ba10f5` |
+| 5.3 Faults | ✅ Done | `9ba10f5` |
+| 5.4 Economic dispatch | ✅ Done | `9ba10f5` |
+| 5.5 A day on a feeder | ✅ Done | `9ba10f5` |
 | Modules 6–8 | Not started | — |
 
 **Verification:** 161 unit tests (solver, models, note completeness), and a browser test that walks
