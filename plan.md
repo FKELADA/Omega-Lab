@@ -16,13 +16,13 @@ tests are in [documentation.md](documentation.md).
 
 | Lesson | Status | Commit |
 |---|---|---|
-| 0.1 A day on the grid | ✅ Done | (this commit) |
-| 0.2 Replay a blackout | ✅ Done | (this commit) |
-| 1.1 R, L, C as energy elements | ✅ Done | (this commit) |
+| 0.1 A day on the grid | ✅ Done | `4535b69` |
+| 0.2 Replay a blackout | ✅ Done | `4535b69` |
+| 1.1 R, L, C as energy elements | ✅ Done | `4535b69` |
 | 1.2 RLC transients | ✅ Done | `84cf27a` |
 | 1.3 AC sources and RMS | ✅ Done | `a9b0b3e` |
 | 1.4 Resonance | ✅ Done | `a9b0b3e` |
-| 1.5 DC versus AC | ✅ Done | (this commit) |
+| 1.5 DC versus AC | ✅ Done | `4535b69` |
 | 2.1 Euler and the rotating vector | ✅ Done | `a9b0b3e` |
 | 2.2 Phasors and impedance | ✅ Done | `07b14a7` |
 | 2.3 AC power, P, Q, S | ✅ Done | `07b14a7` |
