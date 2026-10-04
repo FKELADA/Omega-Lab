@@ -15,6 +15,10 @@ import { pvLesson } from './pv/experiment';
 import { faultsLesson } from './faults/experiment';
 import { dispatchLesson } from './dispatch/experiment';
 import { feederLesson } from './feeder/experiment';
+import { chopperLesson } from './chopper/experiment';
+import { rectifierLesson } from './rectifier/experiment';
+import { pwmLesson } from './pwm/experiment';
+import { lclLesson } from './lcl/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -120,10 +124,10 @@ export const curriculum: ModuleEntry[] = [
     n: 6,
     title: { fr: 'Électronique de puissance', en: 'Power electronics' },
     lessons: [
-      soon('6.1', 'Hacheurs', 'Choppers'),
-      soon('6.2', 'Redresseurs', 'Rectifiers'),
-      soon('6.3', 'MLI', 'PWM'),
-      soon('6.4', 'Modèles moyens, filtres LCL', 'Averaging, LCL filters'),
+      { id: '6.1', title: { fr: 'Hacheurs', en: 'Choppers' }, experiment: chopperLesson },
+      { id: '6.2', title: { fr: 'Redresseurs', en: 'Rectifiers' }, experiment: rectifierLesson },
+      { id: '6.3', title: { fr: 'MLI', en: 'PWM' }, experiment: pwmLesson },
+      { id: '6.4', title: { fr: 'Modèles moyens, filtres LCL', en: 'Averaging, LCL filters' }, experiment: lclLesson },
     ],
   },
   {

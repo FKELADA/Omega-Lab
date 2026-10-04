@@ -20,8 +20,9 @@ contributors who extend them or check the physics.
 8. [Module 3 — Signals and control](#8-module-3--signals-and-control)
 9. [Module 4 — Grid elements](#9-module-4--grid-elements)
 10. [Module 5 — The network in steady state](#10-module-5--the-network-in-steady-state)
-11. [Modules not yet built](#11-modules-not-yet-built)
-12. [Standards and figures quoted in the lessons](#12-standards-and-figures-quoted-in-the-lessons)
+11. [Module 6 — Power electronics](#11-module-6--power-electronics)
+12. [Modules not yet built](#12-modules-not-yet-built)
+13. [Standards and figures quoted in the lessons](#13-standards-and-figures-quoted-in-the-lessons)
 
 ---
 
@@ -2354,16 +2355,264 @@ it from 11 to 15 h.
 
 ---
 
-## 11. Modules not yet built
+## 11. Module 6 — Power electronics
+
+Module 6 works at switching level, which G2ELin does not model; G2ELin's converter models are
+averaged. The models are in `lib/models/module6.ts` and tested in `lib/models/module6.test.ts`.
+`harmonic(y, t, f1, h)` takes the Fourier coefficient of harmonic $h$ over a whole number of
+periods. It is used for spectra, THD and the fundamental in every lesson of the module.
+
+### 6.1 Choppers · `#6.1` · `lessons/chopper`
+
+**Objectives.** After this lesson the learner can:
+- derive the conversion ratio of the buck, boost and buck-boost from volt-second balance;
+- predict and reduce the inductor-current and output-voltage ripple;
+- recognise discontinuous conduction and its critical inductance.
+
+**Model.**
+- An ideal switch and diode, $V_{in} = 48$ V, states $i_L$ and $v_C$.
+- Integration: midpoint method, 120 steps per switching period. The diode blocks reverse current, which gives DCM ($i_L$ clamped at 0).
+- The run starts at the CCM operating point and settles for $12\max(RC, \sqrt{LC})$ (at least 200
+  and at most 4000 periods). It then records 10 periods.
+
+**Formulas.**
+- Volt-second balance $\langle v_L\rangle = 0$ ⇒ $D$, $1/(1-D)$, $D/(1-D)$, with ideal and
+  measured ratios live.
+- Ripple: $\Delta i_L$ and $\Delta v_s$ live, and $\Delta i_L = V_s(1-D)/(Lf_s)$ for the buck.
+- Critical inductance:
+  - buck $(1-D)R/2f_s$;
+  - boost $D(1-D)^2R/2f_s$;
+  - buck-boost $(1-D)^2R/2f_s$.
+- *Researcher, Engineer:* switch types; synchronous rectification.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Topology | buck / boost / buck-boost | buck |
+| $D$ | 0.05–0.9 | 0.5 |
+| $f_s$ | 5–100 kHz (log) | 20 kHz |
+| $L$ | 10–2000 µH (log) | 200 µH |
+| $C$ | 10–1000 µF (log) | 220 µF |
+| $R$ | 2–100 Ω (log) | 10 Ω |
+
+**Panels.**
+- Schematic with the switch open or closed at the cursor and the current path lit (switch, diode
+  or none).
+- Conversion ratio against D for the three topologies, with the measured point.
+- CCM/DCM boundary: $L_{crit}(D)$ against the chosen L.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the inductor current | Prediction revealed |
+| 2 | Setting the voltage | Buck, $\lvert V_s - 12\rvert < 1$ V, CCM |
+| 3 | Stepping up | Boost, $V_s \ge 95$ V |
+| 4 | Discontinuous conduction | DCM |
+| 5 | Smoothing the current | CCM and $\Delta i_L < 0.1\,\bar i_L$ |
+| 6 | The buck-boost | Buck-boost, $D > 0.5$, $V_s > V_{in}$ |
+
+**Misconception detected** (y-range 0–6 A): a constant current. Triggers when the sketch's
+spread is under 30 % of the true ripple.
+
+**Tests.**
+- All three topologies hit the ideal ratio in CCM.
+- The buck ripple matches $V_s(1-D)/(Lf_s)$.
+- Below $L_{crit}$, DCM appears and the gain rises.
+- The mean inductor voltage is under 0.5 V.
+
+### 6.2 Rectifiers · `#6.2` · `lessons/rectifier`
+
+**Objectives.** After this lesson the learner can:
+- relate firing angle to DC voltage and recognise inverter operation;
+- compute the commutation overlap and its voltage drop;
+- describe the line-current harmonics and power factor of a six-pulse bridge;
+- explain commutation failure.
+
+**Model.** A six-pulse bridge with $V_{LL} = 400$ V at 50 Hz and a constant DC current $I_d$ (large smoothing inductor). The waveforms are analytic:
+- Each group (positive and negative) commutates $\alpha$ after the natural crossing points. In
+  the positive group, c→a, a→b and b→c occur at 30°, 150° and 270°.
+- During the overlap μ, from $\cos\alpha - \cos(\alpha+\mu) = 2\omega L_sI_d/(\sqrt2V_{LL})$:
+  - the incoming current is $I_d(\cos\alpha - \cos(\alpha+\varphi))/(\cos\alpha - \cos(\alpha+\mu))$;
+  - the rail voltage is the mean of the two commutating phases.
+- When there is no solution for μ, the bridge has a commutation failure.
+
+**Formulas.**
+- $V_d = \frac{3\sqrt2}{\pi}V_{LL}\cos\alpha - \frac3\pi\omega L_sI_d$, live.
+- The overlap equation, with μ live.
+- $\cos\varphi_1 \approx \cos(\alpha + \mu/2)$ and $\lambda = \cos\varphi_1/\sqrt{1+\mathrm{THD}^2}$, live.
+- $h = 6k \pm 1$, $I_h/I_1 \approx 1/h$; 12-pulse cancellation.
+- *Engineer, Researcher:* LCC HVDC, extinction angle $\gamma = 180° - \alpha - \mu$.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| α | 0–165° | 30° |
+| $L_s$ | 0–2 mH | 0.2 mH |
+| $I_d$ | 50–1000 A | 400 A |
+
+**Panels.**
+- Bridge with the conducting thyristors at the cursor (three during overlap).
+- $V_d$ against α, with and without $L_s$; the rectifier zone is shaded.
+- Line-current spectrum against $100/h$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the DC voltage | Prediction revealed |
+| 2 | The diode bridge | α ≤ 1°, $L_s$ ≤ 0.01 mH |
+| 3 | Delaying the firing | $0.4V_{d0} < V_d < 0.6V_{d0}$ |
+| 4 | Inverter operation | $V_d < -50$ V, no failure |
+| 5 | Overlap | α < 90°, μ ≥ 20° |
+| 6 | Commutation failure | No overlap solution, or α + μ > 180° |
+
+**Misconception detected** (y-range ±700 V): a smooth DC voltage. Triggers when the sketch's
+spread is under 30 % of the true spread.
+
+**Tests.**
+- A diode bridge gives 1.35 $V_{LL}$.
+- The $V_d$ formula holds with overlap, and $V_d < 0$ at 120°.
+- μ satisfies its equation, and there is failure at 150°, 2 mH, 1000 A.
+- The 5th and 7th harmonics are 20 % and 14 %, with no 3rd.
+- DPF ≈ $\cos(\alpha + \mu/2)$.
+
+### 6.3 PWM · `#6.3` · `lessons/pwm`
+
+**Objectives.** After this lesson the learner can:
+- explain carrier-based PWM and why the leg voltage has only two levels;
+- give the fundamental in the linear range and recognise overmodulation;
+- explain zero-sequence (third-harmonic, min–max) injection and its equivalence with SVPWM;
+- read the space-vector hexagon and its dwell times.
+
+**Model.** A two-level, three-phase inverter with $V_{dc} = 700$ V and $f_1 = 50$ Hz.
+- A triangular carrier at $m_f f_1$ is compared with each reference.
+- References:
+  - sine $m\sin\theta_x$;
+  - plus $\frac m6\sin3\theta$;
+  - or minus $(\max+\min)/2$, which is SVPWM.
+- One period, 6000 samples.
+- The spectrum runs up to $h = 120$ (8000 samples).
+- The gain curve is computed at 21 values of m.
+- SVPWM dwell times:
+  - $d_1 = \lvert v\rvert\sin(60°-\theta')/(\frac23V_{dc}\sin60°)$;
+  - $d_2 = \lvert v\rvert\sin\theta'/(\ldots)$;
+  - $d_0 = 1 - d_1 - d_2$.
+
+**Formulas.**
+- The comparator law and $v_{aN} = (2s_a-1)V_{dc}/2$.
+- $\hat V_{ab,1} = m\frac{\sqrt3}{2}V_{dc}$, ideal against obtained.
+- Zero-sequence injection.
+- The SVPWM volt-second equation and $\lvert v_{ref}\rvert \le V_{dc}/\sqrt3$.
+- *Researcher, Engineer:* THD and $f_s = m_ff_1$.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $m$ | 0–1.4 | 0.8 |
+| $m_f$ | 3–45 (integer) | 15 |
+| Method | sine / sine + 3rd / SVPWM | sine |
+
+**Panels.**
+- Inverter with each switch's state at the cursor and the applied vector (V0–V6).
+- Space-vector hexagon with the reference, its sector and dwell times, and the inscribed circle.
+- Line-voltage spectrum with mf and 2mf markers.
+- Fundamental against m (sine against injection) with the six-step limit.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict a leg voltage | Prediction revealed |
+| 2 | The linear range | Sine, $\lvert m - 1\rvert < 0.02$ |
+| 3 | Overmodulation | Sine, m ≥ 1.15 |
+| 4 | 15 % for free | Injection or SVPWM, 1.1 ≤ m ≤ 1.16 |
+| 5 | The hexagon | Cursor beyond 90 %, m > 2/√3 |
+| 6 | Switching faster | $m_f$ ≥ 27 |
+
+**Misconception detected** (y-range ±450 V): an intermediate (sinusoidal) leg voltage. Triggers
+when more than 40 % of the sketch lies within ±0.6·$V_{dc}/2$.
+
+**Tests.**
+- The linear-range fundamental is exact (2 decimals) at m = 0.5 and 0.9.
+- At m = 1.15, sine distorts while injection and SVPWM stay linear.
+- The 5th and 7th harmonics stay under 0.5 % at m = 0.9 and exceed 2 % at m = 1.35.
+- The SVPWM dwell times sum to 1, with $d_0 = 0$ on the inscribed circle at 30°.
+
+### 6.4 Averaged model and LCL filter · `#6.4` · `lessons/lcl`
+
+**Objectives.** After this lesson the learner can:
+- explain the averaged model and what it leaves out;
+- compute an LCL filter's resonance and its high-frequency attenuation;
+- damp the resonance passively and apply the usual design rule.
+
+**Model.** A single-phase full bridge with bipolar PWM ($V_{dc} = 400$ V), feeding a 230 V grid
+through $L_1$, $C_f$ (in series with $R_d$) and $L_2$, with 0.05 Ω in each inductor.
+- States: $i_1$, $v_C$, $i_g$.
+- Exact ZOH stepping (§2.1) at 50 steps per switching period. The PWM is averaged over 8
+  sub-samples per step, so edges are not quantised.
+- The averaged model uses the same circuit with $\bar v = m V_{dc}$.
+- The inverter voltage is a feed-forward phasor that gives 10 A in phase with the grid.
+- Both models start from the averaged steady state.
+
+**Formulas.**
+- $\bar v = mV_{dc}$.
+- $I_g/V = 1/(s^3L_1L_2C_f + s(L_1+L_2))$ and $f_{res}$, live.
+- $R_d \approx 1/(3\omega_{res}C_f)$, live.
+- Grid-current ripple, live; IEEE 519, IEC 61000-3-12.
+- *Researcher:* the resonance thread (1.4 → 6.4 → 8.5–8.6).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| $L_1$ | 0.5–5 mH | 2 mH |
+| $L_2$ | 0.2–3 mH | 1 mH |
+| $C_f$ | 0–30 µF (0 = L filter) | 10 µF |
+| $R_d$ | 0–10 Ω | 0.5 Ω |
+| $f_s$ | 1.5–20 kHz (log) | 3 kHz |
+
+**Panels.**
+- Circuit with $f_{res}$ and $R_{d,opt}$.
+- $\lvert I_g/V\rvert$ on log–log axes: L filter, undamped LCL and LCL with $R_d$, with $f_s$ and
+  $f_{res}$ markers.
+- Resonance peak against $R_d$.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Averaged against switched | Switching trace hidden |
+| 2 | A plain L filter | $C_f$ = 0, switching trace shown |
+| 3 | The capacitor | After step 2, $C_f$ ≥ 5 µF and attenuation at $f_s$ < 0.1 |
+| 4 | The resonance | $R_d$ ≈ 0, $\lvert f_s - f_{res}\rvert < 0.25f_{res}$ |
+| 5 | Damping | $R_d \ge 0.5R_{d,opt}$ |
+| 6 | A sound design | $500\ \text{Hz} < f_{res} < f_s/2$ and step 5's damping |
+
+No prediction in this lesson.
+
+**Tests.**
+- $f_{res}$ follows its formula, and the slope is 1/f³ above it.
+- Attenuation at $f_s$ is below 0.1.
+- $R_{d,opt}$ cuts the peak by more than 20.
+- Both models give 10√2 A.
+- An L filter ripples more than twice as much as the damped LCL.
+
+---
+
+## 12. Modules not yet built
 
 The plan ([plan.md](plan.md) §5) lists:
-- Modules 6 (power electronics), 7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
+- Modules 7 (IBR and HVDC) and 8 (stability, on the G2ELin engine).
 
 Each lesson will be documented here, in the same format, when it is built.
 
 ---
 
-## 12. Standards and figures quoted in the lessons
+## 13. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.

@@ -88,7 +88,11 @@
           <line x1={X(v.x)} x2={X(v.x)} y1={M.t} y2={H - M.b} class="vline" />
         {/each}
         {#each paths as p, j (j)}
-          <path d={p.d} class="curve" class:dash={p.s.dash} style="stroke: var({p.s.color}); stroke-width: {p.s.width ?? 2}" />
+          {#if p.s.fill}
+            <path d="{p.d}Z" class="area" style="fill: var({p.s.color})" />
+          {:else}
+            <path d={p.d} class="curve" class:dash={p.s.dash} style="stroke: var({p.s.color}); stroke-width: {p.s.width ?? 2}" />
+          {/if}
         {/each}
         {#each points as pt, j (j)}
           <circle cx={X(pt.x)} cy={Y(pt.y)} r="5" class="pt" class:hollow={pt.hollow} style="--c: var({pt.color})" />
@@ -119,6 +123,10 @@
   }
   text:not([text-anchor]) {
     text-anchor: middle;
+  }
+  .area {
+    fill-opacity: 0.22;
+    stroke: none;
   }
   .band {
     fill: var(--good-soft);

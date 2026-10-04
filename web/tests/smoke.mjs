@@ -486,6 +486,64 @@ await page.getByRole('radio', { name: 'Écrêtement P(V)' }).click();
 await setParam(0, 5.1, 0, 6);
 check('5.5 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
+// ── Module 6 ──────────────────────────────────────────────────────────────────
+// 6.1 Choppers
+await open('6.1');
+fb = await predict(() => 0.4); // a constant current
+check('6.1 misconception: the inductor current is a triangle', /triangle/.test(fb), fb.slice(0, 70));
+await setParam(0, 0.25, 0.05, 0.9); // 12 V
+await page.getByRole('radio', { name: 'Élévateur' }).click();
+await setParam(0, 0.5, 0.05, 0.9); // 96 V
+await setParam(2, 20, 10, 2000, true);
+await setParam(4, 50, 2, 100, true); // discontinuous
+await setParam(2, 2000, 10, 2000, true);
+await setParam(4, 10, 2, 100, true);
+await setParam(1, 100, 5, 100, true); // smooth
+await page.getByRole('radio', { name: 'Inverseur' }).click();
+await setParam(0, 0.7, 0.05, 0.9);
+check('6.1 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 6.2 Thyristor bridge
+await open('6.2');
+fb = await predict(() => 0.2); // a flat DC voltage
+check('6.2 misconception: six caps per period', /six calottes/.test(fb), fb.slice(0, 70));
+await setParam(0, 0, 0, 165);
+await setParam(1, 0, 0, 2); // diode bridge
+await setParam(0, 60, 0, 165);
+await setParam(0, 120, 0, 165); // inverter
+await setParam(0, 30, 0, 165);
+await setParam(1, 1, 0, 2);
+await setParam(2, 600, 50, 1000); // overlap ≈ 48°
+await setParam(0, 150, 0, 165); // commutation failure
+check('6.2 commutation failure shown', /échec de commutation/.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('6.2 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 6.3 PWM
+await open('6.3');
+fb = await predict((f) => 0.5 - 0.3 * Math.sin(2 * Math.PI * f)); // a sine wave
+check('6.3 misconception: a leg has two levels', /deux états/.test(fb), fb.slice(0, 70));
+await setParam(0, 1, 0, 1.4);
+await setParam(0, 1.2, 0, 1.4); // overmodulation
+await page.getByRole('radio', { name: 'Sinus + 3ᵉ harmonique' }).click();
+await setParam(0, 1.13, 0, 1.4);
+await setParam(0, 1.3, 0, 1.4);
+await scrubToEnd(); // the reference circles the hexagon
+await setParam(1, 28, 3, 45);
+check('6.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// 6.4 Averaged model and LCL filter
+await open('6.4');
+await page.locator('.chip').nth(0).click(); // hide the switching model
+await page.locator('.chip').nth(0).click(); // and show it again
+await setParam(2, 0, 0, 30); // L filter only
+await setParam(2, 10, 0, 30);
+await setParam(4, 10, 1.5, 20, true);
+await setParam(3, 0, 0, 10);
+await setParam(4, 2, 1.5, 20, true); // switching near the resonance
+await setParam(3, 2, 0, 10); // damped
+await setParam(4, 10, 1.5, 20, true);
+check('6.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
 await page.reload();
@@ -522,7 +580,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

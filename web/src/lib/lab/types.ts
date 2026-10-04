@@ -131,6 +131,8 @@ export interface ChartSeries {
   pts: [number, number][];
   dash?: boolean;
   width?: number;
+  /** Draw as a filled, closed area (e.g. the equal-area criterion) instead of a line. */
+  fill?: boolean;
 }
 
 export interface ChartPoint {

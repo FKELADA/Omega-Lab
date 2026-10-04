@@ -14,7 +14,7 @@ const PREFIXES: [number, string, string][] = [
 ];
 
 /** Units that take no SI prefix. */
-const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu', 'km', 'GW', 'MW', 'Hz/s', '€/MWh', '€/h', 'MVA', 'Mvar', 'kA', 'MWh']);
+const NO_PREFIX = new Set(['', '%', 'rad/s', '1/s', '°', 'dB', 'pu', 'km', 'GW', 'MW', 'Hz/s', '€/MWh', '€/h', 'MVA', 'Mvar', 'kA', 'MWh', 'kHz', 'µH', 'µF', 'mH', 'kW', 'kV', 'MJ', 'm/s', 'W/m²', '°C', 'rpm', 'ms']);
 
 /** Below this, a value is round-off (e.g. the sum of balanced currents) and shown as 0. */
 const NOISE = 1e-11;
@@ -52,7 +52,7 @@ export function si(v: number, unit: string, digits = 3): string {
   return u ? `${num(m, digits)} ${u}` : num(m, digits);
 }
 
-const TEX_UNITS: Record<string, string> = { '1/s': 's^{-1}', Ω: '\\Omega', '°': '^{\\circ}', '%': '\\%', '€/MWh': '\\text{€}/MWh', '€/h': '\\text{€}/h' };
+const TEX_UNITS: Record<string, string> = { '1/s': 's^{-1}', Ω: '\\Omega', '°': '^{\\circ}', '%': '\\%', '€/MWh': '\\text{€}/MWh', '€/h': '\\text{€}/h', 'µH': '\\mu H', 'µF': '\\mu F', 'W/m²': 'W/m^2', '°C': '^{\\circ}C' };
 
 /** The same, as KaTeX source. */
 export function tex(v: number, unit: string, digits = 3): string {
