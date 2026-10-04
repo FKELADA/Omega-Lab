@@ -147,3 +147,88 @@ describe('three-phase (2.4)', () => {
     expect(Math.hypot(k.Vload[1].re, k.Vload[1].im)).toBeGreaterThan(300);
   });
 });
+
+import { TARGETS, clarkePark, fourier, fourierB, fourierInfo, parkInfo, perUnitInfo, sequenceInfo } from './module2b';
+
+describe('Clarke and Park (2.5)', () => {
+  const base = { V: 230, f: 50, kc: 1, h5: 0, ratio: 1, phi: 0 };
+  it('a balanced set is DC in the synchronous frame', () => {
+    const run = clarkePark.simulate(base, clarkePark.window(base));
+    const pk = Math.SQRT2 * 230;
+    run.t.forEach((_, j) => {
+      expect(run.s.vd[j] / pk).toBeCloseTo(1, 9);
+      expect(run.s.vq[j] / pk).toBeCloseTo(0, 9);
+    });
+  });
+  it('the phase φ of the set appears as the dq angle', () => {
+    const run = clarkePark.simulate({ ...base, phi: 30 }, 0.01);
+    expect(Math.atan2(run.s.vq[0], run.s.vd[0]) * (180 / Math.PI)).toBeCloseTo(30, 9);
+  });
+  it('unbalance shows up as negative sequence: a 2ω ripple in dq', () => {
+    const k = parkInfo({ ...base, kc: 0.5 });
+    expect(k.V2 / k.V1).toBeGreaterThan(0.15);
+    const run = clarkePark.simulate({ ...base, kc: 0.5 }, clarkePark.window(base));
+    const amp = (Math.max(...run.s.vd) - Math.min(...run.s.vd)) / 2;
+    expect(amp / k.V2).toBeCloseTo(1, 2);
+  });
+});
+
+describe('per-unit (2.6)', () => {
+  const base = { Sbase: 100e6, Pload: 10e6, pf: 0.9, tap: 1 };
+  it('the result in pu does not depend on the chosen base', () => {
+    const a = perUnitInfo(base), b = perUnitInfo({ ...base, Sbase: 10e6 });
+    expect(Math.hypot(a.Vload.re, a.Vload.im)).toBeCloseTo(Math.hypot(b.Vload.re, b.Vload.im), 12);
+  });
+  it('carries the base voltage through the transformer ratios', () => {
+    const k = perUnitInfo(base);
+    expect(k.zones.map((z) => z.Vb)).toEqual([11e3, 132e3, 33e3]);
+    expect(k.zT1.im).toBeCloseTo(0.1 * (100 / 50), 12); // 10 % on 50 MVA → 20 % on 100 MVA
+  });
+  it('raising the tap raises the load voltage', () => {
+    const v = (tap: number) => Math.hypot(perUnitInfo({ ...base, tap }).Vload.re, perUnitInfo({ ...base, tap }).Vload.im);
+    expect(v(1.05)).toBeGreaterThan(v(1));
+  });
+});
+
+describe('Fourier (2.7)', () => {
+  it('the partial sums converge on each target (away from jumps)', () => {
+    for (const target of Object.values(TARGETS)) {
+      const p = { target, N: 49, V: 1, f: 50 };
+      const run = fourier.simulate(p, 1 / 50, 721);
+      let err = 0;
+      // Compare at 15°, 45°, 90°, 165°…: inside smooth stretches of every target.
+      for (const d of [15, 45, 90, 100, 165, 260]) err = Math.max(err, Math.abs(run.s.err[d * 2]));
+      expect(err).toBeLessThan(0.06);
+    }
+  });
+  it('THD: square 48.3 %, triangle 12.1 %, six-pulse rectifier 31.1 %', () => {
+    expect(fourierInfo({ target: TARGETS.square, N: 1 }).thd).toBeCloseTo(0.4834, 3);
+    expect(fourierInfo({ target: TARGETS.triangle, N: 1 }).thd).toBeCloseTo(0.1212, 3);
+    expect(fourierInfo({ target: TARGETS.rectifier, N: 1 }).thd).toBeCloseTo(0.3108, 3);
+  });
+  it('the rectifier has only 6k ± 1 harmonics', () => {
+    for (let n = 2; n < 30; n++) {
+      const nonzero = Math.abs(fourierB(TARGETS.rectifier, n)) > 1e-12;
+      expect(nonzero).toBe(n % 2 === 1 && n % 3 !== 0);
+    }
+  });
+});
+
+describe('symmetrical components (2.8)', () => {
+  it('balanced: positive sequence only', () => {
+    const k = sequenceInfo({ Ma: 1, Mb: 1, Ab: -120, Mc: 1, Ac: 120, f: 50 });
+    expect(Math.hypot(k.V1.re, k.V1.im)).toBeCloseTo(1, 12);
+    expect(k.vuf).toBeLessThan(1e-12);
+  });
+  it('b and c swapped: negative sequence only', () => {
+    const k = sequenceInfo({ Ma: 1, Mb: 1, Ab: 120, Mc: 1, Ac: -120, f: 50 });
+    expect(Math.hypot(k.V2.re, k.V2.im)).toBeCloseTo(1, 12);
+    expect(Math.hypot(k.V1.re, k.V1.im)).toBeLessThan(1e-12);
+  });
+  it('the three sequences rebuild the original phasors', () => {
+    const k = sequenceInfo({ Ma: 1, Mb: 0.7, Ab: -100, Mc: 1.2, Ac: 130, f: 50 });
+    const sum = { re: k.V0.re + k.V1.re + k.V2.re, im: k.V0.im + k.V1.im + k.V2.im };
+    expect(sum.re).toBeCloseTo(k.Va.re, 12);
+    expect(sum.im).toBeCloseTo(k.Va.im, 12);
+  });
+});

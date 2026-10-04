@@ -23,7 +23,7 @@ npm run dev        # http://localhost:5173
 
 ## Status
 
-Seven lessons are complete, in French and English. Open one directly with its number in the URL,
+Eleven lessons are complete (Modules 1 and 2), in French and English. Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -35,6 +35,10 @@ e.g. `http://localhost:5173/#1.4`.
 | **2.2 Phasors and impedance** | Predicts the current in an inductor, compares R, L and C, finds the 45° corner of an RL circuit | Impedance plane with the Z triangle and its frequency locus |
 | **2.3 AC power** | Predicts p(t) for a motor (it goes negative), splits it into active and reactive parts, corrects the power factor, overcompensates | Power triangle, cos φ dial, cable-loss meter |
 | **2.4 Three-phase** | Predicts the total power of three heaters (constant), unbalances the loads, breaks the neutral | Clickable neutral switch, phase-balance meter with ±10 % band |
+| **2.5 Clarke and Park** | Predicts v_d in the synchronous frame (constant), aligns d like a PLL, sees unbalance as 2f and the 5th harmonic as 6f | Fixed αβ plane and a camera riding the dq frame |
+| **2.6 Per-unit** | Changes the base, loads the feeder out of the ±5 % band, recovers with the tap changer and the power factor | One-line diagram across 11/132/33 kV, bases per zone, voltage profile |
+| **2.7 Harmonics** | Builds a square wave, meets Gibbs, compares the triangle, finds the 6k±1 rectifier spectrum, listens to timbre | Fourier epicycles, spectrum with THD and audio |
+| **2.8 Symmetrical components** | Rebalances, swaps two phases, isolates the zero sequence, analyses a phase-to-ground fault, hits the 2 % limit | Positive/negative/zero wheels with fault presets |
 
 Shared by every lesson:
 
@@ -54,7 +58,8 @@ Shared by every lesson:
 web/src/
   lib/core/        linear algebra, LTI simulation (expm discretisation)
   lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
-                   impedance, power, three-phase; G2ELin-backed models later)
+                   impedance, power, three-phase, Park, per-unit, Fourier, sequences;
+                   G2ELin-backed models later)
   lib/lab/         lesson format (types.ts), shared experiment state, lesson + parameter panels
   lib/instruments/ oscilloscope, s-plane, energy balance, frequency response, phasor diagram,
                    live equations

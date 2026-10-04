@@ -16,7 +16,7 @@
   const fromPos = (p: ParamSpec, x: number) => {
     const f = x / STEPS;
     const v = p.scale === 'log' ? p.min * (p.max / p.min) ** f : p.min + (p.max - p.min) * f;
-    return +v.toPrecision(3);
+    return p.step ? Math.round(v / p.step) * p.step : +v.toPrecision(3);
   };
 
   // Playback: sweeps the time cursor across the window in about six seconds.

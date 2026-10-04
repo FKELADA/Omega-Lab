@@ -20,6 +20,8 @@ export interface ParamSpec {
   scale: 'log' | 'lin';
   /** The equation term this knob belongs to, for cross-highlighting. */
   term?: string;
+  /** Slider resolution, e.g. 1 for an integer count. */
+  step?: number;
   /** Discrete choices, shown as a segmented control instead of a slider. */
   choices?: { value: number; label: L }[];
 }

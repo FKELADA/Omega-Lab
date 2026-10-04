@@ -4,7 +4,11 @@ import type { Experiment } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
 import { acRms } from './ac-rms/experiment';
 import { euler } from './euler/experiment';
+import { fourierLesson } from './fourier/experiment';
 import { impedanceLesson } from './impedance/experiment';
+import { parkLesson } from './park/experiment';
+import { perUnitLesson } from './per-unit/experiment';
+import { sequencesLesson } from './sequences/experiment';
 import { powerLesson } from './power/experiment';
 import { threePhaseLesson } from './three-phase/experiment';
 import { resonance } from './resonance/experiment';
@@ -49,10 +53,10 @@ export const curriculum: ModuleEntry[] = [
       { id: '2.2', title: { fr: 'Phaseurs et impédance', en: 'Phasors and impedance' }, experiment: impedanceLesson },
       { id: '2.3', title: { fr: 'Puissances P, Q, S', en: 'AC power: P, Q, S' }, experiment: powerLesson },
       { id: '2.4', title: { fr: 'Systèmes triphasés', en: 'Three-phase systems' }, experiment: threePhaseLesson },
-      soon('2.5', 'Clarke et Park', 'Clarke and Park'),
-      soon('2.6', 'Système per-unit', 'Per-unit system'),
-      soon('2.7', 'Harmoniques et Fourier', 'Harmonics and Fourier'),
-      soon('2.8', 'Composantes symétriques', 'Symmetrical components'),
+      { id: '2.5', title: { fr: 'Clarke et Park', en: 'Clarke and Park' }, experiment: parkLesson },
+      { id: '2.6', title: { fr: 'Système per-unit', en: 'Per-unit system' }, experiment: perUnitLesson },
+      { id: '2.7', title: { fr: 'Harmoniques et Fourier', en: 'Harmonics and Fourier' }, experiment: fourierLesson },
+      { id: '2.8', title: { fr: 'Composantes symétriques', en: 'Symmetrical components' }, experiment: sequencesLesson },
     ],
   },
   {

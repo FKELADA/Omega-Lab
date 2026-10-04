@@ -163,13 +163,56 @@ await page.getByRole('switch').click(); // reconnect
 await setParam(1, 26.45, 5, 500, true);
 check('2.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
+// ── 2.5 Clarke and Park ───────────────────────────────────────────────────────
+await open('2.5');
+fb = await predict((f) => 0.5 - 0.3 * Math.cos(2 * Math.PI * 2 * f)); // oscillating
+check('2.5 misconception: v_d is constant', /immobile/.test(fb), fb.slice(0, 70));
+await setParam(0, 0, 0, 1.5); // fixed frame
+await setParam(0, 1, 0, 1.5);
+await setParam(1, 0, -180, 180); // align d
+await setParam(2, 0.6, 0, 1.5); // unbalance
+await setParam(2, 1, 0, 1.5);
+await setParam(3, 12, 0, 30); // 5th harmonic
+check('2.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 2.6 Per-unit ──────────────────────────────────────────────────────────────
+await open('2.6');
+await page.getByRole('radio', { name: '10 MVA' }).click();
+await setParam(0, 30e6, 1e6, 40e6); // heavy load
+await setParam(2, 1.1, 0.9, 1.1); // tap up
+await setParam(2, 1, 0.9, 1.1);
+await setParam(1, 1, 0.7, 1); // unity power factor
+check('2.6 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
+// ── 2.7 Fourier ───────────────────────────────────────────────────────────────
+await open('2.7');
+await setParam(0, 15, 1, 49);
+await setParam(0, 49, 1, 49);
+await page.getByRole('radio', { name: 'Triangle' }).click();
+await setParam(0, 3, 1, 49);
+await page.getByRole('radio', { name: 'Redresseur 6 pulses' }).click();
+const thd = (await page.locator('.thd b').first().textContent()) ?? '';
+check('2.7 six-pulse rectifier THD ≈ 31 %', /^31/.test(thd), thd);
+await page.getByRole('button', { name: '♪ Écouter' }).click();
+check('2.7 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 2.8 Symmetrical components ────────────────────────────────────────────────
+await open('2.8');
+await page.locator('.presets').getByRole('button', { name: 'Équilibré', exact: true }).click();
+await page.locator('.presets').getByRole('button', { name: 'b ↔ c', exact: true }).click();
+await page.locator('.presets').getByRole('button', { name: 'Homopolaire pur', exact: true }).click();
+await page.locator('.presets').getByRole('button', { name: 'Défaut phase a – terre', exact: true }).click();
+await page.locator('.presets').getByRole('button', { name: 'Équilibré', exact: true }).click();
+await setParam(3, 0.95, 0, 1.5); // 5 % dip on phase c
+check('2.8 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4']) {
+for (const id of ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);
