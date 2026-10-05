@@ -35,7 +35,9 @@ export interface Netlist {
   node: Record<string, number>;
   nNodes: number;
   /** Elements the solver sees (ground and unknown types excluded). */
-  active: { el: BenchEl; def: ElementDef; nodes: number[] }[];
+  active: { el: BenchEl; def: ElementDef; nodes: number[]; sigs: Record<string, number> }[];
+  /** Number of signal nets (control wires), numbered from 1. */
+  nSig: number;
   diagnostics: Diagnostic[];
 }
 
@@ -64,6 +66,16 @@ export function buildNetlist(doc: BenchDoc): Netlist {
     const pa = portOf(w.a.el, w.a.port), pb = portOf(w.b.el, w.b.port);
     if (!pa || !pb) continue;
     const ka = keysOf(w.a.el, pa), kb = keysOf(w.b.el, pb);
+    if (!!pa.signal !== !!pb.signal) {
+      diagnostics.push({
+        level: 'error',
+        text: {
+          fr: `Le fil ${w.id} relie une borne de commande à une borne électrique : il est ignoré.`,
+          en: `Wire ${w.id} joins a control terminal to an electrical one: it is ignored.`,
+        },
+      });
+      continue;
+    }
     if (ka.length !== kb.length) {
       diagnostics.push({
         level: 'error',
@@ -90,24 +102,47 @@ export function buildNetlist(doc: BenchDoc): Netlist {
     roots.set(find(keysOf(first.id, p)[0]), 0);
     diagnostics.push({ level: 'warn', text: { fr: `Pas de masse : la borne − de ${first.id} sert de référence. Ajoutez une masse.`, en: `No ground: ${first.id}’s − terminal is used as reference. Add a ground.` } });
   }
-  let next = 1;
+  let next = 1, nextSig = 1;
   const node: Record<string, number> = {};
+  const sigOf: Record<string, number> = {};
+  const sigRoots = new Map<string, number>();
+  const drivers = new Map<number, string[]>(), readers = new Map<number, number>();
   for (const el of doc.elements)
     for (const p of DEFS[el.type]?.ports ?? [])
       for (const k of keysOf(el.id, p)) {
         const r = find(k);
+        if (p.signal) {
+          if (!sigRoots.has(r)) sigRoots.set(r, nextSig++);
+          const n = sigRoots.get(r)!;
+          sigOf[k] = n;
+          if (p.signal === 'out') drivers.set(n, [...(drivers.get(n) ?? []), el.id]);
+          else readers.set(n, (readers.get(n) ?? 0) + 1);
+          continue;
+        }
         if (!roots.has(r)) roots.set(r, next++);
         node[k] = roots.get(r)!;
       }
+  for (const [n, count] of readers)
+    if (count && !drivers.get(n)?.length)
+      diagnostics.push({ level: 'warn', text: { fr: 'Une entrée de commande n’est reliée à aucune sortie : elle lit 0.', en: 'A control input is connected to no output: it reads 0.' } });
+  for (const [, ds] of drivers)
+    if (ds.length > 1)
+      diagnostics.push({ level: 'error', text: { fr: `Deux sorties de commande sont reliées entre elles (${ds.join(', ')}).`, en: `Two control outputs are connected together (${ds.join(', ')}).` } });
   const label = (p: { id: string }) => (p.id === 'a' ? '+' : p.id === 'b' ? '−' : p.id);
   for (const el of active)
     for (const p of DEFS[el.type].ports)
-      if (!degree.get(key(el.id, p.id)))
+      if (!p.signal && !degree.get(key(el.id, p.id)))
         diagnostics.push({ level: 'warn', el: el.id, text: { fr: `La borne ${label(p)} de ${el.id} n’est reliée à rien.`, en: `${el.id}’s ${label(p)} terminal is not connected.` } });
   return {
     node,
     nNodes: next,
-    active: active.map((el) => ({ el, def: DEFS[el.type], nodes: DEFS[el.type].ports.flatMap((p) => keysOf(el.id, p).map((k) => node[k])) })),
+    active: active.map((el) => ({
+      el,
+      def: DEFS[el.type],
+      nodes: DEFS[el.type].ports.filter((p) => !p.signal).flatMap((p) => keysOf(el.id, p).map((k) => node[k])),
+      sigs: Object.fromEntries(DEFS[el.type].ports.filter((p) => p.signal).map((p) => [p.id, sigOf[key(el.id, p.id)] ?? 0])),
+    })),
+    nSig: nextSig - 1,
     diagnostics,
   };
 }

@@ -226,7 +226,6 @@ export function runEmt(nNodes: number, elements: EmtElement[], tEnd: number, nOu
     return { x, switched };
   };
 
-  for (const e of elements) (e.v = 0), (e.i = 0);
   record(0, null);
   let cda = false;
   for (let k = 1; k <= nOut; k++) {

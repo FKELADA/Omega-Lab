@@ -14,6 +14,8 @@ export interface PortDef {
   phases?: 3;
   /** Label drawn next to the port on elements with more than two. */
   label?: string;
+  /** A control-signal port (not electrical): an input or an output. */
+  signal?: 'in' | 'out';
   /** Position relative to the element centre, in grid units, before rotation. */
   dx: number;
   dy: number;
@@ -53,6 +55,14 @@ export function sigSpec(s: Sig): { id: string; unit: string; name: L; sym: strin
   return typeof s === 'string' ? { id: s, unit: SIG[s].unit, name: SIG[s].name, sym: s } : { ...s, sym: s.sym ?? s.id };
 }
 
+/** Access to the control signals of an element's signal ports. */
+export interface SigCtx {
+  /** Reader of an input port's signal (0 when unconnected). */
+  in(port: string): () => number;
+  /** Writer of an output port's signal. */
+  out(port: string): (v: number) => void;
+}
+
 export interface ElementDef {
   type: string;
   family: Family;
@@ -86,7 +96,7 @@ export interface ElementDef {
    * port). Composite elements return several, the first one carrying the
    * element's id and outputs; `node()` allocates internal nodes.
    */
-  build?: (id: string, nodes: number[], p: Record<string, number>, h: number, node: () => number) => EmtElement | EmtElement[];
+  build?: (id: string, nodes: number[], p: Record<string, number>, h: number, node: () => number, sig: SigCtx) => EmtElement | EmtElement[];
   /** Shortest time scale it imposes (for the automatic step), if any. */
   timeScale?: (p: Record<string, number>) => number | null;
   formulas: ElFormula[];

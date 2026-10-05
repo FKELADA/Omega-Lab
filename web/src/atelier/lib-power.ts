@@ -106,6 +106,8 @@ export const POWER: ElementDef[] = [
       { id: 'ph', symbol: '\\varphi', name: { fr: 'Phase de a', en: 'Phase of a' }, unit: '°', default: 0, min: -180, max: 180, scale: 'lin' },
       { id: 'R', symbol: 'R_s', name: { fr: 'Résistance interne', en: 'Internal resistance' }, unit: 'Ω', default: 0.01, min: 1e-5, max: 100, scale: 'log' },
       { id: 'L', symbol: 'L_s', name: { fr: 'Inductance interne', en: 'Internal inductance' }, unit: 'H', default: 2e-4, min: 1e-7, max: 1, scale: 'log' },
+      { id: 'tJ', symbol: 't_s', name: { fr: 'Instant du saut de phase (0 : aucun)', en: 'Phase jump time (0: none)' }, unit: 's', default: 0, min: 0, max: 100, scale: 'lin' },
+      { id: 'dJ', symbol: '\\Delta\\varphi', name: { fr: 'Saut de phase', en: 'Phase jump' }, unit: '°', default: -20, min: -90, max: 90, scale: 'lin' },
     ],
     symbol: 'M14,0 H40',
     glyph: '3~',
@@ -131,7 +133,10 @@ export const POWER: ElementDef[] = [
       const branches: EmtElement[] = [];
       nodes.forEach((n, k) => {
         const x = node();
-        parts.push(vsource(`${id}:e${k}`, x, 0, waves.ac(Vpk, p.f, p.ph - 120 * k)));
+        // Optional phase jump of dJ degrees at tJ (a distant event, lesson 7.2).
+        const w0 = 2 * Math.PI * p.f;
+        const jump = (t: number) => (p.tJ > 0 && t >= p.tJ ? p.dJ : 0);
+        parts.push(vsource(`${id}:e${k}`, x, 0, (t) => Vpk * Math.cos(w0 * t + (p.ph - 120 * k + jump(t)) * deg)));
         const br = rlSeries(`${id}:z${k}`, x, n, p.R, p.L, h);
         branches.push(br);
         parts.push(br);

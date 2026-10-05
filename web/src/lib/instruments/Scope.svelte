@@ -212,9 +212,22 @@
   }
 
   onMount(() => {
-    const ro = new ResizeObserver(() => plot?.setSize({ width: host.clientWidth, height: host.clientHeight }));
+    // Resize on the next frame and ignore sub-2 px changes: resizing inside the
+    // observer can toggle a scrollbar, which resizes again (a resize loop).
+    let raf = 0, lastW = 0, lastH = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const w = host.clientWidth, h = host.clientHeight;
+        if (Math.abs(w - lastW) < 2 && Math.abs(h - lastH) < 2) return;
+        lastW = w;
+        lastH = h;
+        plot?.setSize({ width: w, height: h });
+      });
+    });
     ro.observe(host);
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       plot?.destroy();
     };

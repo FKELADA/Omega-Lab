@@ -10,10 +10,16 @@ const out = process.argv[2] ?? '.';
 const executablePath = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
 const browser = await chromium.launch({ executablePath });
-const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, locale: 'fr-FR' });
+// One context (shared storage: language, theme), and a page that can be renewed:
+// hundreds of reloads of one tab in dev mode exhaust Chrome's resources.
+const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'fr-FR' });
 const errors = [];
-page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+const watch = (pg) => {
+  pg.on('pageerror', (e) => errors.push(e.message));
+  pg.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  return pg;
+};
+let page = watch(await context.newPage());
 
 const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  — ' + detail : ''}`);
@@ -56,7 +62,14 @@ async function predict(y) {
 async function open(id) {
   await page.goto(`${URL}#${id}`);
   await page.reload();
-  await page.waitForSelector('.u-over');
+  try {
+    await page.waitForSelector('.u-over', { timeout: 60000 });
+  } catch (e) {
+    // Say what the page shows when a lesson does not come up.
+    const body = (await page.locator('body').innerHTML().catch(() => '')).replace(/s+/g, ' ').slice(0, 400);
+    console.log('STUCK', id, 'overlay:', await page.locator('vite-error-overlay').count(), 'errors:', errors.slice(-3).join(' | '), 'body:', body);
+    throw e;
+  }
 }
 
 // ── 1.2 RLC transients ────────────────────────────────────────────────────────
@@ -907,6 +920,10 @@ await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
 for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9']) {
+  if (['2.1', '4.1', '6.1', '8.1'].includes(id)) {
+    await page.close();
+    page = watch(await context.newPage());
+  }
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

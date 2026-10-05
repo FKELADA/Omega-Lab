@@ -7,7 +7,7 @@ import { solveAc, type AcItem, type AcResult } from './engine/ac';
 import { modal, type Modal } from './engine/modal';
 import type { EmtElement } from './engine/emt';
 import type { BenchEl } from './doc';
-import type { ElementDef } from './library';
+import type { ElementDef, SigCtx } from './library';
 import type { Netlist } from './compile';
 
 /** Output samples per time-domain run. */
@@ -16,7 +16,8 @@ export const N_OUT = 1200;
 /** An element's parameters (with the run duration T, which switches need in AC). */
 export function paramsOf(el: BenchEl, def: ElementDef, p: Params): Record<string, number> {
   const out: Record<string, number> = Object.fromEntries(def.params.map((q) => [q.id, p[`${el.id}.${q.id}`] ?? el.params[q.id] ?? q.default]));
-  out.T = p.T;
+  // The run duration, for elements whose AC state depends on it (switches, breakers).
+  out.__tEnd = p.T;
   // Values computed by the initialisation (e.g. a machine's initial rotor angle).
   const init = p[`${el.id}.__delta0`];
   if (init !== undefined) out.__delta0 = init;
@@ -42,8 +43,21 @@ export const stepOf = (net: Netlist, p: Params) => p.T / (N_OUT * substeps(net, 
 export function buildElements(net: Netlist, p: Params, h: number): { els: EmtElement[]; nAll: number } {
   let next = net.nNodes;
   const node = () => next++;
-  const els = net.active.flatMap(({ el, def, nodes }) => {
-    const b = def.build!(el.id, nodes, paramsOf(el, def, p), h, node);
+  // Control signals: one value per signal net (index 0: unconnected inputs read 0).
+  const vals = new Float64Array(net.nSig + 1);
+  const sink = new Float64Array(1);
+  const els = net.active.flatMap(({ el, def, nodes, sigs }) => {
+    const sig: SigCtx = {
+      in: (port) => {
+        const k = sigs[port] ?? 0;
+        return () => vals[k];
+      },
+      out: (port) => {
+        const k = sigs[port] ?? 0;
+        return k ? (v: number) => (vals[k] = v) : (v: number) => (sink[0] = v);
+      },
+    };
+    const b = def.build!(el.id, nodes, paramsOf(el, def, p), h, node, sig);
     return Array.isArray(b) ? b : [b];
   });
   return { els, nAll: next };

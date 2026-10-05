@@ -226,8 +226,9 @@
       {@const d = route(wr.a, wr.b)}
       {#if d}
         {@const off = flow(wr.a, wr.b)}
-        {@const tri = DEFS[bench.el(wr.a.el)?.type ?? '']?.ports.find((q) => q.id === wr.a.port)?.phases === 3}
-        <g class="wire" class:sel={isSel('wire', wr.id)} class:tri>
+        {@const pa = DEFS[bench.el(wr.a.el)?.type ?? '']?.ports.find((q) => q.id === wr.a.port)}
+        {@const tri = pa?.phases === 3}
+        <g class="wire" class:sel={isSel('wire', wr.id)} class:tri class:sigw={!!pa?.signal}>
           <path {d} class="hit" role="button" tabindex="-1" aria-label={wr.id} onpointerdown={(e) => downWire(e, wr.id)} />
           <path {d} class="line" />
           {#if off !== null && charge.scale > 0}<path {d} class="flow" style="stroke-dashoffset: {off}" />{/if}
@@ -269,6 +270,7 @@
             r={p.phases === 3 ? 7 : 5}
             class="port"
             class:tri={p.phases === 3}
+            class:sig={!!p.signal}
             class:open={!linked}
             class:pend={bench.pending?.el === el.id && bench.pending.port === p.id}
             role="button"
@@ -341,6 +343,15 @@
   }
   .wire.tri .line {
     stroke-width: 4;
+  }
+  .wire.sigw .line {
+    stroke: var(--good);
+    stroke-dasharray: 6 4;
+    stroke-width: 1.6;
+  }
+  .port.sig {
+    stroke: var(--good);
+    fill: var(--good-soft);
   }
   .port.tri {
     stroke-width: 2.5;

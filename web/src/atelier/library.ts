@@ -8,6 +8,8 @@ import type { L } from '../lib/ui/ui.svelte';
 import { lead, si, two, type ElementDef, type Family } from './defs';
 import { POWER } from './lib-power';
 import { GRID_LIB } from './lib-grid';
+import { CONTROL } from './lib-control';
+import { IBR } from './lib-ibr';
 
 export * from './defs';
 
@@ -239,7 +241,7 @@ export const LIBRARY: ElementDef[] = [
     symbol: 'M-40,0 H-12 M-12,0 L10,-12 M12,0 H40',
     label: (p) => `↓ ${si(p.tc, 's')}${p.to > p.tc ? ` ↑ ${si(p.to, 's')}` : ''}`,
     // In AC, the switch keeps the state it has at the end of the run.
-    ac: { kind: 'Y', y: (p) => cx(p.T >= p.tc && (p.to <= p.tc || p.T < p.to) ? 1e3 : 1e-9) },
+    ac: { kind: 'Y', y: (p) => cx(p.__tEnd >= p.tc && (p.to <= p.tc || p.__tEnd < p.to) ? 1e3 : 1e-9) },
     signals: ['v', 'i'],
     build: (id, [a, b], p) => timedSwitch(id, a, b, p.tc, p.to),
     formulas: [
@@ -313,7 +315,7 @@ export const LIBRARY: ElementDef[] = [
   },
 ];
 
-LIBRARY.push(...POWER, ...GRID_LIB);
+LIBRARY.push(...POWER, ...GRID_LIB, ...IBR, ...CONTROL);
 
 export const DEFS: Record<string, ElementDef> = Object.fromEntries(LIBRARY.map((d) => [d.type, d]));
 

@@ -212,9 +212,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 373 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 385 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -3615,7 +3615,7 @@ before using them in a formal context.
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
-[plan.md](plan.md) §10. Phases A0 to A4 are built.
+[plan.md](plan.md) §10. Phases A0 to A5 are built.
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
@@ -3875,3 +3875,67 @@ sinusoidal steady state, where loads are constant-impedance, to show the effect 
   - 5.1: power flow converges and agrees with the steady state within 0.04 pu;
   - 6.4: grid current THD under 8 % against more than 50 % for the inverter voltage.
 - No singular AC system in any template.
+
+### 15.4 Control blocks and inverter-based resources (phase A5)
+
+**Signal domain.**
+- Ports can be control signals (`signal: 'in' | 'out'`), drawn as green squares and joined by
+  dashed green wires.
+- The netlist puts them in separate signal nets: one output drives each net, and an unconnected
+  input reads 0. A wire between a control terminal and an electrical one is reported and ignored,
+  as are two outputs driving the same net.
+- Blocks compute their output after each network step, in drawing order. Actuators read their
+  input at the next step: the one-step delay of EMT control systems, negligible at the solver's
+  step.
+
+**Control library** (`lib-control.ts`).
+- Sources: constant, step, sinusoid.
+- Operators: gain, summing junction (sign of b), PI with output limits and anti-windup,
+  integrator, first-order lag, limiter, product, PWM modulator.
+- Sensors: voltage sensor, current sensor (in series).
+- Actuators: controlled voltage and current sources, IGBT driven by a gate signal.
+
+The scope shows every block's output.
+
+**Inverter-based resources** (`lib-ibr.ts`, cores in `engine/vsc.ts`). Averaged models: three
+controlled EMFs behind the filter inductance, driven by their control after every step. The EMF
+is limited to 1.3 pu (modulation limit) and the PLL to ±10 Hz, so an unstable converter
+oscillates within its limits instead of diverging.
+
+| Element | Control |
+|---|---|
+| Grid-following inverter | Synchronous-frame PLL (bandwidth $f_{PLL}$), dq current loops with decoupling and voltage feed-forward (bandwidth $f_c$), current limit with active priority; P and Q setpoints with a start-up ramp |
+| Grid-forming inverter | Virtual synchronous machine: $2H\dot\omega = P^* - P - (\omega - 1)/R$, $E = 1 + k_q(Q^* - Q)$; no PLL; synchronised on the voltage measured at connection |
+| PV plant | Grid-following, power from a normalised I–V curve (irradiance, temperature) at the voltage found by perturb-and-observe MPPT (step Δv every $T_m$); irradiance step (cloud) |
+| Battery | Grid-following, frequency from its PLL; droop $P = (f_0 - f)/(f_0 R)\,S_n$ or FFR (full power below a threshold, latched); state of charge |
+| Wind turbine (type 4) | $C_p(\lambda, \beta)$ curve, rotor inertia, MPPT torque below rated speed, pitch control above; gust |
+| MMC (averaged) | AC side as a grid-following converter controlling P (and Q) or the DC voltage; DC side: equivalent capacitance $2W_cS_n/V_{dc}^2$ precharged at $V_{dc}$, current $P_{ac}/V_{dc}$ (power balance) |
+
+The three-phase source gains a **phase jump** (time and angle) to test the converters (7.2).
+
+**Templates.**
+- PI loop built from blocks.
+- Grid-following inverter on a weak grid (SCR 1.5) (7.1, 8.5).
+- Grid-forming versus grid-following under a −20° phase jump (7.2).
+- Battery supporting an island fed by a generator during a load step (7.5, 8.4).
+- PV plant and cloud (7.3).
+- Wind turbine and gust (7.4).
+- MMC HVDC link between two grids (7.6).
+
+**Tests** (`templates-a5.test.ts`).
+- PI loop: no steady-state error.
+- Grid-following inverter, SCR 1.5:
+  - stable with a 20 Hz PLL;
+  - oscillating (and finite) with a 120 Hz PLL.
+- Phase jump: the grid-forming power swing is more than 20× the grid-following one.
+- Battery: a stiff droop keeps the frequency nadir more than 0.15 Hz above a weak one.
+- PV: the MPPT stays within 3 % of the maximum before and after the cloud.
+- Wind: $P \approx (9/12)^3$ at 9 m/s; the rotor stays under 1.05 pu during the gust.
+- HVDC: $V_{dc}$ within 2 % of 400 kV; 0.8 pu carried.
+
+**Robustness changes made along the way.**
+- The run duration reaches element parameters as `__tEnd`. It used to be `T`, which collided
+  with the PV temperature and the lag's time constant.
+- The oscilloscope resizes on the next frame and ignores sub-2 px changes, so it no longer
+  triggers a ResizeObserver loop.
+- The Atelier is loaded on demand: lesson pages do not load its solver and library.

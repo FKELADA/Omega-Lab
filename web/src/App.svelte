@@ -13,7 +13,8 @@
   import NoteView from './lib/ui/NoteView.svelte';
   import Zoomable from './lib/ui/Zoomable.svelte';
   import { ui } from './lib/ui/ui.svelte';
-  import Atelier from './atelier/Atelier.svelte';
+  /** The Atelier is loaded on demand: lessons do not pay for its solver and library. */
+  const loadAtelier = () => import('./atelier/Atelier.svelte');
 
   /** Lessons are addressed by their course number in the URL hash, e.g. #1.4. */
   const fromHash = () => lessons.find((l) => l.id === location.hash.slice(1)) ?? lessons[0];
@@ -81,7 +82,11 @@
   />
 
   {#if view === 'atelier'}
-    <Atelier />
+    {#await loadAtelier()}
+      <p class="loading">…</p>
+    {:then m}
+      <m.default />
+    {/await}
   {:else if view === 'docs'}
     <DocsPage onback={() => (location.hash = currentLesson()?.id ?? '')} />
   {:else}

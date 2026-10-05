@@ -255,7 +255,7 @@ export const GRID_LIB: ElementDef[] = [
       kind: 'multi',
       nV: 0,
       stamp: (ctx, n, p) => {
-        const open = breakerOpenAt(p, p.T);
+        const open = breakerOpenAt(p, p.__tEnd);
         [0, 1, 2].forEach((k) => ctx.y(n[k], n[3 + k], cx(open ? 1e-8 : 1e4)));
       },
     },
