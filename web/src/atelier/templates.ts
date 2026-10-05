@@ -2,6 +2,7 @@
 
 import type { BenchDoc, BenchEl, Wire } from './doc';
 import type { L } from '../lib/ui/ui.svelte';
+import { TEMPLATES_A3 } from './templates-a3';
 
 const el = (id: string, type: string, x: number, y: number, rot: BenchEl['rot'], params: Record<string, number>, scope: string[] = []): BenchEl => ({ id, type, x, y, rot, params, scope });
 const w = (id: string, a: string, b: string): Wire => {
@@ -130,4 +131,5 @@ export const TEMPLATES: Template[] = [
       ],
     }),
   },
+  ...TEMPLATES_A3,
 ];

@@ -1,10 +1,11 @@
 // The analyses run on a compiled bench, beyond the time-domain run: sinusoidal
 // steady state, transfer functions (Bode), impedance scan and poles.
 
-import { cabs, cx, type Complex } from '../lib/core/linalg';
+import { cabs, type Complex } from '../lib/core/linalg';
 import type { Params } from '../lib/models/types';
 import { solveAc, type AcItem, type AcResult } from './engine/ac';
 import { modal, type Modal } from './engine/modal';
+import type { EmtElement } from './engine/emt';
 import type { BenchEl } from './doc';
 import type { ElementDef } from './library';
 import type { Netlist } from './compile';
@@ -34,6 +35,17 @@ export function substeps(net: Netlist, p: Params, T: number): number {
 
 export const stepOf = (net: Netlist, p: Params) => p.T / (N_OUT * substeps(net, p, p.T));
 
+/** The solver elements of the bench, with the internal nodes of composite elements numbered after the netlist's. */
+export function buildElements(net: Netlist, p: Params, h: number): { els: EmtElement[]; nAll: number } {
+  let next = net.nNodes;
+  const node = () => next++;
+  const els = net.active.flatMap(({ el, def, nodes }) => {
+    const b = def.build!(el.id, nodes, paramsOf(el, def, p), h, node);
+    return Array.isArray(b) ? b : [b];
+  });
+  return { els, nAll: next };
+}
+
 export function acItems(net: Netlist, p: Params): AcItem[] {
   return net.active.map(({ el, def, nodes }) => ({ id: el.id, nodes, p: paramsOf(el, def, p), model: def.ac }));
 }
@@ -57,13 +69,13 @@ export interface Steady {
 export function steadyState(net: Netlist, p: Params): Steady | null {
   const f1 = fundamental(net, p);
   if (!f1) return null;
-  const res = solveAc(net.nNodes, acItems(net, p), 2 * Math.PI * f1, (it) => (it.model.kind === 'V' || it.model.kind === 'I' ? (it.model.phasor(it.p, f1) ?? cx(0)) : cx(0)));
+  const res = solveAc(net.nNodes, acItems(net, p), 2 * Math.PI * f1, () => 'own');
   return { f1, res };
 }
 
 /** The circuit driven by 1∠0 at one source or probe, every other source off. */
 export function driven(net: Netlist, p: Params, input: string, f: number): AcResult {
-  return solveAc(net.nNodes, acItems(net, p), 2 * Math.PI * f, (it) => (it.id === input ? cx(1) : cx(0)));
+  return solveAc(net.nNodes, acItems(net, p), 2 * Math.PI * f, (it) => (it.id === input ? 'unit' : 'off'));
 }
 
 /** Impedance seen from a probe (1 A injected), or at the terminals of a voltage source (1 V applied). */
@@ -96,8 +108,8 @@ export function modalOf(net: Netlist, p: Params): Modal {
   const hit = cache.get(net);
   if (hit?.key === key) return hit.md;
   const h = stepOf(net, p);
-  const els = net.active.map(({ el, def, nodes }) => def.build!(el.id, nodes, paramsOf(el, def, p), h));
-  const md = modal(net.nNodes, els, h, p.T);
+  const { els, nAll } = buildElements(net, p, h);
+  const md = modal(nAll, els, h, p.T);
   cache.set(net, { key, md });
   return md;
 }

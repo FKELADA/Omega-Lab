@@ -4,26 +4,20 @@
 import type { EquationSpec } from '../lib/lab/types';
 import type { Params } from '../lib/models/types';
 import type { Netlist } from './compile';
-import { N_OUT, paramsOf, substeps } from './analyses';
-import type { EmtElement, System } from './engine/emt';
+import { N_OUT, buildElements, substeps } from './analyses';
+import { layout } from './engine/emt';
 
 /** The modified nodal matrix of the circuit for the parameters p (window T). */
 export function nodalMatrix(net: Netlist, p: Params): { A: number[][]; names: string[]; h: number } {
   const T = p.T;
   const h = T / (N_OUT * substeps(net, p, T));
-  const els: EmtElement[] = net.active.map(({ el, def, nodes }) =>
-    def.build!(el.id, nodes, paramsOf(el, def, p), h),
-  );
-  const nExtra = els.reduce((s, e) => s + (e.extra ?? 0), 0);
-  const n = net.nNodes - 1 + nExtra;
-  const sys: System = { n, row: (nd) => nd - 1 };
+  const { els, nAll: nBuilt } = buildElements(net, p, h);
+  const { n, sys, bases, nAll } = layout(nBuilt, els);
   const A = Array.from({ length: n }, () => new Array<number>(n).fill(0));
-  const names = Array.from({ length: net.nNodes - 1 }, (_, k) => `v_{${k + 1}}`);
-  let base = net.nNodes - 1;
-  els.forEach((e) => {
-    e.stamp(A, sys, base);
+  const names = Array.from({ length: nAll - 1 }, (_, k) => (k < net.nNodes - 1 ? `v_{${k + 1}}` : `v_{\\text{int}${k + 2 - net.nNodes}}`));
+  els.forEach((e, j) => {
+    e.stamp(A, sys, bases[j]);
     for (let k = 0; k < (e.extra ?? 0); k++) names.push(`i_{\\text{${e.id}}}`);
-    base += e.extra ?? 0;
   });
   return { A, names, h };
 }

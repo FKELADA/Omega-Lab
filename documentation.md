@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 346 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 357 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3615,7 +3615,7 @@ before using them in a formal context.
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
-[plan.md](plan.md) §10. Phases A0, A1 and A2 are built.
+[plan.md](plan.md) §10. Phases A0 to A3 are built.
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
@@ -3760,3 +3760,57 @@ owned by L1 and C1).
 - `analyses.test.ts`: the templates' poles, steady state, Bode peak $Q = 2$, tank impedance 100 Ω,
   and the LC filter's THD.
 - The smoke test opens every tab, clicks a pole, and reads the THD and the measurements.
+
+### 15.2 Power electronics and three-phase (phase A3)
+
+**Solver extensions** (`engine/emt.ts`).
+- **State-driven switching.** After each solve, elements may report that the solution changes
+  their state (`check`): a diode that would carry a negative current blocks, one that sees more
+  than $V_f$ conducts, a saturating core changes slope. The matrix is refactorised and the step
+  re-solved, up to 12 times.
+- **CDA.** After any switching event, the next step is taken as two half steps of backward Euler,
+  then the trapezoidal rule resumes. This removes the trapezoidal rule's numerical chatter on
+  inductor voltages and capacitor currents. L, C and R–L branches implement both rules
+  (`setStep`).
+- **Composite elements.** An element may build several solver elements and allocate internal nodes
+  (a three-phase source is three EMFs behind three R–L branches). A monitor element records named
+  outputs (`out`), e.g. $v_a$, $i_a$, $v_d$, $\psi$.
+- **Three-phase ports.** A port can be three-phase: one wire carries the three conductors. The
+  netlist expands it into three nodes. A wire between a three-phase and a single-phase terminal is
+  reported and ignored. Three-phase wires are drawn thicker.
+- **AC models of multi-terminal elements** (`kind: 'multi'`) stamp their own admittances, sources,
+  internal nodes and ideal transformers. Sources are driven as `own` (steady state), `unit`
+  (transfer functions) or `off`.
+
+**Elements** (`lib-power.ts`).
+
+| Element | Model |
+|---|---|
+| Diode | Two states: $R_{on}$ with threshold $V_f$, or $R_{off}$ = 10 MΩ |
+| Thyristor | As the diode, turned on only during its gate window (α after the reference voltage's upward zero crossing) |
+| IGBT (duty cycle) | Gate at $f_s$ with duty cycle D, with its antiparallel diode |
+| Three-phase source | Star EMFs (line voltage U, phase φ) behind $R_s + jL_s\omega$, neutral grounded; outputs $v_{abc}$, $i_{abc}$, p |
+| Three-phase load | Star R–L from P and Q at rated voltage |
+| Thyristor bridge (6-pulse) | Six thyristors fired every 60° from α; outputs $v_d$, $i_d$ |
+| Three-phase inverter | Six IGBTs, sine-triangle PWM (m, f, $f_s$); outputs $v_{abc}$ (to −), $i_{abc}$ |
+| Transformer | $R + L_\sigma$ in series, saturable magnetising inductance (two slopes, knee $\psi_{sat}$, residual flux $\psi_r$), ideal transformer of ratio $V_1/V_2$; outputs $i_1$, $v_2$, $i_m$, ψ (pu) |
+
+**Templates.**
+- Buck chopper (6.1).
+- Thyristor bridge on a 400 V grid with an R–L load (6.2).
+- Three-phase PWM inverter on a ±300 V bus with a P–Q load (6.3).
+- Transformer inrush with residual flux (4.2).
+
+**Tests** (`engine/switching.test.ts`, `engine/rl.test.ts`, `templates-a3.test.ts`).
+- Half-wave rectification (mean $V/\pi$).
+- Buck converter output.
+- Thyristor fired at 90°.
+- No chatter after diode turn-off.
+- R–L step response.
+- Template checks:
+  - the buck chopper gives $V_{out} \approx D\,V_{in}$;
+  - the bridge's $V_d$ is within 3 % of $1.35\,U\cos\alpha$ minus the overlap drop, at α = 30° and 75°;
+  - the inverter's phase fundamental is within 5 % of $m V_{dc}/2$, with balanced currents;
+  - inrush exceeds 4× rated current when closing at a voltage zero with residual flux, and stays
+    under 10 % of it when closing at the voltage peak without residual flux.
+- Every signal symbol of every template renders in KaTeX.

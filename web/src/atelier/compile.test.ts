@@ -72,3 +72,20 @@ describe('Atelier compiler', () => {
     expect(exp.equations[0].id).toBe('C1.0');
   });
 });
+
+import katex from 'katex';
+describe('signal symbols', () => {
+  it('every signal of every template renders in KaTeX', () => {
+    const bad: string[] = [];
+    for (const t of TEMPLATES) {
+      const { exp } = compile(t.doc(), ui(), circuitEquations);
+      for (const s of exp.signals)
+        try {
+          katex.renderToString(s.symbol, { throwOnError: true });
+        } catch {
+          bad.push(`${t.id}: ${s.symbol}`);
+        }
+    }
+    expect(bad).toEqual([]);
+  });
+});

@@ -3,7 +3,7 @@
   // shows on the oscilloscope, and its live values. Without a selection: the
   // project, the run settings, templates and the solver's messages.
   import type { Bench } from '../bench.svelte';
-  import { DEFS, si, type ElParam } from '../library';
+  import { DEFS, si, sigSpec, type ElParam } from '../library';
   import { TEMPLATES } from '../templates';
   import { parseSI } from '../units';
   import { lastPeriods, meanProduct, stats } from '../engine/harmonics';
@@ -49,11 +49,6 @@
   const toPos = (p: ElParam, v: number) => (p.scale === 'log' ? (STEPS * Math.log(Math.max(v, p.min) / p.min)) / Math.log(p.max / p.min) : (STEPS * (v - p.min)) / (p.max - p.min));
   const fromPos = (p: ElParam, x: number) => +(p.scale === 'log' ? p.min * (p.max / p.min) ** (x / STEPS) : p.min + ((p.max - p.min) * x) / STEPS).toPrecision(3);
 
-  const SIG = [
-    { id: 'v', unit: 'V', name: { fr: 'tension', en: 'voltage' } },
-    { id: 'i', unit: 'A', name: { fr: 'courant', en: 'current' } },
-    { id: 'p', unit: 'W', name: { fr: 'puissance', en: 'power' } },
-  ];
   let copied = $state(false);
   async function share() {
     try {
@@ -82,16 +77,24 @@
         {@const v = el.params[p.id] ?? p.default}
         <div class="param">
           <label for="p-{p.id}">{@html renderMath(p.symbol)} <span class="pn">{tr(p.name)}</span></label>
+          {#if p.choices}
+            <div class="seg" id="p-{p.id}" role="radiogroup">
+              {#each p.choices as ch (ch.value)}
+                <button role="radio" aria-checked={v === ch.value} class:on={v === ch.value} onclick={() => (bench.checkpoint(), bench.setParam(el.id, p.id, ch.value))}>{tr(ch.label)}</button>
+              {/each}
+            </div>
+          {:else}
           <div class="row">
             <input id="p-{p.id}" type="range" onpointerdown={() => bench.checkpoint()} onkeydown={() => bench.checkpoint()} min="0" max={STEPS} value={toPos(p, v)} oninput={(e) => bench.setParam(el.id, p.id, fromPos(p, +e.currentTarget.value))} />
             <input class="num" type="text" value={si(v, p.unit)} onchange={(e) => setTyped(p, e.currentTarget.value)} aria-label={tr(p.name)} />
           </div>
+          {/if}
         </div>
       {/each}
       {#if def.signals.length}
         <h4>{tr({ fr: 'Sur l’oscilloscope', en: 'On the oscilloscope' })}</h4>
         <div class="chips">
-          {#each SIG.filter((s) => def.signals.includes(s.id as 'v')) as s (s.id)}
+          {#each def.signals.map(sigSpec) as s (s.id)}
             <button class="chip" class:on={el.scope.includes(s.id)} onclick={() => bench.toggleScope(el.id, s.id)}>
               {s.id} : {si(lab.run.s[`${el.id}.${s.id}`]?.[lab.idx] ?? NaN, s.unit)}
             </button>
@@ -222,6 +225,24 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--muted);
+  }
+  .seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .seg button {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--muted);
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .seg button.on {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--ink);
   }
   .chips {
     display: flex;

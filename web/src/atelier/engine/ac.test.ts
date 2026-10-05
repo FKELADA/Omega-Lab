@@ -14,7 +14,7 @@ describe('AC nodal analysis', () => {
   // Series RLC: 1 —V— 0 ; 1 —R— 2 —L— 3 —C— 0
   const Rv = 5, Lv = 0.01, Cv = 1e-4, f0 = 1 / (2 * Math.PI * Math.sqrt(Lv * Cv));
   const items = [V('V', 1, 0), R('R', 1, 2, Rv), Lx('L', 2, 3, Lv), Cx('C', 3, 0, Cv)];
-  const at = (f: number) => solveAc(4, items, 2 * Math.PI * f, () => cx(1));
+  const at = (f: number) => solveAc(4, items, 2 * Math.PI * f, () => 'unit');
 
   it('at resonance the current is V/R, in phase, and V_C = Q·V', () => {
     const r = at(f0);

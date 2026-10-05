@@ -4,7 +4,7 @@
   // them (q = ∫ i dt at the time cursor), so the current is seen moving.
   import type { Bench } from '../bench.svelte';
   import { portPos, type BenchEl, type PortRef } from '../doc';
-  import { DEFS, GRID, si } from '../library';
+  import { DEFS, GRID, si, sigSpec } from '../library';
   import { tr } from '../../lib/ui/ui.svelte';
 
   let { bench, tool = 'select' }: { bench: Bench; tool?: 'select' | 'pan' } = $props();
@@ -226,7 +226,8 @@
       {@const d = route(wr.a, wr.b)}
       {#if d}
         {@const off = flow(wr.a, wr.b)}
-        <g class="wire" class:sel={isSel('wire', wr.id)}>
+        {@const tri = DEFS[bench.el(wr.a.el)?.type ?? '']?.ports.find((q) => q.id === wr.a.port)?.phases === 3}
+        <g class="wire" class:sel={isSel('wire', wr.id)} class:tri>
           <path {d} class="hit" role="button" tabindex="-1" aria-label={wr.id} onpointerdown={(e) => downWire(e, wr.id)} />
           <path {d} class="line" />
           {#if off !== null && charge.scale > 0}<path {d} class="flow" style="stroke-dashoffset: {off}" />{/if}
@@ -238,22 +239,24 @@
       {@const def = DEFS[el.type]}
       {#if def}
         {@const horiz = el.rot % 180 === 0}
+        {@const [bw, bh] = def.box ?? [30, 16]}
+        {@const ly = horiz ? bh + 6 : bw + 6}
         <g class="el" class:sel={isSel('el', el.id)} transform="translate({el.x * GRID},{el.y * GRID})" role="button" tabindex="-1" aria-label={el.id} onpointerdown={(e) => downEl(e, el)}>
           <g transform="rotate({el.rot})">
             {#if (bench.highlight?.[el.id] ?? 0) > 0.02}
-              <rect x="-34" y="-20" width="68" height="40" rx="10" class="glow" style="opacity: {0.12 + 0.4 * bench.highlight![el.id]}" />
+              <rect x={-bw - 4} y={-bh - 4} width={2 * bw + 8} height={2 * bh + 8} rx="10" class="glow" style="opacity: {0.12 + 0.4 * bench.highlight![el.id]}" />
             {/if}
-            <rect x="-30" y="-16" width="60" height="32" class="hitbox" />
+            <rect x={-bw} y={-bh} width={2 * bw} height={2 * bh} class="hitbox" />
             {#if def.circle}<circle r="14" class="body" />{/if}
             <path d={def.symbol} class="sym" />
           </g>
           {#if def.glyph}<text class="glyph" y="5">{def.glyph}</text>{/if}
           {#if !def.ground}
-            <text class="lbl id" x={horiz ? 0 : 20} y={horiz ? -22 : -4} text-anchor={horiz ? 'middle' : 'start'}>{el.id}</text>
-            {#if def.label}<text class="lbl val" x={horiz ? 0 : 20} y={horiz ? 30 : 10} text-anchor={horiz ? 'middle' : 'start'}>{def.label(el.params)}</text>{/if}
+            <text class="lbl id" x={horiz ? 0 : ly} y={horiz ? -ly : -4} text-anchor={horiz ? 'middle' : 'start'}>{el.id}</text>
+            {#if def.label}<text class="lbl val" x={horiz ? 0 : ly} y={horiz ? ly + 8 : 10} text-anchor={horiz ? 'middle' : 'start'}>{def.label(el.params)}</text>{/if}
             {#if def.family === 'instruments'}
-              {@const s = def.signals[0]}
-              <text class="lbl meter" x={horiz ? 0 : 20} y={horiz ? 30 : 10} text-anchor={horiz ? 'middle' : 'start'}>{si(live(el.id, s) ?? NaN, s === 'v' ? 'V' : 'A')}</text>
+              {@const s = sigSpec(def.signals[0])}
+              <text class="lbl meter" x={horiz ? 0 : ly} y={horiz ? ly + 8 : 10} text-anchor={horiz ? 'middle' : 'start'}>{si(live(el.id, s.id) ?? NaN, s.unit)}</text>
             {/if}
           {/if}
         </g>
@@ -263,8 +266,9 @@
           <circle
             cx={px}
             cy={py}
-            r="5"
+            r={p.phases === 3 ? 7 : 5}
             class="port"
+            class:tri={p.phases === 3}
             class:open={!linked}
             class:pend={bench.pending?.el === el.id && bench.pending.port === p.id}
             role="button"
@@ -274,7 +278,9 @@
             onclick={(e) => (e.stopPropagation(), bench.clickPort({ el: el.id, port: p.id }))}
             onkeydown={(e) => e.key === 'Enter' && bench.clickPort({ el: el.id, port: p.id })}
           />
-          {#if def.ports.length === 2 && !def.ground}
+          {#if def.ports.length > 2 || (p.label && def.ports.length === 2)}
+            <text class="pm" x={px + 8} y={py - 7}>{p.label ?? p.id}</text>
+          {:else if def.ports.length === 2 && !def.ground}
             <text class="pm" x={px + (horiz ? (p.id === 'a' ? 6 : -6) : 7)} y={py + (horiz ? -6 : p.id === 'a' ? 10 : -4)} text-anchor={horiz ? (p.id === 'a' ? 'start' : 'end') : 'start'}>{p.id === 'a' ? '+' : '−'}</text>
           {/if}
         {/each}
@@ -332,6 +338,12 @@
     stroke-width: 12;
     fill: none;
     cursor: pointer;
+  }
+  .wire.tri .line {
+    stroke-width: 4;
+  }
+  .port.tri {
+    stroke-width: 2.5;
   }
   .wire.sel .line {
     stroke: var(--accent);

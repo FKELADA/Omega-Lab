@@ -2,91 +2,13 @@
 // parameters, how it is built for the EMT solver, and its formulas. Adding a
 // component means adding an entry here.
 
-import type { EmtElement } from './engine/emt';
-import type { AcModel } from './engine/ac';
 import { cx, polar } from '../lib/core/linalg';
 import { ammeter, capacitor, inductor, isource, resistor, timedSwitch, voltmeter, vsource, waves } from './engine/elements';
-import type { EqContext } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
+import { lead, si, two, type ElementDef, type Family } from './defs';
+import { POWER } from './lib-power';
 
-/** Grid pitch, in canvas pixels. */
-export const GRID = 20;
-
-export interface PortDef {
-  id: string;
-  /** Position relative to the element centre, in grid units, before rotation. */
-  dx: number;
-  dy: number;
-}
-
-export interface ElParam {
-  id: string;
-  symbol: string; // KaTeX
-  name: L;
-  unit: string;
-  default: number;
-  min: number;
-  max: number;
-  scale: 'lin' | 'log';
-}
-
-export interface ElFormula {
-  title: L;
-  tex: (c: EqContext, id: string) => string;
-  note?: (c: EqContext, id: string) => string | null;
-  personas?: ('learner' | 'research' | 'utility')[];
-}
-
-export type Family = 'sources' | 'passives' | 'switches' | 'instruments';
-
-export interface ElementDef {
-  type: string;
-  family: Family;
-  name: L;
-  /** Prefix of automatic names: R1, L2… */
-  prefix: string;
-  ports: PortDef[];
-  params: ElParam[];
-  /** SVG path(s) in local pixels, drawn horizontally, ports at x = ±40. */
-  symbol: string;
-  /** Short text drawn inside the symbol (meters). */
-  glyph?: string;
-  /** Drawn with a round body (sources, meters). */
-  circle?: boolean;
-  /** How it enters the frequency-domain (AC) equations. */
-  ac: AcModel;
-  /** Value shown next to the symbol. */
-  label?: (p: Record<string, number>) => string;
-  /** Signals offered to the oscilloscope. */
-  signals: ('v' | 'i' | 'p')[];
-  /** Shown on the oscilloscope by default. */
-  scopeDefault?: ('v' | 'i' | 'p')[];
-  /** Ground: its port is the reference node. */
-  ground?: boolean;
-  /** The element for the solver; nodes are in port order. */
-  build?: (id: string, nodes: number[], p: Record<string, number>, h: number) => EmtElement;
-  /** Shortest time scale it imposes (for the automatic step), if any. */
-  timeScale?: (p: Record<string, number>) => number | null;
-  formulas: ElFormula[];
-}
-
-const two: PortDef[] = [
-  { id: 'a', dx: -2, dy: 0 },
-  { id: 'b', dx: 2, dy: 0 },
-];
-
-/** Engineering notation with SI prefix, for labels. */
-export function si(v: number, unit: string, digits = 3): string {
-  if (!Number.isFinite(v)) return '—';
-  if (v === 0) return `0 ${unit}`;
-  const pre = ['p', 'n', 'µ', 'm', '', 'k', 'M', 'G'];
-  let e = Math.floor(Math.log10(Math.abs(v)) / 3);
-  e = Math.max(-4, Math.min(3, e));
-  const m = v / 10 ** (3 * e);
-  return `${+m.toPrecision(digits)} ${pre[e + 4]}${unit}`.replace('.', ',');
-}
-
-const lead = 'M-40,0 H-24 M24,0 H40';
+export * from './defs';
 
 export const LIBRARY: ElementDef[] = [
   // ── Sources ──
@@ -390,13 +312,19 @@ export const LIBRARY: ElementDef[] = [
   },
 ];
 
+LIBRARY.push(...POWER);
+
 export const DEFS: Record<string, ElementDef> = Object.fromEntries(LIBRARY.map((d) => [d.type, d]));
 
 export const FAMILIES: { id: Family; name: L }[] = [
   { id: 'sources', name: { fr: 'Sources', en: 'Sources' } },
   { id: 'passives', name: { fr: 'Éléments passifs', en: 'Passive elements' } },
   { id: 'switches', name: { fr: 'Interrupteurs', en: 'Switches' } },
+  { id: 'power', name: { fr: 'Électronique de puissance', en: 'Power electronics' } },
+  { id: 'grid', name: { fr: 'Réseau triphasé', en: 'Three-phase grid' } },
+  { id: 'machines', name: { fr: 'Machines', en: 'Machines' } },
+  { id: 'ibr', name: { fr: 'Onduleurs et renouvelables', en: 'Inverters and renewables' } },
+  { id: 'control', name: { fr: 'Commande', en: 'Control' } },
   { id: 'instruments', name: { fr: 'Instruments', en: 'Instruments' } },
 ];
 
-export const signalIds = (id: string, def: ElementDef) => def.signals.map((s) => `${id}.${s}`);

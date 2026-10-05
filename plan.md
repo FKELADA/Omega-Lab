@@ -68,7 +68,7 @@ tests are in [documentation.md](documentation.md).
 | 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
 | 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
 
-**Verification:** 346 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+**Verification:** 357 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
 all 51 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
@@ -135,7 +135,7 @@ no console errors).
 
 ### Next
 
-1. **Free-style mode, the Atelier** (§10): A0, A1 and A2 done; next A3 (diodes, thyristors, IGBT with PWM, transformer with saturation).
+1. **Free-style mode, the Atelier** (§10): A0 to A3 done; next A4 (three-phase grid, machines, power flow) and A5 (control, IBR).
 2. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
 3. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
 

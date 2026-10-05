@@ -9,7 +9,7 @@
 
 import { cx, eigenvaluesQR, type Complex } from '../../lib/core/linalg';
 import { csolve } from './ac';
-import { luFactor, luSolve, type EmtElement, type System } from './emt';
+import { layout, luFactor, luSolve, type EmtElement } from './emt';
 
 export interface Pole {
   s: Complex;
@@ -28,12 +28,7 @@ export function modal(nNodes: number, els: EmtElement[], h: number, t: number): 
   const states = reactive.map((e) => e.id);
   const m = reactive.length;
   if (!m) return { poles: [], states };
-  const nExtra = els.reduce((s, e) => s + (e.extra ?? 0), 0);
-  const n = nNodes - 1 + nExtra;
-  const sys: System = { n, row: (nd) => nd - 1 };
-  const bases: number[] = [];
-  let next = nNodes - 1;
-  for (const e of els) (bases.push(next), (next += e.extra ?? 0));
+  const { n, sys, bases } = layout(nNodes, els);
   for (const e of els) e.changed?.(t); // switches in their state at time t
   const A = Array.from({ length: n }, () => new Array<number>(n).fill(0));
   els.forEach((e, k) => e.stamp(A, sys, bases[k]));
