@@ -135,8 +135,9 @@ no console errors).
 
 ### Next
 
-1. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
-2. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
+1. **Free-style mode, the Atelier** (§10): phases A0–A6, in progress.
+2. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
+3. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
 
 ---
 
@@ -522,3 +523,196 @@ exactly which concepts Modules 3–5 must build up to.
    internals?). This drives most of the new engine work.
 4. **First audience:** students, utility training, or both? This decides whether P1 or P2 ships
    first.
+
+---
+
+## 10. Free-style mode: the Atelier
+
+> **Atelier** (FR) / **Workbench** (EN). A second mode next to *Leçons*: an empty bench where the
+> learner builds any circuit or grid from the library, wires instruments to it, and runs every
+> analysis the lessons used. The lessons teach one idea at a time; the Atelier lets the learner
+> combine them.
+
+### 10.1 Screen
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ TOP BAR   [Leçons | Atelier]   project ▾   ↶ ↷   ▶ Simuler   analyses ▾   share     │
+├────────────────────────────────────────────────────────────────┬─────────────────────┤
+│                                                                │ LIBRARY  (search)   │
+│                         CANVAS (free space)                    │  Sources            │
+│   drag & drop elements, wire ports, drop instrument probes     │  Passives           │
+│   on wires; live values and moving current dots; a click       │  Switches & semis   │
+│   on an element selects it                                     │  Machines · Grid    │
+│                                                                │  Converters & IBR   │
+│                                                                │  Control · Instr.   │
+│                                                                │  Templates          │
+│                                                                ├─────────────────────┤
+├────────────────────────────────────────────────────────────────┤ INSPECTOR           │
+│ INSTRUMENT DOCK  Oscilloscope · Multimètre · THD · Bode ·      │ (selected element)  │
+│   Impédance · Phaseurs · Pôles · Répartition de charge         │ params, presets,    │
+├────────────────────────────────────────────────────────────────┤ units, probes       │
+│ FORMULAS  selected element: constitutive law, companion model, │                     │
+│ live values · whole circuit: G·v = i, nodes, states, messages  │                     │
+└────────────────────────────────────────────────────────────────┴─────────────────────┘
+```
+
+- **Right column:** the library on top (categories, search, drag to the canvas). When an element is
+  selected, the inspector opens below it (or replaces it on small screens). It shows the
+  parameters with sliders and typed inputs that accept units (`4,7µ`, `10k`, `20 kV`), presets
+  (a 20 kV cable per km, a 400 kV line, a 2 MW wind turbine), probes, and rotate, flip and delete.
+- **Bottom:** the formula panel. For the selected element, it shows:
+  - its equations with live values;
+  - its numerical (companion) model, for the Researcher profile;
+  - engineering notes, for the Engineer profile.
+
+  It reuses the equation cards. Without a selection, it shows the circuit's own equations (number
+  of nodes and states, and the nodal matrix written out for small circuits) and plain-language
+  solver messages (floating node, a loop of voltage sources, a step too large).
+- **Instrument dock**, between the canvas and the formulas: the existing oscilloscope, Bode plot,
+  s-plane and phasor diagram, plus a new THD analyser, multimeter, wattmeter and impedance scan.
+  Each tab can be enlarged (⤢) like the lesson panels.
+- Phone: canvas full screen; the library, inspector, dock and formulas become bottom sheets.
+
+### 10.2 Architecture: the bench compiles into an experiment
+
+The `Lab` already drives every instrument from an `Experiment` (model, params, signals, equations,
+Bode and phasor specifications). The bench **compiles into a dynamic `Experiment`**:
+
+| Experiment field | Built from the bench |
+|---|---|
+| `model.simulate` | the EMT solver run on the compiled netlist |
+| `params` | every element parameter, as `R1.R`, `L1.L`… so sweeps, freeze-and-compare and the time cursor work unchanged |
+| `signals` | every probe (node voltage, branch current, power, speed…) |
+| `poles` | the modal analysis below |
+| `bode` | the transfer from a chosen source to a chosen probe |
+| `phasors` | the AC operating point |
+| `equations` | the selected element's cards plus the circuit's |
+
+The oscilloscope, Bode plot, s-plane, phasor diagram, equation cards, sweep, ghosts and even
+predict-then-reveal therefore come for free, and behave exactly as in the lessons.
+
+```
+web/src/atelier/
+  bench.svelte.ts      bench state: elements, wires, probes, selection, undo/redo, save
+  netlist.ts           wires → nodes (union-find), ports → node ids, checks
+  compile.ts           netlist → Experiment (params, signals, model, specs)
+  engine/emt.ts        nodal EMT solver (below)
+  engine/ac.ts         complex nodal solve at one frequency: phasors, Bode, impedance scan
+  engine/modal.ts      poles and participation from the EMT step map
+  engine/harmonics.ts  FFT, THD, harmonic table against EN 50160 / IEEE 519
+  library/*.ts         one file per family; each element = ports + params + stamps + formulas + icon
+  ui/                  Canvas, Library, Inspector, Dock, FormulaPanel, Wire, Probe
+```
+
+### 10.3 The solver: one drawing, three analyses
+
+- **EMT (time domain).** This is the method of EMTP and of G2ELin's EMT solver.
+  - Each element becomes a conductance plus a history current source (trapezoidal companion
+    models, Dommel).
+  - Each step solves `G·v = i_hist + i_src` by LU. The factorisation is reused while the topology
+    and the switch states do not change.
+  - Ideal voltage sources use modified nodal analysis.
+  - After a switching event, two half steps of backward Euler remove trapezoidal chatter (CDA).
+  - The step is chosen automatically from the smallest time constant, the switching frequency and
+    50 Hz. It can be overridden.
+- **AC (frequency domain).** The same stamps with $j\omega$ give the complex nodal matrix. It
+  yields:
+  - the phasor steady state at 50 Hz (phasor diagram, wattmeter);
+  - any transfer function (Bode);
+  - the impedance seen at any node (impedance scan, to find resonances as in 1.4, 6.4 and 8.6).
+- **Small signal (poles).** The EMT step of a linear(ised) circuit is a linear map
+  $x_{k+1} = M x_k$ on the history states. Its eigenvalues $z$ map exactly to continuous poles by
+  the inverse Tustin transform $s = \frac2h\,\frac{z - 1}{z + 1}$.
+  - This gives the poles of **any** circuit drawn on the bench, without writing state equations
+    by hand.
+  - It also gives participation factors that can be painted back onto the elements: click a pole,
+    and the inductors and capacitors that make it light up (the 8.8 idea, on the learner's own
+    circuit).
+- **RMS power flow** for three-phase grids: the same drawing is read as buses and branches and
+  solved by the existing Newton–Raphson. The EMT and RMS answers can be compared, as in 8.9.
+- Machines, motors and averaged converters are interfaced as Norton (or Thevenin) equivalents.
+  Their internal states are integrated with the same step (a one-step interface, standard
+  practice).
+- Control blocks (gain, PI, integrator, limiter, sum, PLL, measurement, PWM) form a signal domain,
+  solved explicitly after each network step. This allows building a converter control from
+  blocks.
+- Long runs go in a Web Worker so the interface stays fluid. Dense LU up to about 150 nodes is
+  enough for teaching circuits.
+
+### 10.4 Library (each element: icon, ports, parameters, stamps, formulas)
+
+| Family | Elements |
+|---|---|
+| Sources | DC, AC (amplitude, f, phase), step, ramp, pulse, three-phase source with impedance (SCR), current source, controlled sources |
+| Passives | R, L (with optional saturation), C, series RLC, coupled inductors, ground |
+| Switches & semiconductors | timed switch/breaker, diode, thyristor (firing angle), IGBT/MOSFET with gate signal, H-bridge and three-phase bridge |
+| Machines | synchronous machine (classical and 6th order, AVR, governor, PSS), induction motor, DC motor |
+| Grid | line (π and Bergeron travelling-wave), cable, transformer (single and three-phase, tap, saturation), ZIP and motor loads, fault (type, resistance, timing), capacitor bank, shunt reactor, series capacitor, SVC/STATCOM |
+| Converters & IBR | buck, boost, buck-boost, thyristor rectifier, VSC averaged and switched with L/LCL filter, GFL and GFM control, PV array with MPPT, BESS, type-4 wind turbine, MMC (averaged) |
+| Control | gain, sum, PI, integrator, first order, limiter, comparator, PLL, abc/dq, PWM modulator |
+| Instruments | oscilloscope probe, multimeter, wattmeter (P, Q, S, pf), THD analyser, Bode input/output markers, impedance probe, frequency/RoCoF meter |
+| Templates | every lesson circuit that maps to a netlist (1.2, 1.4, 2.2–2.4, 4.2, 6.1–6.4, 7.1, 8.6…), plus classic benches (RLC filter, LCL inverter, SMIB, two-area grid) |
+
+Three-phase elements carry three-conductor ports, drawn as one line with a "///" mark
+(single-line style). They expand to three nodes in the netlist.
+
+### 10.5 Innovations
+
+1. **Instruments are physical.** The learner drags a scope probe onto a wire, as on a real bench.
+   Probes are colour-coded, and each trace takes its probe's colour.
+2. **The circuit is alive.**
+   - Live values on every wire at the time cursor.
+   - Moving dots whose speed follows the current.
+   - Power-flow arrows.
+   - Overloaded elements turn red.
+3. **One drawing, three solvers.** EMT, phasor/RMS and small-signal results side by side, with the
+   differences explained (8.9 on your own circuit).
+4. **Poles you can click.** Inverse-Tustin modal analysis of any circuit. Clicking a pole
+   highlights the elements that participate in it.
+5. **Impedance scan** at any node. Resonances are marked, and the elements that form them named.
+6. **See the matrix.** For small circuits, the nodal matrix and the companion sources are written
+   out live, so "how does a simulator work?" has a visible answer.
+7. **Predict, then run**, in free mode too: sketch the expected trace on the scope before ▶.
+8. **Challenges**, for example "design an LCL filter so that THD < 5 %" or "keep the frequency
+   above 49.2 Hz with the least battery".
+   - A challenge is a template with locked elements and a goal.
+   - Checks reuse the step-check mechanism.
+9. **Lessons ↔ Atelier.** An "Ouvrir dans l'Atelier" button on every lesson whose circuit maps to
+   a netlist. The lesson's parameters come along.
+10. **Plain-language diagnostics**, for example:
+    - "node 3 is floating: connect it or add a ground";
+    - "two ideal voltage sources in parallel";
+    - "this step is too large for the 2 µs time constant of C2".
+11. **Typed units and presets** (`4,7µ`, `20 kV`, "câble 240 mm² Al").
+12. **Share without a server.**
+    - A project fits in the URL (compressed JSON).
+    - Projects can also be exported and imported as a file.
+    - Several projects are kept in the browser.
+
+### 10.6 Phases
+
+| Phase | Content | Done when |
+|---|---|---|
+| **A0** | Mode switch, canvas (grid, pan, zoom), library panel, drag and drop, ports and orthogonal wires, selection, inspector with unit-aware inputs, undo/redo, local save, URL share | A circuit can be drawn, edited, saved and reopened |
+| **A1** | Netlist and nodal EMT solver (R, L, C, sources, switch, ground), probes, oscilloscope via the dynamic Experiment, formula panel, diagnostics, templates 1.2 and 1.4 | The bench reproduces lessons 1.2 and 1.4 to within 0.1 % (unit tests) |
+| **A2** | AC solve (phasors, Bode, impedance scan); inverse-Tustin poles with participation; THD analyser; multimeter and wattmeter | Bode and poles match the closed forms of 1.4 and 3.1; the THD of a square wave is 48.3 % |
+| **A3** | Diode, thyristor, IGBT with PWM, CDA, transformer with saturation; chopper, rectifier, PWM and LCL templates | Matches lessons 6.1–6.4 |
+| **A4** | Three-phase library: sources with SCR, lines (π, Bergeron), transformers, ZIP loads, faults, breakers, synchronous machine, induction motor; RMS power flow on the same drawing | Matches 4.1, 4.3, 4.5, 5.1 and 8.1 |
+| **A5** | Control blocks; averaged VSC with GFL/GFM control, PV with MPPT, BESS, wind, MMC | Matches 7.1, 7.2, 7.5 and 8.5 |
+| **A6** | Lessons ↔ Atelier, challenges, predict-then-run, docs, smoke test, phone layout | Every template and challenge passes the smoke test |
+
+Every phase adds unit tests that compare the bench with the lesson models already validated, so
+the lessons double as the Atelier's test suite.
+
+### 10.7 Risks
+
+- **Scope:** the library is large; each phase must be usable on its own.
+- **Numerics:**
+  - trapezoidal chatter after switching (handled by CDA);
+  - stiff circuits (automatic step and warnings);
+  - algebraic loops in control (one-step delay, stated in the diagnostics).
+- **Usability of wiring:**
+  - snapping and automatic orthogonal routing;
+  - wires that follow moved elements;
+  - probes dropped on wires rather than on hard-to-hit nodes.
