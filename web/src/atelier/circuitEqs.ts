@@ -3,17 +3,16 @@
 
 import type { EquationSpec } from '../lib/lab/types';
 import type { Params } from '../lib/models/types';
-import { substeps, type Netlist } from './compile';
+import type { Netlist } from './compile';
+import { N_OUT, paramsOf, substeps } from './analyses';
 import type { EmtElement, System } from './engine/emt';
-
-const N_OUT = 1200;
 
 /** The modified nodal matrix of the circuit for the parameters p (window T). */
 export function nodalMatrix(net: Netlist, p: Params): { A: number[][]; names: string[]; h: number } {
   const T = p.T;
   const h = T / (N_OUT * substeps(net, p, T));
   const els: EmtElement[] = net.active.map(({ el, def, nodes }) =>
-    def.build!(el.id, nodes, Object.fromEntries(def.params.map((q) => [q.id, p[`${el.id}.${q.id}`] ?? el.params[q.id] ?? q.default])), h),
+    def.build!(el.id, nodes, paramsOf(el, def, p), h),
   );
   const nExtra = els.reduce((s, e) => s + (e.extra ?? 0), 0);
   const n = net.nNodes - 1 + nExtra;

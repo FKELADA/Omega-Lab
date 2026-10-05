@@ -7,12 +7,13 @@
   import Canvas from './ui/Canvas.svelte';
   import Inspector from './ui/Inspector.svelte';
   import LibraryPanel from './ui/LibraryPanel.svelte';
-  import Scope from '../lib/instruments/Scope.svelte';
+  import Dock from './ui/Dock.svelte';
+  import { provideBench } from './ui/context';
   import Equations from '../lib/instruments/Equations.svelte';
-  import Zoomable from '../lib/ui/Zoomable.svelte';
   import { S, tr } from '../lib/ui/ui.svelte';
 
   const bench = new Bench();
+  provideBench(bench);
   const lab = $derived(bench.lab);
   let canvas = $state<Canvas>();
   let tool = $state<'select' | 'pan'>('select');
@@ -81,7 +82,7 @@
     <Canvas {bench} {tool} bind:this={canvas} />
     {#key lab}
       <div class="dock">
-        <Zoomable {lab} comp={Scope} cls="scope-wrap" />
+        <Dock {lab} />
         <Equations {lab} />
       </div>
     {/key}

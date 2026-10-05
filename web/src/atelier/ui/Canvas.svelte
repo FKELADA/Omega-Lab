@@ -15,7 +15,6 @@
   // View: world point at the top-left corner, and zoom.
   let vx = $state(-40), vy = $state(-40), zoom = $state(1.4);
 
-  const CIRCLE = new Set(['vdc', 'vac', 'vstep', 'vsquare', 'idc', 'voltmeter', 'ammeter']);
 
   function world(e: { clientX: number; clientY: number }): [number, number] {
     const r = svg!.getBoundingClientRect();
@@ -241,8 +240,11 @@
         {@const horiz = el.rot % 180 === 0}
         <g class="el" class:sel={isSel('el', el.id)} transform="translate({el.x * GRID},{el.y * GRID})" role="button" tabindex="-1" aria-label={el.id} onpointerdown={(e) => downEl(e, el)}>
           <g transform="rotate({el.rot})">
+            {#if (bench.highlight?.[el.id] ?? 0) > 0.02}
+              <rect x="-34" y="-20" width="68" height="40" rx="10" class="glow" style="opacity: {0.12 + 0.4 * bench.highlight![el.id]}" />
+            {/if}
             <rect x="-30" y="-16" width="60" height="32" class="hitbox" />
-            {#if CIRCLE.has(el.type)}<circle r="14" class="body" />{/if}
+            {#if def.circle}<circle r="14" class="body" />{/if}
             <path d={def.symbol} class="sym" />
           </g>
           {#if def.glyph}<text class="glyph" y="5">{def.glyph}</text>{/if}
@@ -346,6 +348,11 @@
   }
   .el {
     cursor: grab;
+  }
+  .glow {
+    fill: var(--accent);
+    stroke: var(--accent);
+    stroke-width: 2;
   }
   .hitbox {
     fill: transparent;

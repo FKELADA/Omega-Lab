@@ -6,7 +6,6 @@
 
   let { onadd }: { onadd: (type: string) => void } = $props();
   let q = $state('');
-  const CIRCLE = new Set(['vdc', 'vac', 'vstep', 'vsquare', 'idc', 'voltmeter', 'ammeter']);
   const match = (name: { fr: string; en: string }) => !q || `${name.fr} ${name.en}`.toLowerCase().includes(q.toLowerCase());
 </script>
 
@@ -28,7 +27,7 @@
               onclick={() => onadd(d.type)}
             >
               <svg viewBox="-44 -24 88 48" aria-hidden="true">
-                {#if CIRCLE.has(d.type)}<circle r="14" class="body" />{/if}
+                {#if d.circle}<circle r="14" class="body" />{/if}
                 <path d={d.symbol} class="sym" />
                 {#if d.glyph}<text y="5">{d.glyph}</text>{/if}
               </svg>

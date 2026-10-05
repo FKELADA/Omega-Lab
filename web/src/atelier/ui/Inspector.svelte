@@ -6,6 +6,9 @@
   import { DEFS, si, type ElParam } from '../library';
   import { TEMPLATES } from '../templates';
   import { parseSI } from '../units';
+  import { lastPeriods, meanProduct, stats } from '../engine/harmonics';
+  import { fundamental } from '../analyses';
+  import type { Steady } from '../analyses';
   import { tr } from '../../lib/ui/ui.svelte';
   import { renderMarkdown, renderMath } from '../../lib/ui/markdown';
 
@@ -15,6 +18,32 @@
   const el = $derived(sel?.kind === 'el' ? bench.el(sel.id) : undefined);
   const def = $derived(el ? DEFS[el.type] : undefined);
   const nPicked = $derived(bench.picked.els.length + bench.picked.wires.length);
+
+  // Measurements over the last whole periods of the fundamental (or the second half of the run).
+  const meas = $derived.by(() => {
+    if (!el || !def) return null;
+    const run = lab.run;
+    const v = run.s[`${el.id}.v`], i = run.s[`${el.id}.i`];
+    if (!v && !i) return null;
+    const f1 = fundamental(bench.compiled.net, lab.params);
+    const w = (f1 && lastPeriods(run.t, f1)) || { k0: Math.floor(run.t.length / 2), k1: run.t.length - 1 };
+    const sv = v ? stats(run.t, v, w) : null, si_ = i ? stats(run.t, i, w) : null;
+    const P = v && i ? meanProduct(run.t, v, i, w) : null;
+    const S = sv && si_ ? sv.rms * si_.rms : null;
+    // Reactive power from the steady-state phasors (peak values: Q = ½ Im(V I*)).
+    const ss = lab.info.ss as Steady | null;
+    let Q: number | null = null;
+    if (ss && v && i) {
+      const V = ss.res.v[el.id], I = ss.res.i[el.id];
+      Q = 0.5 * (V.im * I.re - V.re * I.im);
+    }
+    // Numerical noise (a mean of 1e-13 V on an AC signal) is shown as 0.
+    const clean = (x: number, scale: number) => (Math.abs(x) < 1e-6 * Math.max(scale, 1e-30) ? 0 : x);
+    if (sv) sv.mean = clean(sv.mean, sv.peak);
+    if (si_) si_.mean = clean(si_.mean, si_.peak);
+    const sc = S ?? 0;
+    return { sv, si: si_, P: P === null ? null : clean(P, sc), S, Q: Q === null ? null : clean(Q, sc), pf: P !== null && S ? clean(P, sc) / S : null, periodic: !!f1 };
+  });
 
   const STEPS = 1000;
   const toPos = (p: ElParam, v: number) => (p.scale === 'log' ? (STEPS * Math.log(Math.max(v, p.min) / p.min)) / Math.log(p.max / p.min) : (STEPS * (v - p.min)) / (p.max - p.min));
@@ -68,6 +97,25 @@
             </button>
           {/each}
         </div>
+      {/if}
+      {#if meas}
+        <h4>{tr({ fr: 'Mesures', en: 'Measurements' })} <span class="sub">({meas.periodic ? tr({ fr: 'dernières périodes', en: 'last periods' }) : tr({ fr: 'seconde moitié', en: 'second half' })})</span></h4>
+        <dl class="meas">
+          {#if meas.sv}
+            <dt>V {tr({ fr: 'eff.', en: 'RMS' })}</dt><dd>{si(meas.sv.rms, 'V')}</dd>
+            <dt>V {tr({ fr: 'moy. / crête', en: 'mean / peak' })}</dt><dd>{si(meas.sv.mean, 'V')} / {si(meas.sv.peak, 'V')}</dd>
+          {/if}
+          {#if meas.si}
+            <dt>I {tr({ fr: 'eff.', en: 'RMS' })}</dt><dd>{si(meas.si.rms, 'A')}</dd>
+            <dt>I {tr({ fr: 'moy. / crête', en: 'mean / peak' })}</dt><dd>{si(meas.si.mean, 'A')} / {si(meas.si.peak, 'A')}</dd>
+          {/if}
+          {#if meas.P !== null}
+            <dt>P</dt><dd>{si(meas.P, 'W')}</dd>
+            <dt>S</dt><dd>{si(meas.S ?? NaN, 'VA')}</dd>
+            {#if meas.Q !== null}<dt>Q</dt><dd>{si(meas.Q, 'var')}</dd>{/if}
+            {#if meas.pf !== null}<dt>cos φ</dt><dd>{meas.pf.toFixed(3)}</dd>{/if}
+          {/if}
+        </dl>
       {/if}
       <div class="acts">
         <button class="btn" onclick={() => bench.rotate(el.id)}>⟳ {tr({ fr: 'Tourner', en: 'Rotate' })} (R)</button>
@@ -235,6 +283,25 @@
     color: var(--accent);
     font-weight: 600;
     text-align: left;
+  }
+  .meas {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1px 10px;
+    margin: 0;
+    font: 11.5px var(--mono, monospace);
+  }
+  .meas dt {
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .meas dd {
+    margin: 0;
+  }
+  .sub {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
   }
   .count {
     margin: 0 0 4px;

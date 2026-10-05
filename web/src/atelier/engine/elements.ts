@@ -33,8 +33,9 @@ export function resistor(id: string, a: number, b: number, R: number): EmtElemen
 export function inductor(id: string, a: number, b: number, L: number, h: number): EmtElement {
   const g = h / (2 * Math.max(L, 1e-12));
   let hist = 0;
-  return {
+  const e: EmtElement = {
     id, v: 0, i: 0,
+    state: { get: () => e.i + g * e.v, set: (s) => ((e.i = s), (e.v = 0)) },
     stamp: (A, sys) => addG(A, sys, a, b, g),
     rhs(bb, _t, sys) {
       hist = this.i + g * this.v;
@@ -45,13 +46,15 @@ export function inductor(id: string, a: number, b: number, L: number, h: number)
       this.i = g * this.v + hist;
     },
   };
+  return e;
 }
 
 export function capacitor(id: string, a: number, b: number, C: number, h: number): EmtElement {
   const g = (2 * Math.max(C, 1e-15)) / h;
   let hist = 0;
-  return {
+  const e: EmtElement = {
     id, v: 0, i: 0,
+    state: { get: () => -(g * e.v + e.i), set: (s) => ((e.v = 0), (e.i = -s)) },
     stamp: (A, sys) => addG(A, sys, a, b, g),
     rhs(bb, _t, sys) {
       hist = -(g * this.v + this.i);
@@ -62,6 +65,7 @@ export function capacitor(id: string, a: number, b: number, C: number, h: number
       this.i = g * this.v + hist;
     },
   };
+  return e;
 }
 
 /** Ideal voltage source (+ at a). Its current is the one delivered out of a. */

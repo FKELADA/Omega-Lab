@@ -4,9 +4,23 @@
 // cards work on it unchanged.
 
 import { runEmt } from './engine/emt';
+import { N_OUT, paramsOf, substeps, modalOf, steadyState } from './analyses';
+import { benchCharts, benchPhasors } from './charts';
+
+export { substeps };
 import { DEFS, type ElementDef } from './library';
 import type { BenchDoc, BenchEl } from './doc';
 import type { EquationSpec, Experiment, ParamSpec, SignalSpec } from '../lib/lab/types';
+
+/** Live choices of the Atelier's interface that the compiled experiment reads. */
+export interface BenchUi {
+  /** Element whose formulas are shown. */
+  selected(): string | null;
+  /** Source driving the Bode plot (null: the first source). */
+  bodeIn(): string | null;
+  /** Where the impedance is scanned (null: the first probe, else the Bode input). */
+  zAt(): string | null;
+}
 import type { Model, Params, Run } from '../lib/models/types';
 import type { L } from '../lib/ui/ui.svelte';
 
@@ -84,36 +98,16 @@ const SIG: Record<string, { unit: string; name: L }> = {
   p: { unit: 'W', name: { fr: 'puissance', en: 'power' } },
 };
 
-/** Output samples per run, and bounds on solver steps per sample. */
-const N_OUT = 1200;
-
-/** Solver sub-steps per output sample: at least 200 steps per shortest period/time scale. */
-export function substeps(net: Netlist, p: Params, T: number): number {
-  let tmin = Infinity;
-  for (const { el, def } of net.active) {
-    const ts = def.timeScale?.(paramsOf(el, def, p));
-    if (ts) tmin = Math.min(tmin, ts);
-  }
-  // Natural time scales of R–L and R–C pairs are not known here; 20 sub-steps per
-  // sample (24 000 steps per run) resolves them for the window the learner chose.
-  const want = Number.isFinite(tmin) ? Math.ceil((T / N_OUT) / (tmin / 400)) : 1;
-  return Math.min(400, Math.max(20, want));
-}
-
-function paramsOf(el: BenchEl, def: ElementDef, p: Params): Record<string, number> {
-  return Object.fromEntries(def.params.map((q) => [q.id, p[`${el.id}.${q.id}`] ?? el.params[q.id] ?? q.default]));
-}
-
 export interface Compiled {
   exp: Experiment;
   net: Netlist;
 }
 
 /**
- * Compiles a bench. `selected` is read lazily by the equations list, so the
- * formula panel follows the selection without recompiling.
+ * Compiles a bench. The interface choices are read lazily, so the formula panel
+ * and the frequency plots follow them without recompiling.
  */
-export function compile(doc: BenchDoc, selected: () => string | null, circuitEqs: (net: Netlist) => EquationSpec[]): Compiled {
+export function compile(doc: BenchDoc, ui: BenchUi, circuitEqs: (net: Netlist) => EquationSpec[]): Compiled {
   const net = buildNetlist(doc);
   const params: ParamSpec[] = [
     { id: 'T', symbol: 'T', name: { fr: 'Durée simulée', en: 'Simulated time' }, unit: 's', min: 1e-5, max: 100, default: doc.T, scale: 'log' },
@@ -149,7 +143,7 @@ export function compile(doc: BenchDoc, selected: () => string | null, circuitEqs
       }
     return { t: r.t, s };
   };
-  const model: Model = { id: 'atelier', simulate, poles: () => [], window: (p) => p.T ?? doc.T };
+  const model: Model = { id: 'atelier', simulate, poles: (p) => modalOf(net, p).poles.map((q) => q.s), window: (p) => p.T ?? doc.T };
 
   const elementEqs = (id: string): EquationSpec[] => {
     const el = doc.elements.find((e) => e.id === id);
@@ -171,9 +165,11 @@ export function compile(doc: BenchDoc, selected: () => string | null, circuitEqs
     model,
     params,
     signals,
-    info: () => ({ net }),
+    info: (p) => ({ net, ss: steadyState(net, p), modal: modalOf(net, p) }),
+    phasors: benchPhasors(net),
+    charts: benchCharts(net, ui, () => signals),
     get equations() {
-      const id = selected();
+      const id = ui.selected();
       return id ? elementEqs(id) : circuitEqs(net);
     },
     steps: [],

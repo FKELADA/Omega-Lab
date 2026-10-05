@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 334 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 346 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3615,11 +3615,11 @@ before using them in a formal context.
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
-[plan.md](plan.md) §10. Phases A0 and A1 are built.
+[plan.md](plan.md) §10. Phases A0, A1 and A2 are built.
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
-- Below the canvas: the oscilloscope and the equation cards, the same components as in the lessons.
+- Below the canvas: the instrument dock (oscilloscope, Bode, impedance, phasors, poles, harmonics; §15.1) and the equation cards.
 - Right: the library and the inspector.
 
 **Using it.**
@@ -3674,7 +3674,7 @@ unchanged.
 - Sources: DC, AC, step, square-wave voltage sources and a DC current source.
 - Passives: R, L, C and ground.
 - A timed switch.
-- Ideal voltmeter and ammeter.
+- Ideal voltmeter and ammeter, and an impedance probe (A2).
 
 **Templates.** Series RLC step (lesson 1.2), series RLC on AC at resonance (1.4), RC charging
 with switch and meters.
@@ -3701,3 +3701,62 @@ with switch and meters.
   - box selection, Ctrl+A, deleting the selection, and clearing all with undo.
 - `atelier/bench.test.ts`: the selection logic (box, Shift+click, group move, delete with wires,
   clear all, undo).
+
+### 15.1 Analyses (phase A2)
+
+The dock under the bench has six tabs, each enlargeable (⤢):
+
+| Tab | What it shows | How it is computed |
+|---|---|---|
+| Oscilloscope | The time-domain run | EMT solver |
+| Bode | Gain (dB) and phase from a chosen source to every signal shown on the oscilloscope | AC nodal analysis at 240 log-spaced frequencies, input = 1∠0, other sources off |
+| Impedance | $\lvert Z(f)\rvert$ seen from an **impedance probe** (new instrument) or a source's terminals, with series (dip) and parallel (∥, peak) resonances marked | AC analysis with 1 A injected (or 1 V applied) |
+| Phasors | The sinusoidal steady state at the fundamental: every element's voltage, the sources' currents (thin) | AC analysis at the first AC (or square-wave) source's frequency; the lessons' phasor diagram |
+| Poles | Every pole of the circuit, on an s-plane (logarithmic) and in a table: $s$, f, ζ, τ and the participating elements. Clicking a pole highlights those elements on the bench | Inverse Tustin transform of the EMT step (below) |
+| Harmonics | Spectrum (harmonics 1–25 in % of the fundamental), THD, RMS, DC, with the EN 50160 limits for voltages | Fourier coefficients over the last whole periods of the fundamental (at most half the run) |
+
+The frequency range of Bode and impedance plots runs from a decade below the slowest pole to a
+decade above the fastest, and always includes the fundamental.
+
+**Measurements.** The inspector shows, for the selected element:
+- V and I: RMS, mean and peak;
+- P (mean of $v\,i$), S ($V_{\text{eff}}I_{\text{eff}}$), Q (from the steady-state phasors,
+  $\tfrac12\,\mathrm{Im}(\underline V\,\underline I^*)$) and $\cos\varphi$.
+
+These are computed over the last whole periods of the fundamental, or over the second half of the
+run without one. Values under $10^{-6}$ of the signal's scale are shown as 0 (numerical noise).
+
+**Poles without state equations.** With the sources held constant, one EMT step is a linear map
+on the memories of the inductors and capacitors: $s_{n+1} = M s_n$ + a constant.
+- $M$ is built column by column, by stepping from each unit memory (`engine/modal.ts`).
+- The trapezoidal rule maps each pole to $z = (1 + sh/2)/(1 - sh/2)$, so the eigenvalues of $M$
+  give the poles exactly: $s = \frac2h\,\frac{z-1}{z+1}$.
+- Eigenvalues $z = -1$ and $z = 0$ are states tied to a voltage source (no dynamics) and are
+  dropped.
+- Right and left eigenvectors (inverse iteration) give the participation factors
+  $p_k = \lvert v_k w_k\rvert / \sum_j \lvert v_j w_j\rvert$.
+
+**AC models.** Each library element declares how it enters the AC equations:
+- an admittance: R, $1/(j\omega L)$, $j\omega C$, the switch in its end-of-run state;
+- a voltage source with its phasor at a given frequency: DC at 0 Hz, AC at its own frequency, the
+  square wave's odd harmonics $4V/(n\pi)$; ammeters are zero-volt sources;
+- a current source;
+- nothing (voltmeter, ground).
+
+**Templates added.** A square wave through an LC filter (Bode, harmonics: the load's THD falls
+from 48 % to under 15 %), and a tank circuit with an impedance probe (resonance at 503 Hz, poles
+owned by L1 and C1).
+
+**Tests.**
+- `engine/ac.test.ts`:
+  - the series RLC at resonance ($V/R$ in phase, $V_C = QV$);
+  - the transfer function against its closed form;
+  - the RLC poles exactly, with participations of 0.5 and 0.5;
+  - two decoupled real poles, each owned by its element.
+- `engine/harmonics.test.ts`:
+  - 230 V RMS;
+  - the square wave's $4/\pi$ and 48 % THD;
+  - $P = \tfrac12 VI\cos\varphi$.
+- `analyses.test.ts`: the templates' poles, steady state, Bode peak $Q = 2$, tank impedance 100 Ω,
+  and the LC filter's THD.
+- The smoke test opens every tab, clicks a pole, and reads the THD and the measurements.

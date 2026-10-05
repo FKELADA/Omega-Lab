@@ -25,6 +25,11 @@ export class Bench {
   doc = $state<BenchDoc>(emptyDoc());
   /** Everything selected (rectangle, Shift+click, Ctrl+A). */
   picked = $state<Picked>(none());
+  /** Source driving the Bode plot, and node where the impedance is scanned (null: automatic). */
+  bodeIn = $state<string | null>(null);
+  zAt = $state<string | null>(null);
+  /** Participation of each element in the pole clicked in the Poles tab (canvas highlight). */
+  highlight = $state<Record<string, number> | null>(null);
   /** A wire being drawn from this port. */
   pending = $state<PortRef | null>(null);
   private past: string[] = [];
@@ -101,7 +106,15 @@ export class Bench {
     this.compiled = $derived.by(() => {
       void key;
       const doc = untrack(() => $state.snapshot(this.doc) as BenchDoc);
-      return compile(doc, () => (this.selection?.kind === 'el' ? this.selection.id : null), circuitEquations);
+      return compile(
+        doc,
+        {
+          selected: () => (this.selection?.kind === 'el' ? this.selection.id : null),
+          bodeIn: () => this.bodeIn,
+          zAt: () => this.zAt,
+        },
+        circuitEquations,
+      );
     });
     this.lab = $derived(new Lab(this.compiled.exp));
   }

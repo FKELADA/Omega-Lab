@@ -875,6 +875,28 @@ await page.screenshot({ path: `${out}/smoke-atelier.png` });
   await page.locator('.toolbar button[title="Ctrl+Z"]').click();
   check('clear all can be undone', (await page.locator('g.el').count()) === 6);
 }
+// A2: frequency analyses, poles, harmonics, measurements
+await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
+await page.getByRole('button', { name: /Circuit bouchon/ }).click();
+await page.waitForSelector('g.el[aria-label="Z1"]');
+await page.getByRole('tab', { name: 'Impédance' }).click();
+check('impedance scan marks the parallel resonance', /∥ 50/.test((await page.locator('.dock-panel').textContent()) ?? ''));
+await page.getByRole('tab', { name: 'Pôles' }).click();
+check('poles of the tank circuit: one complex pair', (await page.locator('.poles tbody tr').count()) === 1);
+await page.locator('.poles tbody tr').first().click();
+check('clicking a pole lights up L1 and C1', (await page.locator('rect.glow').count()) === 2);
+await page.getByRole('tab', { name: 'Phaseurs' }).click();
+check('phasor diagram in steady state', (await page.locator('.dock-panel svg line, .dock-panel svg path').count()) > 3);
+await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
+await page.getByRole('button', { name: /Filtrer une onde carrée/ }).click();
+await page.waitForSelector('g.el[aria-label="VM1"]');
+await page.getByRole('tab', { name: 'Harmoniques' }).click();
+{ const th = (await page.locator('.thd header').textContent()) ?? ''; check('harmonic analyser: square source THD ≈ 48 %', /THD = 4[78],\d %/.test(th), th); }
+await page.getByRole('tab', { name: 'Bode' }).click();
+check('Bode gain and phase charts', (await page.locator('.bode .panel').count()) === 2);
+await page.locator('g.el[aria-label="R1"] .hitbox').click();
+check('measurements in the inspector', /cos φ/.test((await page.locator('.insp').textContent()) ?? ''));
+await page.screenshot({ path: `${out}/smoke-atelier-a2.png` });
 await page.getByRole('button', { name: 'Leçons' }).click();
 await page.waitForSelector('.lesson');
 

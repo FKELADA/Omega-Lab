@@ -4,6 +4,7 @@ import { buildNetlist, compile } from './compile';
 import { TEMPLATES } from './templates';
 
 const tpl = (id: string) => TEMPLATES.find((t) => t.id === id)!.doc();
+const ui = () => ({ selected: () => null, bodeIn: () => null, zAt: () => null });
 const defaults = (exp: ReturnType<typeof compile>['exp']) => Object.fromEntries(exp.params.map((p) => [p.id, p.default]));
 
 describe('Atelier compiler', () => {
@@ -17,7 +18,7 @@ describe('Atelier compiler', () => {
   });
 
   it('the lesson 1.2 template reproduces the closed-form step response', () => {
-    const { exp } = compile(tpl('rlc-step'), () => null, circuitEquations);
+    const { exp } = compile(tpl('rlc-step'), ui(), circuitEquations);
     const p = defaults(exp);
     const run = exp.model.simulate(p, p.T);
     const V = 10, R = 2, L = 0.01, C = 1e-4, a = R / (2 * L), wd = Math.sqrt(1 / (L * C) - a * a);
@@ -28,7 +29,7 @@ describe('Atelier compiler', () => {
   });
 
   it('the AC template settles to the phasor solution at resonance', () => {
-    const { exp } = compile(tpl('rlc-ac'), () => null, circuitEquations);
+    const { exp } = compile(tpl('rlc-ac'), ui(), circuitEquations);
     const p = defaults(exp);
     const run = exp.model.simulate(p, p.T);
     const n = run.t.length - 1;
@@ -37,7 +38,7 @@ describe('Atelier compiler', () => {
   });
 
   it('meters read the RC charge after the switch closes', () => {
-    const { exp } = compile(tpl('rc-switch'), () => null, circuitEquations);
+    const { exp } = compile(tpl('rc-switch'), ui(), circuitEquations);
     const p = defaults(exp);
     const run = exp.model.simulate(p, p.T);
     const k = run.t.findIndex((t) => t >= 0.001 + 1e-3);
@@ -56,7 +57,7 @@ describe('Atelier compiler', () => {
 
   it('the nodal matrix of a resistor divider', () => {
     const d = tpl('rlc-step');
-    const { exp, net } = compile(d, () => null, circuitEquations);
+    const { exp, net } = compile(d, ui(), circuitEquations);
     const { A, names } = nodalMatrix(net, defaults(exp));
     expect(names).toEqual(['v_{1}', 'v_{2}', 'v_{3}', 'i_{\\text{V1}}']);
     expect(A[0][0]).toBeCloseTo(0.5, 9); // 1/R at the source node
@@ -65,7 +66,7 @@ describe('Atelier compiler', () => {
 
   it('equations follow the selection', () => {
     let sel: string | null = null;
-    const { exp } = compile(tpl('rlc-step'), () => sel, circuitEquations);
+    const { exp } = compile(tpl('rlc-step'), { ...ui(), selected: () => sel }, circuitEquations);
     expect(exp.equations[0].id).toBe('circuit');
     sel = 'C1';
     expect(exp.equations[0].id).toBe('C1.0');

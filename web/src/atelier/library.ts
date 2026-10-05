@@ -3,6 +3,8 @@
 // component means adding an entry here.
 
 import type { EmtElement } from './engine/emt';
+import type { AcModel } from './engine/ac';
+import { cx, polar } from '../lib/core/linalg';
 import { ammeter, capacitor, inductor, isource, resistor, timedSwitch, voltmeter, vsource, waves } from './engine/elements';
 import type { EqContext } from '../lib/lab/types';
 import type { L } from '../lib/ui/ui.svelte';
@@ -49,6 +51,10 @@ export interface ElementDef {
   symbol: string;
   /** Short text drawn inside the symbol (meters). */
   glyph?: string;
+  /** Drawn with a round body (sources, meters). */
+  circle?: boolean;
+  /** How it enters the frequency-domain (AC) equations. */
+  ac: AcModel;
   /** Value shown next to the symbol. */
   label?: (p: Record<string, number>) => string;
   /** Signals offered to the oscilloscope. */
@@ -91,6 +97,8 @@ export const LIBRARY: ElementDef[] = [
     params: [{ id: 'V', symbol: 'V', name: { fr: 'Tension', en: 'Voltage' }, unit: 'V', default: 10, min: -1000, max: 1000, scale: 'lin' }],
     symbol: 'M-40,0 H-14 M14,0 H40 M-10,0 h6 M-7,-3 v6 M4,0 h6',
     label: (p) => si(p.V, 'V'),
+    circle: true,
+    ac: { kind: 'V', phasor: (p, f) => (f === 0 ? cx(p.V) : null) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => vsource(id, a, b, waves.dc(p.V)),
     formulas: [
@@ -112,6 +120,8 @@ export const LIBRARY: ElementDef[] = [
     ],
     symbol: 'M-40,0 H-14 M14,0 H40 M-8,0 c2,-7 6,-7 8,0 s6,7 8,0',
     label: (p) => `${si(p.Vpk, 'V')} ${si(p.f, 'Hz')}`,
+    circle: true,
+    ac: { kind: 'V', phasor: (p, f) => (Math.abs(f - p.f) <= 1e-9 * p.f ? polar(p.Vpk, (p.ph * Math.PI) / 180) : null) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => vsource(id, a, b, waves.ac(p.Vpk, p.f, p.ph)),
     timeScale: (p) => 1 / p.f,
@@ -132,6 +142,8 @@ export const LIBRARY: ElementDef[] = [
     ],
     symbol: 'M-40,0 H-14 M14,0 H40 M-7,5 H0 V-5 H7',
     label: (p) => si(p.V, 'V'),
+    circle: true,
+    ac: { kind: 'V', phasor: () => null },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => vsource(id, a, b, waves.step(p.V, p.t0)),
     formulas: [
@@ -151,6 +163,15 @@ export const LIBRARY: ElementDef[] = [
     ],
     symbol: 'M-40,0 H-14 M14,0 H40 M-8,4 h4 v-8 h8 v8 h4',
     label: (p) => `±${si(p.V, 'V')} ${si(p.f, 'Hz')}`,
+    circle: true,
+    ac: {
+      kind: 'V',
+      // Odd harmonics 4V/(nπ), in sine phase.
+      phasor: (p, f) => {
+        const n = Math.round(f / p.f);
+        return n % 2 === 1 && Math.abs(f - n * p.f) <= 1e-9 * f ? polar((4 * p.V) / (n * Math.PI), -Math.PI / 2) : null;
+      },
+    },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => vsource(id, a, b, waves.square(p.V, p.f)),
     timeScale: (p) => 1 / p.f,
@@ -169,6 +190,8 @@ export const LIBRARY: ElementDef[] = [
     params: [{ id: 'I', symbol: 'I', name: { fr: 'Courant', en: 'Current' }, unit: 'A', default: 1, min: -1000, max: 1000, scale: 'lin' }],
     symbol: 'M-40,0 H-14 M14,0 H40 M8,0 H-8 M-8,0 l5,-4 M-8,0 l5,4',
     label: (p) => si(p.I, 'A'),
+    circle: true,
+    ac: { kind: 'I', phasor: (p, f) => (f === 0 ? cx(p.I) : null) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => isource(id, a, b, waves.dc(p.I)),
     formulas: [
@@ -188,6 +211,7 @@ export const LIBRARY: ElementDef[] = [
     params: [{ id: 'R', symbol: 'R', name: { fr: 'Résistance', en: 'Resistance' }, unit: 'Ω', default: 10, min: 1e-3, max: 1e6, scale: 'log' }],
     symbol: `${lead} M-24,0 L-20,-8 L-12,8 L-4,-8 L4,8 L12,-8 L20,8 L24,0`,
     label: (p) => si(p.R, 'Ω'),
+    ac: { kind: 'Y', y: (p) => cx(1 / Math.max(p.R, 1e-9)) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p) => resistor(id, a, b, p.R),
     formulas: [
@@ -214,6 +238,7 @@ export const LIBRARY: ElementDef[] = [
     params: [{ id: 'L', symbol: 'L', name: { fr: 'Inductance', en: 'Inductance' }, unit: 'H', default: 0.01, min: 1e-6, max: 10, scale: 'log' }],
     symbol: `${lead} M-24,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0 a6,6 0 0 1 12,0`,
     label: (p) => si(p.L, 'H'),
+    ac: { kind: 'Y', y: (p, w) => ({ re: 0, im: -1 / (Math.max(w, 1e-9) * p.L) }) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p, h) => inductor(id, a, b, p.L, h),
     formulas: [
@@ -241,6 +266,7 @@ export const LIBRARY: ElementDef[] = [
     params: [{ id: 'C', symbol: 'C', name: { fr: 'Capacité', en: 'Capacitance' }, unit: 'F', default: 1e-4, min: 1e-9, max: 1, scale: 'log' }],
     symbol: 'M-40,0 H-5 M-5,-12 V12 M5,-12 V12 M5,0 H40',
     label: (p) => si(p.C, 'F'),
+    ac: { kind: 'Y', y: (p, w) => ({ re: 0, im: w * p.C }) },
     signals: ['v', 'i', 'p'],
     build: (id, [a, b], p, h) => capacitor(id, a, b, p.C, h),
     formulas: [
@@ -266,6 +292,7 @@ export const LIBRARY: ElementDef[] = [
     ports: [{ id: 'g', dx: 0, dy: -1 }],
     params: [],
     symbol: 'M0,-20 V0 M-12,0 H12 M-8,5 H8 M-4,10 H4',
+    ac: { kind: 'none' },
     signals: [],
     ground: true,
     formulas: [
@@ -288,6 +315,8 @@ export const LIBRARY: ElementDef[] = [
     ],
     symbol: 'M-40,0 H-12 M-12,0 L10,-12 M12,0 H40',
     label: (p) => `↓ ${si(p.tc, 's')}${p.to > p.tc ? ` ↑ ${si(p.to, 's')}` : ''}`,
+    // In AC, the switch keeps the state it has at the end of the run.
+    ac: { kind: 'Y', y: (p) => cx(p.T >= p.tc && (p.to <= p.tc || p.T < p.to) ? 1e3 : 1e-9) },
     signals: ['v', 'i'],
     build: (id, [a, b], p) => timedSwitch(id, a, b, p.tc, p.to),
     formulas: [
@@ -307,6 +336,8 @@ export const LIBRARY: ElementDef[] = [
     params: [],
     symbol: 'M-40,0 H-14 M14,0 H40',
     glyph: 'V',
+    circle: true,
+    ac: { kind: 'none' },
     signals: ['v'],
     scopeDefault: ['v'],
     build: (id, [a, b]) => voltmeter(id, a, b),
@@ -325,6 +356,8 @@ export const LIBRARY: ElementDef[] = [
     params: [],
     symbol: 'M-40,0 H-14 M14,0 H40',
     glyph: 'A',
+    circle: true,
+    ac: { kind: 'V', phasor: () => cx(0), meter: true },
     signals: ['i'],
     scopeDefault: ['i'],
     build: (id, [a, b]) => ammeter(id, a, b),
@@ -333,6 +366,25 @@ export const LIBRARY: ElementDef[] = [
         title: { fr: 'Ampèremètre idéal', en: 'Ideal ammeter' },
         tex: (c, id) => `i = ${c.q(c.at(`${id}.i`), 'A')}, \\qquad v = 0`,
         note: (c) => c.tr({ fr: 'Impédance nulle : il se branche en série, dans le chemin du courant, de + vers −.', en: 'Zero impedance: it goes in series, in the current’s path, from + to −.' }),
+      },
+    ],
+  },
+  {
+    type: 'zprobe', family: 'instruments', prefix: 'Z',
+    name: { fr: 'Sonde d’impédance', en: 'Impedance probe' },
+    ports: [{ id: 'a', dx: 0, dy: -1 }],
+    params: [],
+    symbol: 'M0,-20 V-14',
+    glyph: 'Z',
+    circle: true,
+    ac: { kind: 'I', phasor: () => null },
+    signals: ['v'],
+    build: (id, [a]) => voltmeter(id, a, 0),
+    formulas: [
+      {
+        title: { fr: 'Impédance vue d’un nœud', en: 'Impedance seen from a node' },
+        tex: () => `Z(j\\omega) = \\frac{\\underline V}{\\underline I}\\Big|_{\\text{sources éteintes}}`,
+        note: (c) => c.tr({ fr: 'Posée sur un nœud, elle injecte un courant de 1 A à chaque fréquence (sources éteintes : tensions court-circuitées, courants ouverts) et mesure la tension. Ses pics sont les résonances parallèles, ses creux les résonances série. Voir l’onglet Impédance.', en: 'Placed on a node, it injects 1 A at each frequency (sources off: voltages shorted, currents opened) and measures the voltage. Its peaks are parallel resonances, its dips series resonances. See the Impedance tab.' }),
       },
     ],
   },

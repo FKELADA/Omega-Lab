@@ -24,6 +24,11 @@ export interface EmtElement {
   update(x: number[], t: number, sys: System, base: number): void;
   /** True when the element's conductance changes before the step ending at t (switches). */
   changed?(t: number): boolean;
+  /**
+   * The element's memory for the modal analysis: the history term its next step
+   * will use (reactive elements only). Setting it makes the next step use that value.
+   */
+  state?: { get(): number; set(s: number): void };
   /** Voltage across (first port minus second) and current through (from the first port), after `update`. */
   v: number;
   i: number;
