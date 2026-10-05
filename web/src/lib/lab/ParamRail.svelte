@@ -99,13 +99,18 @@
         />
         <span class="mono val">{si(lab.params[p.id], p.unit)}</span>
         {/if}
-        {#if !p.choices}
-        <button
-          class="btn sweep"
-          class:on={lab.fan?.param === p.id}
-          title={tr(S.sweepTitle)}
-          onclick={() => lab.sweep(p.id)}>⇶ {tr(S.sweep)}</button
-        >
+        {#if !p.choices && p.sweep !== false}
+        <span class="sweep-wrap">
+          <button
+            class="btn sweep"
+            class:on={lab.fan?.param === p.id}
+            title={tr(S.sweepTitle)}
+            onclick={() => lab.sweep(p.id)}>⇶ {tr(S.sweep)}</button
+          >
+          {#if lab.sweepNote === p.id}
+            <span class="sweep-note" role="status">{tr({ fr: 'Sans effet sur les courbes avec les réglages actuels', en: 'No effect on the curves with the current settings' })}</span>
+          {/if}
+        </span>
         {/if}
       </div>
     {/each}
@@ -207,6 +212,23 @@
   }
   .val {
     text-align: right;
+  }
+  .sweep-wrap {
+    position: relative;
+  }
+  .sweep-note {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 6px);
+    z-index: 20;
+    width: 210px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: var(--panel);
+    font-size: 11.5px;
+    line-height: 1.35;
+    box-shadow: var(--shadow);
   }
   .sweep {
     font-size: 12px;

@@ -634,25 +634,6 @@ await setParam(3, 0.3, 0.2, 20, true); // slow recovery
 check('7.7 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
 // ── Module 8 ──────────────────────────────────────────────────────────────────
-// A mock G2ELin API, so lesson 8.7's live panel is exercised without the server.
-const g2json = (body) => ({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
-await page.route(/\/g2elin\/api\/presets$/, (r) => r.fulfill(g2json([{ id: 'kundur2', name: 'Kundur two-area' }])));
-await page.route(/\/g2elin\/api\/presets\/kundur2\/modal$/, (r) =>
-  r.fulfill(
-    g2json({
-      n_states: 52,
-      stable: true,
-      modes: [
-        { mode: 7, real: -0.08, imag: 3.9, damped_hz: 0.62, damping_pct: 2.1, category: 'synchronisation', state1: 'dw_r_{SM_1}', state2: 'dw_r_{SM_3}', state3: '' },
-        { mode: 9, real: -0.6, imag: 7.0, damped_hz: 1.11, damping_pct: 8.5, category: 'synchronisation', state1: 'dw_r_{SM_1}', state2: 'dw_r_{SM_2}', state3: '' },
-      ],
-    }),
-  ),
-);
-await page.route(/\/modal\/mode_shape$/, (r) => r.fulfill(g2json({ states: ['dw_r_{SM_1}', 'dw_r_{SM_2}', 'dw_r_{SM_3}', 'dw_r_{SM_4}'], angles_deg: [0, 12, 172, 180] })));
-await page.route(/\/modal\/free_response$/, (r) =>
-  r.fulfill(g2json({ t: Array.from({ length: 101 }, (_, j) => j / 10), series: { 'dw_r_{SM_1}': Array.from({ length: 101 }, (_, j) => Math.exp(-j / 80) * Math.sin(j / 2.6)) } })),
-);
 const panelText = async () => (await page.locator('.panel').first().textContent()) ?? '';
 
 // 8.1 Transient stability
@@ -753,7 +734,7 @@ await page.getByRole('radio', { name: 'TCSC' }).click();
 await setParam(0, 0.5, 0.1, 0.8);
 check('8.6 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
-// 8.7 Inter-area oscillations and G2ELin
+// 8.7 Inter-area oscillations
 await open('8.7');
 fb = await predict(() => 0.5); // G3 does not move
 check('8.7 misconception: the inter-area mode reaches G3', /inter-zones/.test(fb), fb.slice(0, 70));
@@ -764,16 +745,54 @@ await setParam(1, 0.85, 0, 0.9); // heavy transfer
 await page.getByRole('radio', { name: 'G3', exact: true }).click();
 await page.getByRole('radio', { name: 'local 2' }).click();
 await setParam(3, 10, 0, 10); // damping
-check('8.7 all checked steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
-await page.waitForSelector('text=connecté');
-await page.waitForSelector('table tbody tr');
-check('8.7 G2ELin panel lists the modes', (await page.locator('table tbody tr').count()) === 2);
-await page.waitForSelector('svg.compass line.arm', { state: 'attached' });
-check('8.7 G2ELin mode shape drawn', (await page.locator('svg.compass line.arm').count()) === 4);
-await page.getByRole('button', { name: 'Simuler' }).click();
-await page.waitForSelector('svg.free path.tr', { state: 'attached' });
-check('8.7 G2ELin free response drawn', (await page.locator('svg.free path.tr').count()) === 1);
+check('8.7 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 await page.screenshot({ path: `${out}/smoke-8.7.png` });
+
+// 8.8 Modes and participation on real networks (baked G2ELin results)
+await open('8.8');
+const row = (j) => page.locator('table tbody tr').nth(j).click();
+await row(0); // Kundur inter-area mode
+check('8.8 mode shape: areas in opposition', (await page.locator('line.arr.a').count()) === 2 && (await page.locator('line.arr.b').count()) === 2);
+check('8.8 participation bars drawn', (await page.locator('.bars .row').count()) === 10);
+await row(1); // local mode
+await row(3); // electrical mode
+await setParam(1, 3, 1, 10); // kick G3
+await scrubToEnd();
+await page.getByRole('radio', { name: 'Kundur classique' }).click();
+await row(0);
+check('8.8 classical inter-area mode is unstable', (await page.locator('table tbody tr.sel td.neg').count()) === 1);
+await page.getByRole('radio', { name: 'WSCC 9', exact: true }).click();
+await page.getByRole('radio', { name: 'WSCC 9 + formeur' }).click();
+await page.getByRole('radio', { name: 'IEEE 39' }).click();
+check('8.8 IEEE 39 lists 20 modes', (await page.locator('table tbody tr').count()) === 20);
+await row(10); // 1.20 Hz, negative damping
+check('8.8 all steps completed', (await doneSteps()) === 7, `${await doneSteps()}/7`);
+await page.screenshot({ path: `${out}/smoke-8.8.png` });
+
+// 8.9 Model reduction, EMT against RMS
+await open('8.9');
+await scrubToEnd();
+await page.getByRole('radio', { name: 'RMS', exact: true }).click();
+await page.getByRole('radio', { name: 'ordre 4' }).click();
+await page.getByRole('radio', { name: 'ordre 3' }).click();
+await page.getByRole('radio', { name: 'classique' }).click();
+check('8.9 ladder highlights the classical model', /classique/.test((await page.locator('table tbody tr.sel').textContent()) ?? ''));
+await page.locator('.chip').nth(2).click(); // linearised response
+check('8.9 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+await page.screenshot({ path: `${out}/smoke-8.9.png` });
+
+// Zoomable panels: a chart opens in a large window and zooms with the wheel
+await page.locator('.zoomable button.grow').last().click();
+await page.waitForSelector('.zoom-modal svg');
+const box = await page.locator('.zoom-modal svg').first().boundingBox();
+check('zoom window is large', box.width > 900, `${Math.round(box.width)} px`);
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await page.mouse.wheel(0, -400);
+await page.waitForTimeout(100);
+check('chart zoomed by the wheel', (await page.locator('.zoom-modal button', { hasText: '⟲' }).count()) === 1);
+await page.screenshot({ path: `${out}/smoke-zoom.png` });
+await page.keyboard.press('Escape');
+check('zoom window closes with Escape', (await page.locator('.zoom-modal').count()) === 0);
 
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
@@ -811,7 +830,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9']) {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(id);
   await page.waitForTimeout(200);

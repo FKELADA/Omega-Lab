@@ -33,6 +33,8 @@ import { fsysLesson } from './fsys/experiment';
 import { cdsLesson } from './cds/experiment';
 import { ssrLesson } from './ssr/experiment';
 import { g2Lesson } from './g2/experiment';
+import { modesLesson } from './modes/experiment';
+import { reductionLesson } from './reduction/experiment';
 import { blackoutLesson } from './blackout/experiment';
 import { dayLesson } from './day/experiment';
 import { dcAcLesson } from './dc-ac/experiment';
@@ -167,7 +169,9 @@ export const curriculum: ModuleEntry[] = [
       { id: '8.4', title: { fr: 'Stabilité de fréquence', en: 'Frequency stability' }, experiment: fsysLesson },
       { id: '8.5', title: { fr: 'Stabilité liée aux convertisseurs', en: 'Converter-driven stability' }, experiment: cdsLesson },
       { id: '8.6', title: { fr: 'Résonances', en: 'Resonance stability' }, experiment: ssrLesson },
-      { id: '8.7', title: { fr: 'Réseaux réels avec G2ELin', en: 'Real networks with G2ELin' }, experiment: g2Lesson },
+      { id: '8.7', title: { fr: 'Oscillations inter-zones', en: 'Inter-area oscillations' }, experiment: g2Lesson },
+      { id: '8.8', title: { fr: 'Modes et participations', en: 'Modes and participation' }, experiment: modesLesson },
+      { id: '8.9', title: { fr: 'Réduction de modèles', en: 'Model reduction' }, experiment: reductionLesson },
     ],
   },
 ];

@@ -11,6 +11,7 @@
   import CourseMap from './lib/ui/CourseMap.svelte';
   import DocsPage from './lib/ui/DocsPage.svelte';
   import NoteView from './lib/ui/NoteView.svelte';
+  import Zoomable from './lib/ui/Zoomable.svelte';
   import { ui } from './lib/ui/ui.svelte';
 
   /** Lessons are addressed by their course number in the URL hash, e.g. #1.4. */
@@ -75,17 +76,17 @@
   {#key lab}
     <main>
       <div class="col left">
-        <lab.exp.canvas {lab} />
+        <Zoomable {lab} comp={lab.exp.canvas} />
         <LessonPanel {lab} onnote={() => {
           const id = currentLesson()?.id;
           if (id) openNote(+id.split('.')[0], id);
         }} />
       </div>
       <div class="col mid">
-        <Scope {lab} />
+        <Zoomable {lab} comp={Scope} cls="scope-wrap" />
         <div class="instruments" style="--n: {lab.exp.instruments.length}; flex: {lab.exp.instruments.length >= 3 ? 1.4 : 1}">
           {#each lab.exp.instruments as Instrument, k (k)}
-            <Instrument {lab} />
+            <Zoomable {lab} comp={Instrument} />
           {/each}
         </div>
       </div>
@@ -127,7 +128,7 @@
     min-height: 0;
     min-width: 0;
   }
-  .mid > :global(.scope) {
+  .mid > :global(.scope-wrap) {
     flex: 1.5;
   }
   .instruments {
@@ -157,7 +158,7 @@
       height: auto;
       min-height: 100vh;
     }
-    .mid > :global(.scope) {
+    .mid > :global(.scope-wrap) {
       min-height: 340px;
     }
   }

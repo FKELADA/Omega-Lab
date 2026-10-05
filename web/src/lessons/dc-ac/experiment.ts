@@ -19,7 +19,7 @@ export const dcAcLesson: Experiment = {
   instruments: [CostChart, ChargingChart],
 
   params: [
-    { id: 'km', symbol: 'd', name: { fr: 'Distance', en: 'Distance' }, unit: 'km', min: 10, max: 2000, default: 300, scale: 'log', term: 'R' },
+    { id: 'km', sweep: false, symbol: 'd', name: { fr: 'Distance', en: 'Distance' }, unit: 'km', min: 10, max: 2000, default: 300, scale: 'log', term: 'R' },
     {
       id: 'medium',
       symbol: '',

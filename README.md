@@ -15,16 +15,16 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 255 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, and every Module 8 stability step) |
+| `npm test` | 265 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 49 lessons, the documentation page and the teaching notes in a real Chrome, 175 checks, with a mocked G2ELin API (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 51 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Forty-nine lessons are complete (Modules 0–8), in French and English. Module 8 can also query a local
-G2ELin API (`start-windows.bat`, port 8000, proxied at `/g2elin`; set `VITE_G2ELIN_URL` for another server). Open one directly with its number in the URL,
+Fifty-one lessons are complete (Modules 0–8), in French and English. Lessons 8.8 and 8.9 show G2ELin results
+baked into the app (`web/scripts/bake-g2elin.mjs` and `bake-shapes.py` regenerate them from a local G2ELin). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
 | Lesson | What the learner does | Signature instrument |
@@ -66,7 +66,9 @@ e.g. `http://localhost:5173/#1.4`.
 | **8.4 Frequency stability** | Predicts the frequency after a 1.3 GW trip, replaces machines by inverters until shedding and RoCoF trips, fixes it with batteries or grid-forming | Fleet bar and frequency gauge, nadir and RoCoF versus inverter share |
 | **8.5 Converter-driven stability** | Predicts a GFL plant on a weak grid, slows the PLL, strengthens the grid, curtails, finds the minimum SCR | Stability boundary (SCR versus PLL bandwidth), slow eigenvalues |
 | **8.6 Resonance stability** | Predicts a shaft's torsion on a compensated line, detunes, finds another resonance, tries mechanical damping, installs a TCSC | Twisting shaft masses, growth rate and frequency-coincidence charts |
-| **8.7 Real networks with G2ELin** | Predicts a distant machine's swing, reads inter-area and local mode shapes, weakens and loads the tie, damps the mode, then explores G2ELin's networks | Two-area mode-shape bars, live G2ELin modes, compass and free response |
+| **8.7 Inter-area oscillations** | Predicts a distant machine's swing, reads inter-area and local mode shapes, weakens and loads the tie, damps the mode | Two-area mode-shape bars, s-plane, inter-area frequency versus tie |
+| **8.8 Modes and participation** | Finds inter-area, local and control modes on G2ELin's Kundur, WSCC 9-bus (with inverters) and IEEE 39-bus models, sees the classical model go unstable | Mode table, participation factors, mode shape on the network map |
+| **8.9 Model reduction** | Steps down from full EMT to RMS and 6th/4th/3rd-order and classical machines, compares with EMT and the linearised response | Model ladder, eigenvalues on log scales, damping and size versus level |
 
 Shared by every lesson:
 
@@ -81,6 +83,7 @@ Shared by every lesson:
   on demand. Hovering any term highlights it everywhere.
 - **Oscilloscope:** probes, frozen ghost traces, sweep fans, predict-then-reveal with scoring and
   misconception feedback.
+- **Enlarge and zoom:** every panel opens live in a large window; charts zoom and pan.
 - **Profiles:** Learner, Researcher and Engineer, each with their own equation cards.
 - **Client solver:** exact ZOH discretisation via the matrix exponential. Sinusoidal sources are
   extra oscillator states, so AC simulations are exact too.
@@ -93,8 +96,8 @@ web/src/
                    power flow (Y-bus, Newton–Raphson, Gauss–Seidel, DC)
   lib/models/      models behind a common interface (RLC step, RLC AC, waveforms, phasors,
                    impedance, power, three-phase, Park, per-unit, Fourier, sequences,
-                   grid elements, converters, IBRs, stability; g2elin.svelte.ts is the
-                   G2ELin API client)
+                   grid elements, converters, IBRs, stability; g2data.ts reads the baked
+                   G2ELin results in src/data/g2elin)
   lib/lab/         lesson format (types.ts), shared experiment state, lesson + parameter panels
   lib/instruments/ oscilloscope, s-plane, energy balance, frequency response, phasor diagram,
                    live equations, x–y characteristic charts (XYChart)
@@ -104,7 +107,8 @@ web/src/
                    lesson-specific panels (heater, meters, Euler helix, impedance plane,
                    power triangle, three-phase schematic, phase balance, line, transformer,
                    machines, loads, compensation, FACTS, power-flow networks, faults,
-                   dispatch, feeder, converters, IBRs, stability tree, G2ELin panel)
+                   dispatch, feeder, converters, IBRs, stability tree, mode table,
+                   participation, mode shape, model ladder)
 ```
 
 ## Adding a lesson

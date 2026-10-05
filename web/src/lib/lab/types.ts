@@ -22,6 +22,8 @@ export interface ParamSpec {
   term?: string;
   /** Slider resolution, e.g. 1 for an integer count. */
   step?: number;
+  /** false hides the sweep button: the parameter never changes the oscilloscope traces (only charts or cards). */
+  sweep?: false;
   /** Discrete choices, shown as a segmented control instead of a slider. */
   choices?: { value: number; label: L }[];
 }

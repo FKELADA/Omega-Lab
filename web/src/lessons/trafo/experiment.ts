@@ -23,8 +23,8 @@ export const trafoLesson: Experiment = {
     { id: 'psiR', symbol: '\\psi_r', name: { fr: 'Flux rémanent', en: 'Residual flux' }, unit: 'pu', min: -0.8, max: 0.8, default: 0.6, scale: 'lin', term: 'L' },
     { id: 'psiSat', symbol: '\\psi_{sat}', name: { fr: 'Coude de saturation', en: 'Saturation knee' }, unit: 'pu', min: 1.05, max: 1.4, default: 1.2, scale: 'lin', term: 'L' },
     { id: 'r', symbol: 'r', name: { fr: 'Résistance d’enroulement', en: 'Winding resistance' }, unit: 'pu', min: 0.002, max: 0.05, default: 0.01, scale: 'log', term: 'R' },
-    { id: 'load', symbol: 'S', name: { fr: 'Charge (régime établi)', en: 'Load (steady state)' }, unit: 'pu', min: 0, max: 1.2, default: 1, scale: 'lin', term: 'p' },
-    { id: 'pf', symbol: '\\cos\\varphi', name: { fr: 'Facteur de puissance de la charge', en: 'Load power factor' }, unit: '', min: 0.6, max: 1, default: 0.8, scale: 'lin' },
+    { id: 'load', sweep: false, symbol: 'S', name: { fr: 'Charge (régime établi)', en: 'Load (steady state)' }, unit: 'pu', min: 0, max: 1.2, default: 1, scale: 'lin', term: 'p' },
+    { id: 'pf', sweep: false, symbol: '\\cos\\varphi', name: { fr: 'Facteur de puissance de la charge', en: 'Load power factor' }, unit: '', min: 0.6, max: 1, default: 0.8, scale: 'lin' },
   ],
 
   signals: [

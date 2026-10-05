@@ -173,8 +173,17 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 - **Hover cross-highlighting:** each equation term carries a term id (`R`, `L`, `C`, `S`, `i`,
   `a`, `b`, `c`, `n`…). Hovering a term, slider, trace or circuit element highlights it everywhere.
-- **Concealment:** while a prediction is being sketched, every panel that would give the answer
-  away is blurred.
+- **Concealment:** on a prediction step, every panel that would give the answer away is blurred and
+  the predicted trace is hidden from the oscilloscope, from the moment the step opens until the
+  reveal (or until the step is done).
+- **Sweep:** "Balayer" simulates eight values of a parameter and draws them as a fan on the trace
+  it changes most (shown if needed). If no trace moves by more than 1 % with the current settings,
+  a note says so instead of drawing an empty fan. Parameters that never change the traces (they
+  only move charts or cards) declare `sweep: false` and have no button.
+- **Enlarge and zoom:** every panel (drawing, oscilloscope, charts) has a ⤢ button that opens it,
+  live, in a large window. Charts zoom with the wheel (Shift: x only, Alt: y only), pan by
+  dragging, and reset with a double-click or ⟲. In the large window, charts get a larger drawing
+  area rather than a magnified one, so text keeps a readable size.
 - **Step completion is sticky:** once a check passes, the step stays done. Some checks require an
   earlier step (e.g. 2.4 step 5 requires step 4) so they cannot pass at page load.
 - **Profiles:**
@@ -199,9 +208,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 255 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 265 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 49 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. Lesson 8.7 runs against a mocked G2ELin API. 175 checks. |
+| Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -3056,7 +3065,8 @@ appears in lessons 8.1–8.6; each leaf opens its lesson. The models run in the 
 - `lib/models/module8.ts`: SMIB, Heffron–Phillips, long-term voltage, system frequency, GFL on a
   weak grid (reusing Module 7's averaged model) and SSR.
 - `lib/models/module8b.ts`: the two-area, four-machine system of lesson 8.7.
-- `lib/models/g2elin.svelte.ts`: the client for a local G2ELin API (lesson 8.7).
+- `lib/models/g2data.ts`: G2ELin results for lessons 8.8 and 8.9, baked into the app
+  (`src/data/g2elin/*.json`), so these lessons are instant and need no server.
 
 They are tested in `lib/models/module8.test.ts`. Every guided step has a test showing it can be
 completed with the sliders.
@@ -3389,13 +3399,12 @@ amplitude in the last second is more than twice that of the first, while the ske
 - 0.5 % mechanical damping is not enough; a TCSC damps for $k$ = 0.45–0.7.
 - The envelope grows exactly as $e^{\sigma t}$.
 
-### 8.7 Real networks with G2ELin · `#8.7` · `lessons/g2`
+### 8.7 Inter-area oscillations · `#8.7` · `lessons/g2`
 
 **Objectives.** After this lesson the learner can:
 - tell local from inter-area modes;
 - read a mode shape;
-- relate the inter-area frequency to tie strength and transfer;
-- run the same analysis on a full model with G2ELin.
+- relate the inter-area frequency to tie strength and transfer.
 
 **Model.** Two areas of two classical machines, in the spirit of Kundur's two-area system.
 - Area 1: $H = 6.5$ s. Area 2: $H_2$.
@@ -3405,22 +3414,10 @@ amplitude in the last second is more than twice that of the first, while the ske
   $M^{-1/2}KM^{-1/2}$ (Jacobi).
 - The response: an exact LTI simulation of a $10^{-3}$ pu speed kick, over 12 s.
 
-**G2ELin panel.** It looks for the API at `/g2elin` (proxied by Vite to `localhost:8000`) or at
-`VITE_G2ELIN_URL`, and:
-- lists the presets from `/api/presets`;
-- runs `/api/presets/{id}/modal` and lists the 0.1–3 Hz synchronisation modes (under 5 %
-  damping highlighted);
-- draws the mode shape (`/modal/mode_shape`) as a compass;
-- plots a free response (`/modal/free_response`) after a speed kick on a chosen machine.
-
-Offline, it explains how to start the API and offers a retry. The rest of the lesson works without
-it.
-
 **Formulas.**
 - The linear model, with a derivation showing $K$ live.
 - The three modes, live.
 - The selected mode shape, live.
-- *Researcher, Engineer:* what G2ELin adds.
 
 **Parameters.**
 
@@ -3437,7 +3434,6 @@ it.
 - Two-area schematic with mode-shape bars; machines tinted by their speed at the cursor.
 - s-plane of the three modes.
 - Inter-area frequency against $X_t$, with the 0.1–0.8 Hz band.
-- The G2ELin panel.
 
 **Guided steps.**
 
@@ -3449,7 +3445,6 @@ it.
 | 4 | More transfer | $X_t$ ≈ 1, $P_{tie} \ge 0.8$ |
 | 5 | Exciting a local mode | Kick G3, local 2 shown |
 | 6 | Damping | Inter-area $\zeta \ge 5$ % |
-| 7 | A real network | Informational (G2ELin) |
 
 **Misconception detected** (y-range ±40 mHz): the distant machine does not move. Triggers when the
 true G3 swing exceeds 5 mHz while the sketch stays under 2 mHz.
@@ -3460,7 +3455,120 @@ true G3 swing exceeds 5 mHz while the sketch stays under 2 mHz.
 - A weaker or more loaded tie slows the inter-area mode.
 - $D = 10$ exceeds 5 % damping.
 - A kick on G1 reaches G3.
-- The smoke test mocks the G2ELin API and checks the mode table, mode shape and free response.
+
+### 8.8 Modes and participation factors · `#8.8` · `lessons/modes`
+
+**Objectives.** After this lesson the learner can:
+- read a table of modes (frequency, damping, nature);
+- interpret participation factors and a mode shape on a real network;
+- tell where to act (PSS, POD) to damp a mode.
+
+**Data.** G2ELin's full models of six networks, analysed by G2ELin and baked into the app:
+Kundur two-area (detailed with PSS, 95 states; classical, 83 states), WSCC 9-bus with three
+generators, with one grid-forming inverter, and with two grid-following inverters, and the IEEE
+39-bus system (403 states). Two scripts produce `src/data/g2elin/modes.json`:
+- `scripts/bake-g2elin.mjs` (G2ELin API on port 8000): modes, categories, participation factors
+  (top 10 states and the total per unit), topology and free responses after a speed kick on each
+  machine (12 s);
+- `scripts/bake-shapes.py` (G2ELin's Python environment): the right eigenvector of every mode on
+  each unit's angle state (amplitude and phase relative to the largest), and the bus of each unit.
+
+**Formulas.**
+- Modal decomposition $A = V\Lambda W$, with the selected eigenvalue live.
+- Frequency and damping.
+- Participation factors $p_{ki} = |v_{ki}w_{ik}| / \sum_j |v_{ji}w_{ij}|$.
+- The mode shape on the angles, live.
+- *Researcher, Engineer:* G2ELin's mode categories.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Network | six choices | Kundur (detailed) |
+| Mode studied | 1–20 (number in the list) | 1 |
+| Machine kicked | G1–G10 | G1 |
+
+**Panels.**
+- Clickable mode table (modes above 0.05 Hz, under 5 % damping highlighted).
+- s-plane of all modes, coloured by nature, with the 5 % and 10 % damping lines.
+- Participation factors: a stacked bar per unit and the ten largest states.
+- Mode shape on the network map: an arrow per unit (length = amplitude, angle = phase). Purple
+  and orange swing in opposition; the disc grows with the unit's participation.
+- Oscilloscope: every machine's speed after the kick.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | The inter-area mode | Kundur, synchronisation mode below 1 Hz |
+| 2 | A local mode | Kundur, synchronisation mode above 1 Hz |
+| 3 | A control mode | A control or machine-electrical mode selected |
+| 4 | A free response | Kundur, G3 kicked, 80 % of the window seen |
+| 5 | Without regulators | Kundur classical, inter-area mode with negative damping |
+| 6 | With inverters | Both WSCC 9-bus variants (3 generators; 2 + grid-forming) opened |
+| 7 | A large network | IEEE 39, synchronisation mode below 5 % |
+
+**Tests** (`lib/models/g2data.test.ts`).
+- Every network has modes, mode shapes, unit buses and free responses.
+- Kundur's inter-area mode is damped above 5 % in detail and unstable in the classical model. Its
+  shape puts G1–G2 against G3–G4.
+- IEEE 39 has a synchronisation mode below 5 %.
+
+### 8.9 Model reduction: EMT, RMS and machine orders · `#8.9` · `lessons/reduction`
+
+**Objectives.** After this lesson the learner can:
+- explain what each modelling level removes (singular perturbation);
+- choose a level for a study;
+- say when RMS is no longer enough and EMT is needed.
+
+**Data** (`src/data/g2elin/reduction.json`, from `scripts/bake-g2elin.mjs`). Six levels, each set
+with G2ELin's `models` options: full EMT; RMS network (`network_level: quasi_stationary`); then
+6th, 4th, 3rd-order and classical machines (`sm_level`). For each level:
+- the modal analysis of the SMIB and of Kundur's two-area system;
+- an EMT-solver run on the SMIB (a 20° phase jump of the infinite bus, over 3 s), with G2ELin's
+  linearised response and the run time.
+
+| Level | SMIB states | Kundur states | Run time (SMIB, 3 s) | Kundur inter-area mode |
+|---|---|---|---|---|
+| EMT | 31 | 95 | 56 s | 0.603 Hz, 18.1 % |
+| RMS | 23 | 61 | 6 s | 0.604 Hz, 18.1 % |
+| Order 6 | 19 | 45 | 12 s | 0.603 Hz, 17.9 % |
+| Order 4 | 17 | 37 | 14 s | 0.597 Hz, 17.2 % |
+| Order 3 | 16 | 33 | 39 s | 0.588 Hz, 15.4 % |
+| Classical | 15 | 29 | 31 s | 0.549 Hz, 1.0 % |
+
+Run times are indicative: they also depend on the solver's step.
+
+**Formulas.**
+- Separated time scales.
+- Singular perturbation, $\varepsilon\dot z = g(x,z) \to 0 = g(x,z)$.
+- The quasi-stationary network.
+- Machine orders, with the live state counts and the largest gap to EMT.
+- *Researcher, Engineer:* when EMT is needed.
+
+**Parameter.** Model level (six choices). Clicking a row of the ladder does the same.
+
+**Panels.**
+- The ladder: what each level removes, states, run time and the inter-area mode.
+- Kundur's eigenvalues on log scales ($|\sigma|$, $f$): full EMT as circles, the chosen level as dots.
+- Damping of the three electromechanical modes against the level.
+- Model size (states) against the level.
+- Oscilloscope: speed at the chosen level, the EMT reference (dashed) and the linearised response.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | The EMT reference | EMT, 80 % of the window seen |
+| 2 | Going RMS | RMS chosen |
+| 3 | Simplifying the machine | Order 4 visited, then order 3 |
+| 4 | The classical model | Classical chosen |
+| 5 | Linear or not | Linearised response shown |
+
+**Tests** (`lib/models/g2data.test.ts`).
+- States decrease at each level.
+- RMS stays within 5 mHz of EMT.
+- Order 4 keeps the inter-area damping within 2 points; the classical model drops it below 2 %.
 
 ---
 

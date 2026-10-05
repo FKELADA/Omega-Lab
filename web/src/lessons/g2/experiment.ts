@@ -1,13 +1,11 @@
 // Module 8.7 — Inter-area oscillations: modes, mode shapes and free responses
-// on a two-area system in the browser, and on G2ELin's full models when its
-// API is running.
+// on a four-machine, two-area system. Real networks follow in 8.8 and 8.9.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
 import type { Experiment } from '../../lib/lab/types';
 import { tr } from '../../lib/ui/ui.svelte';
-import { interCurve, MODE_KIND, modeOf, TWO_AREA, twoAreaInfo, twoAreaModel, type TwoAreaInfo } from '../../lib/models/module8b';
-import G2Panel from './G2Panel.svelte';
+import { interCurve, MODE_KIND, modeOf, twoAreaInfo, twoAreaModel, type TwoAreaInfo } from '../../lib/models/module8b';
 import TwoAreaCanvas from './TwoAreaCanvas.svelte';
 
 const zetaLine = (z: number): [number, number][] => [[0, 0], [(-z * 2 * Math.PI * 2) / Math.sqrt(1 - z * z), 2]];
@@ -22,13 +20,13 @@ export const g2Lesson: Experiment = {
   id: 'g2',
   path: [
     { fr: 'Module 8 · Stabilité des réseaux', en: 'Module 8 · Power-system stability' },
-    { fr: '8.7 Réseaux réels', en: '8.7 Real networks' },
+    { fr: '8.7 Oscillations inter-zones', en: '8.7 Inter-area oscillations' },
   ],
-  title: { fr: 'Oscillations inter-zones : modes, formes modales et G2ELin', en: 'Inter-area oscillations: modes, mode shapes and G2ELin' },
+  title: { fr: 'Oscillations inter-zones : modes et formes modales', en: 'Inter-area oscillations: modes and mode shapes' },
   model: twoAreaModel,
   info: twoAreaInfo,
   canvas: TwoAreaCanvas,
-  instruments: [Chart0, Chart1, G2Panel],
+  instruments: [Chart0, Chart1],
 
   params: [
     { id: 'Xt', symbol: 'X_t', name: { fr: 'Réactance de la liaison entre zones', en: 'Tie-line reactance' }, unit: 'pu', min: 0.4, max: 2, default: 1, scale: 'lin', term: 'L' },
@@ -159,17 +157,6 @@ export const g2Lesson: Experiment = {
           en: 'The eigenvector says who swings, and against whom: components of opposite sign swing in opposition. That is where a PSS belongs: on the machines that participate most in the mode (lesson 8.2).',
         }),
     },
-    {
-      id: 'g2elin',
-      title: { fr: 'Avec G2ELin', en: 'With G2ELin' },
-      personas: ['research', 'utility'],
-      tex: () => `\\text{G2ELin : modèles complets (dq, AVR, PSS, onduleurs)} \\to \\text{modes, formes, participations, réponses libres}`,
-      note: (c) =>
-        c.tr({
-          fr: 'Le panneau G2ELin interroge une API locale : analyse modale du modèle complet (des centaines d’états), formes modales et réponses libres sur ses réseaux de référence. Le modèle à quatre machines garde l’essentiel ; G2ELin montre ce que les simplifications cachent.',
-          en: 'The G2ELin panel queries a local API: modal analysis of the full model (hundreds of states), mode shapes and free responses on its reference networks. The four-machine model keeps the essentials; G2ELin shows what the simplifications hide.',
-        }),
-    },
   ],
 
   steps: [
@@ -227,14 +214,6 @@ export const g2Lesson: Experiment = {
         en: `Raise damping until the inter-area mode reaches **5 %**. On a real grid this damping comes from PSSs (lesson 8.2) or inverters (POD), placed where the mode shape is large.`,
       },
       check: (lab) => inter(lab).zeta >= 0.05,
-    },
-    {
-      id: 'g2elin',
-      title: { fr: 'Un réseau réel', en: 'A real network' },
-      body: {
-        fr: `Si G2ELin tourne sur votre machine, choisissez un de ses réseaux dans le panneau : retrouvez les modes inter-zones (0,1–0,8 Hz) et leur forme modale sur le modèle complet. Sinon, lancez l’API (port 8000) et cliquez sur « Réessayer ». Choc de ${TWO_AREA.kick * 1000} × 10⁻³ pu dans ce modèle-ci.`,
-        en: `If G2ELin runs on your machine, pick one of its networks in the panel: find the inter-area modes (0.1–0.8 Hz) and their shape on the full model. Otherwise, start the API (port 8000) and click “Retry”. Kick of ${TWO_AREA.kick * 1000} × 10⁻³ pu in this model.`,
-      },
     },
   ],
 };

@@ -6,14 +6,78 @@
   import type { ChartAxis } from '../lab/types';
   import { S, tr } from '../ui/ui.svelte';
   import { num } from '../ui/format';
+  import { getContext } from 'svelte';
 
   let { lab, index }: { lab: Lab; index: number } = $props();
 
-  const W = 320, H = 220, M = { l: 44, r: 12, t: 12, b: 30 };
+  // A larger drawing area in the enlarged window keeps text at a readable size.
+  const big = getContext<boolean>('zoomed') ?? false;
+  const W = big ? 760 : 320, H = big ? 420 : 220, M = { l: 44, r: 12, t: 12, b: 30 };
   const spec = $derived(lab.exp.charts![index]);
   const rng = (a: ChartAxis): [number, number] => (typeof a.range === 'function' ? a.range(lab) : a.range);
-  const xr = $derived(rng(spec.x));
-  const yr = $derived(rng(spec.y));
+  // Zoom and pan: a view that overrides the lesson's axis ranges until reset.
+  let vx = $state<[number, number] | null>(null);
+  let vy = $state<[number, number] | null>(null);
+  const xr = $derived(vx ?? rng(spec.x));
+  const yr = $derived(vy ?? rng(spec.y));
+  let svg = $state<SVGSVGElement>();
+  const PW = W - M.l - M.r, PH = H - M.t - M.b;
+  // Axis values ↔ "f-space" (log10 on log axes), where zoom and pan are linear.
+  const toF = (v: number, log?: boolean) => (log ? Math.log10(Math.max(1e-300, v)) : v);
+  const fromF = (v: number, log?: boolean) => (log ? 10 ** v : v);
+  function svgPoint(e: { clientX: number; clientY: number }) {
+    const m = svg?.getScreenCTM();
+    if (!svg || !m) return null;
+    const p = svg.createSVGPoint();
+    p.x = e.clientX;
+    p.y = e.clientY;
+    return p.matrixTransform(m.inverse());
+  }
+  const zoomAxis = (r: [number, number], log: boolean | undefined, at: number, k: number): [number, number] => {
+    const a = toF(r[0], log), b = toF(r[1], log), g = a + (b - a) * at;
+    return [fromF(g - (g - a) * k, log), fromF(g + (b - g) * k, log)];
+  };
+  const panAxis = (r: [number, number], log: boolean | undefined, frac: number): [number, number] => {
+    const a = toF(r[0], log), b = toF(r[1], log), d = (b - a) * frac;
+    return [fromF(a + d, log), fromF(b + d, log)];
+  };
+  $effect(() => {
+    const el = svg;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const p = svgPoint(e);
+      if (!p || p.x < M.l || p.x > W - M.r || p.y < M.t || p.y > H - M.b) return;
+      e.preventDefault();
+      const k = e.deltaY > 0 ? 1.25 : 0.8;
+      // Shift: horizontal only; Alt: vertical only.
+      if (!e.altKey) vx = zoomAxis(xr, spec.x.log, (p.x - M.l) / PW, k);
+      if (!e.shiftKey) vy = zoomAxis(yr, spec.y.log, (H - M.b - p.y) / PH, k);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  });
+  let drag: { x: number; y: number; xr: [number, number]; yr: [number, number] } | null = null;
+  function down(e: PointerEvent) {
+    const p = svgPoint(e);
+    if (!p) return;
+    drag = { x: p.x, y: p.y, xr, yr };
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+  }
+  function move(e: PointerEvent) {
+    if (!drag) return;
+    const p = svgPoint(e);
+    if (!p) return;
+    const dx = (p.x - drag.x) / PW, dy = (p.y - drag.y) / PH;
+    if (Math.abs(dx) + Math.abs(dy) < 0.005) return;
+    vx = panAxis(drag.xr, spec.x.log, -dx);
+    vy = panAxis(drag.yr, spec.y.log, dy);
+  }
+  const up = () => (drag = null);
+  const reset = () => {
+    vx = null;
+    vy = null;
+  };
+  const zoomed = $derived(vx !== null || vy !== null);
   const fx = (v: number) => (spec.x.log ? Math.log10(Math.max(1e-12, v)) : v);
   const X = (v: number) => M.l + ((W - M.l - M.r) * (fx(v) - fx(xr[0]))) / (fx(xr[1]) - fx(xr[0]));
   const fy = (v: number) => (spec.y.log ? Math.log10(Math.max(1e-300, v)) : v);
@@ -22,7 +86,7 @@
 
   /** About five round-number ticks. */
   function ticks(a: [number, number], log = false): number[] {
-    if (log) {
+    if (log && Math.log10(a[1] / a[0]) >= 1) {
       const out: number[] = [];
       const e0 = Math.ceil(Math.log10(a[0])), e1 = Math.floor(Math.log10(a[1]));
       const step = Math.max(1, Math.ceil((e1 - e0) / 6));
@@ -63,10 +127,24 @@
 </script>
 
 <section class="panel">
-  <header><span>{tr(spec.title)}</span></header>
+  <header>
+    <span>{tr(spec.title)}</span>
+    {#if zoomed}<button class="unzoom" onclick={reset} title={tr({ fr: 'Revenir à la vue d’origine', en: 'Back to the original view' })}>⟲</button>{/if}
+  </header>
   {#if lab.concealed}<div class="concealed">{tr(S.hiddenUntilReveal)}</div>{/if}
   <div class="body">
-    <svg viewBox="0 0 {W} {H}" role="img" aria-label={tr(spec.title)}>
+    <svg
+      bind:this={svg}
+      viewBox="0 0 {W} {H}"
+      role="img"
+      aria-label={tr(spec.title)}
+      class:zoomed
+      onpointerdown={down}
+      onpointermove={move}
+      onpointerup={up}
+      onpointercancel={up}
+      ondblclick={reset}
+    >
       <defs>
         <clipPath id="xy-clip-{index}"><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} /></clipPath>
       </defs>
@@ -129,6 +207,23 @@
   .area {
     fill-opacity: 0.22;
     stroke: none;
+  }
+  svg {
+    touch-action: none;
+    cursor: grab;
+  }
+  svg:active {
+    cursor: grabbing;
+  }
+  .unzoom {
+    margin-left: auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0 6px;
   }
   .band {
     fill: var(--good-soft);

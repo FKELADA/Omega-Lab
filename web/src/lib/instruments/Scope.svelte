@@ -19,7 +19,7 @@
 
   const shown = $derived(lab.exp.signals.filter((s) => lab.visible[s.id]));
   const hiddenId = $derived(lab.concealed ? lab.exp.predict?.signal : undefined);
-  const primary = $derived(shown.find((s) => s.id === lab.exp.predict?.signal) ?? shown[0]);
+  const primary = $derived(shown.find((s) => s.id === lab.fan?.signal) ?? shown.find((s) => s.id === lab.exp.predict?.signal) ?? shown[0]);
 
   /** The oscilloscope axis the prediction is sketched against. */
   const predictScale = () => lab.exp.signals.find((s) => s.id === lab.exp.predict?.signal)?.unit ?? 'V';

@@ -1,7 +1,7 @@
 // Module 8 — Power-system stability, in the IEEE/CIGRE 2020 classification:
 // rotor angle (transient 8.1, small-signal 8.2), voltage (8.3), frequency (8.4),
-// converter-driven (8.5) and resonance (8.6). The G2ELin lab (8.7) lives in
-// g2elin.svelte.ts.
+// converter-driven (8.5) and resonance (8.6). Inter-area oscillations (8.7) are
+// in module8b.ts, G2ELin's baked results (8.8, 8.9) in g2data.ts.
 
 import { eigenvaluesQR, solve, type Complex } from '../core/linalg';
 import { linspace, simulate } from '../core/lti';

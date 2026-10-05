@@ -8,7 +8,7 @@
 
 ---
 
-## Status (4 October 2026)
+## Status (5 October 2026)
 
 **All nine modules (0 to 8) are built: 49 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
@@ -64,10 +64,12 @@ tests are in [documentation.md](documentation.md).
 | 8.4 Frequency stability | ✅ Done | `fe3f5c5` |
 | 8.5 Converter-driven stability | ✅ Done | `fe3f5c5` |
 | 8.6 Resonance stability (SSR) | ✅ Done | `fe3f5c5` |
-| 8.7 Real networks with G2ELin | ✅ Done | `fe3f5c5` |
+| 8.7 Inter-area oscillations | ✅ Done | `fe3f5c5`, reworked in PENDING |
+| 8.8 Modes and participation factors (G2ELin) | ✅ Done | PENDING |
+| 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | PENDING |
 
-**Verification:** 255 unit tests (solver, models, note completeness), and a browser test that walks
-all 49 lessons, the documentation page and the teaching notes (175 checks, G2ELin mocked: predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 265 unit tests (solver, models, baked G2ELin data, note completeness), and a browser test that walks
+all 51 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -119,21 +121,21 @@ no console errors).
   - The NR "mismatch surface" became a replay of the network iteration by iteration, with a
     convergence chart.
 
-- **Module 8** runs in the browser, with the G2ELin API as an optional live panel:
+- **Module 8** runs in the browser:
   - 8.1–8.6 use reduced client-side models (SMIB, Heffron–Phillips, quasi-static OLTC and load
     recovery, one-bus frequency, Module 7's GFL model linearised numerically, a one-mode SSR
     damping balance).
-  - 8.7 runs a classical two-area, four-machine system in the browser and, when G2ELin is running
-    locally (`/g2elin` proxy or `VITE_G2ELIN_URL`), lists its presets, modes, mode shapes and free
-    responses. Preset names are read from `/api/presets`, not hard-coded.
-  - Not built from §5: EMT vs RMS vs linear comparison, the 100 % IBR island, PSS design on the
+  - 8.7 runs a classical two-area, four-machine system in the browser.
+  - 8.8 and 8.9 show G2ELin results baked into the app (`web/scripts/bake-g2elin.mjs`, `bake-shapes.py`):
+    modes, participation factors and mode shapes of six networks up to IEEE 39-bus, and the
+    EMT → RMS → machine-order ladder with EMT runs. The live API panel was dropped: the baked data
+    is instant, works offline, and the EMT runs take up to four minutes.
+  - Not built from §5: the 100 % IBR island, PSS design on the
     full two-area system and the blackout replay capstones.
 
 ### Next
 
-1. **G2ELin depth:** case library, participation factors and PSS design on G2ELin's full
-   two-area model; check the panel against the real API (it was written against its documented
-   endpoints and tested with a mock).
+1. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
 2. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
 
 ---

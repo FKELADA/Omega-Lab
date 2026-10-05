@@ -1,7 +1,7 @@
 // Module 8.7 — Inter-area oscillations on a two-area, four-machine system
 // (in the spirit of Kundur's two-area test system), with classical machines so
-// it runs in the browser. The same lesson shows G2ELin's full-model results
-// when its API is running (g2elin.svelte.ts).
+// it runs in the browser. Lessons 8.8 and 8.9 show G2ELin's full models
+// (g2data.ts).
 
 import { eigenvaluesQR, solve, type Complex, type Mat } from '../core/linalg';
 import { simulateFree } from '../core/lti';

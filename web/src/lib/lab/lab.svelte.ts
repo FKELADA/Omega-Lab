@@ -35,7 +35,10 @@ export class Lab {
   hover = $state<string | null>(null);
   visible = $state<Record<string, boolean>>({});
   ghosts = $state<Ghost[]>([]);
-  fan = $state<{ param: string; values: number[] } | null>(null);
+  /** A parameter sweep: the swept values and the signal whose family of curves is drawn. */
+  fan = $state<{ param: string; values: number[]; signal: string } | null>(null);
+  /** Set when a sweep changed no curve, so the rail can say so (cleared after a few seconds). */
+  sweepNote = $state<string | null>(null);
   prediction = $state<Prediction>(freshPrediction());
   stepIndex = $state(0);
   completed = $state<Record<string, boolean>>({});
@@ -68,7 +71,14 @@ export class Lab {
     );
     this.t = $derived(this.frac * this.tEnd);
     this.idx = $derived(Math.round(this.frac * (this.run.t.length - 1)));
-    this.concealed = $derived(this.prediction.active && !this.prediction.revealed);
+    // Hide what would give the answer away: while sketching, and from the moment
+    // the learner reaches a prediction step until that prediction is revealed.
+    this.concealed = $derived.by(() => {
+      if (this.prediction.revealed) return false;
+      if (this.prediction.active) return true;
+      const step = exp.steps[this.stepIndex];
+      return !!exp.predict && !!step?.predict && !this.completed[step.id];
+    });
     this.reset();
   }
 
@@ -131,8 +141,38 @@ export class Lab {
         ? spec.min * (spec.max / spec.min) ** f
         : spec.min + (spec.max - spec.min) * f;
     });
+    // Draw the family on the signal this parameter actually moves (most, relative
+    // to the signal's own range); if it moves none, say so instead of doing nothing.
+    const runs = values.map((v) => this.exp.model.simulate({ ...this.params, [paramId]: v }, this.tEnd));
+    const shown = this.exp.signals.filter((sg) => this.visible[sg.id]);
+    let best: { id: string; score: number } | null = null;
+    for (const sg of this.exp.signals) {
+      const ref = Array.from(this.run.s[sg.id] ?? []).filter(isFinite);
+      if (!ref.length) continue;
+      const span = Math.max(1e-12, Math.max(...ref) - Math.min(...ref), 0.05 * Math.max(...ref.map(Math.abs)));
+      let d = 0;
+      for (const r of runs) {
+        const a = r.s[sg.id];
+        if (!a) continue;
+        for (let j = 0; j < a.length; j += Math.max(1, Math.floor(a.length / 400))) {
+          const v = a[j], w = this.run.s[sg.id][j];
+          if (isFinite(v) && isFinite(w)) d = Math.max(d, Math.abs(v - w));
+        }
+      }
+      // Prefer a signal already on screen when it is affected about as much.
+      const score = (d / span) * (shown.includes(sg) ? 1.5 : 1);
+      if (d / span > 0.01 && (!best || score > best.score)) best = { id: sg.id, score };
+    }
+    if (!best) {
+      this.sweepNote = paramId;
+      setTimeout(() => {
+        if (this.sweepNote === paramId) this.sweepNote = null;
+      }, 4000);
+      return;
+    }
+    this.visible[best.id] = true;
     this.lockedTEnd = this.tEnd;
-    this.fan = { param: paramId, values };
+    this.fan = { param: paramId, values, signal: best.id };
   }
 
   startPrediction() {

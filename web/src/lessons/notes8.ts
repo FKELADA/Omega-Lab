@@ -14,8 +14,8 @@ export const module8Note: ModuleNote = {
     en: 'Recognise each type of instability, its time scale and mechanism, know how to measure it (critical time, damping, nadir, minimum SCR…) and know the countermeasures.',
   },
   path: {
-    fr: '8.1 transitoire → 8.2 petits signaux → 8.3 tension → 8.4 fréquence → 8.5 convertisseurs → 8.6 résonance → 8.7 réseaux réels avec G2ELin.',
-    en: '8.1 transient → 8.2 small-signal → 8.3 voltage → 8.4 frequency → 8.5 converter-driven → 8.6 resonance → 8.7 real networks with G2ELin.',
+    fr: '8.1 transitoire → 8.2 petits signaux → 8.3 tension → 8.4 fréquence → 8.5 convertisseurs → 8.6 résonance → 8.7 oscillations inter-zones → 8.8 modes et participations sur des réseaux réels (G2ELin) → 8.9 réduction de modèles, EMT ou RMS.',
+    en: '8.1 transient → 8.2 small-signal → 8.3 voltage → 8.4 frequency → 8.5 converter-driven → 8.6 resonance → 8.7 inter-area oscillations → 8.8 modes and participation on real networks (G2ELin) → 8.9 model reduction, EMT or RMS.',
   },
 };
 
@@ -180,8 +180,8 @@ export const module8Notes: Record<string, LessonNote> = {
   },
   '8.7': {
     summary: {
-      fr: 'Sur un grand réseau, des régions entières oscillent les unes contre les autres, lentement (0,1–0,8 Hz). Les valeurs propres disent à quelle fréquence, les vecteurs propres qui oscille contre qui. G2ELin fait la même analyse sur des modèles complets.',
-      en: 'On a large grid, whole regions swing against each other, slowly (0.1–0.8 Hz). Eigenvalues say at what frequency, eigenvectors who swings against whom. G2ELin does the same analysis on full models.',
+      fr: 'Sur un grand réseau, des régions entières oscillent les unes contre les autres, lentement (0,1–0,8 Hz). Les valeurs propres disent à quelle fréquence, les vecteurs propres qui oscille contre qui. Les leçons 8.8 et 8.9 refont cette analyse sur les modèles complets de G2ELin.',
+      en: 'On a large grid, whole regions swing against each other, slowly (0.1–0.8 Hz). Eigenvalues say at what frequency, eigenvectors who swings against whom. Lessons 8.8 and 8.9 repeat this analysis on G2ELin’s full models.',
     },
     objective: {
       fr: 'Distinguer modes locaux et inter-zones, lire une forme modale, et relier la fréquence du mode à la force de la liaison et au transit.',
@@ -199,11 +199,62 @@ export const module8Notes: Record<string, LessonNote> = {
       { fr: 'Charger la liaison.', en: 'Load the tie line.' },
       { fr: 'Exciter un mode local.', en: 'Excite a local mode.' },
       { fr: 'Amortir le mode inter-zones à 5 %.', en: 'Damp the inter-area mode to 5 %.' },
-      { fr: 'Retrouver ces modes sur un réseau réel avec G2ELin.', en: 'Find these modes on a real network with G2ELin.' },
     ],
     tests: [
       { what: { fr: 'K est symétrique et ses lignes somment à zéro ; un mode inter-zones entre 0,5 et 0,8 Hz avec les zones en opposition, deux modes locaux au-dessus de 1 Hz.', en: 'K is symmetric and its rows sum to zero; one inter-area mode between 0.5 and 0.8 Hz with areas in opposition, two local modes above 1 Hz.' }, why: { fr: 'Vérifie la réduction du réseau et la classification des modes.', en: 'Checks the network reduction and the mode classification.' } },
       { what: { fr: 'Liaison plus faible ou plus chargée : mode plus lent ; D = 10 dépasse 5 % ; un choc sur G1 atteint G3.', en: 'Weaker or more loaded tie: slower mode; D = 10 exceeds 5 %; a kick on G1 reaches G3.' }, why: { fr: 'Garantit les étapes 1 à 6.', en: 'Guarantees steps 1 to 6.' } },
+    ],
+  },
+  '8.8': {
+    summary: {
+      fr: 'Sur les modèles complets de G2ELin (Kundur, WSCC 9 nœuds avec alternateurs ou onduleurs, IEEE 39 nœuds), on lit chaque mode : fréquence, amortissement, nature, facteurs de participation et forme modale sur la carte du réseau. Les résultats sont pré-calculés par G2ELin.',
+      en: 'On G2ELin’s full models (Kundur, WSCC 9-bus with generators or inverters, IEEE 39-bus), each mode is read: frequency, damping, nature, participation factors and mode shape on the network map. Results are precomputed by G2ELin.',
+    },
+    objective: {
+      fr: 'Lire une table de modes, interpréter des facteurs de participation et une forme modale, et repérer où agir pour amortir un mode.',
+      en: 'Read a mode table, interpret participation factors and a mode shape, and spot where to act to damp a mode.',
+    },
+    formulas: [
+      { tex: r`A = V\Lambda W`, meaning: { fr: 'Décomposition modale : valeurs propres, vecteurs propres à droite et à gauche.', en: 'Modal decomposition: eigenvalues, right and left eigenvectors.' } },
+      { tex: r`p_{ki} = |v_{ki} w_{ik}| / \sum_j |v_{ji} w_{ij}|`, meaning: { fr: 'Facteur de participation de l’état k au mode i.', en: 'Participation factor of state k in mode i.' } },
+      { tex: r`\zeta = -\sigma / \sqrt{\sigma^2 + \omega^2}`, meaning: { fr: 'Amortissement d’un mode ; on vise au moins 5 %.', en: 'Damping of a mode; at least 5 % is the target.' } },
+    ],
+    exercises: [
+      { fr: 'Trouver le mode inter-zones de Kundur.', en: 'Find Kundur’s inter-area mode.' },
+      { fr: 'Trouver un mode local.', en: 'Find a local mode.' },
+      { fr: 'Lire un mode de régulation.', en: 'Read a control mode.' },
+      { fr: 'Observer une réponse libre.', en: 'Watch a free response.' },
+      { fr: 'Voir le mode inter-zones instable sans régulateurs.', en: 'See the inter-area mode go unstable without regulators.' },
+      { fr: 'Comparer alternateur et onduleur formeur.', en: 'Compare a generator with a grid-forming inverter.' },
+      { fr: 'Trouver un mode mal amorti sur IEEE 39 nœuds.', en: 'Find a poorly damped mode on the IEEE 39-bus system.' },
+    ],
+    tests: [
+      { what: { fr: 'Chaque réseau a des modes ; Kundur a un mode de synchronisme sous 1 Hz, bien amorti en détaillé et instable en classique ; IEEE 39 a un mode de synchronisme sous 5 %.', en: 'Every network has modes; Kundur has a synchronisation mode below 1 Hz, well damped in detail and unstable in the classical model; IEEE 39 has a synchronisation mode below 5 %.' }, why: { fr: 'Garantit les étapes 1, 2, 5 et 7.', en: 'Guarantees steps 1, 2, 5 and 7.' } },
+      { what: { fr: 'Les participations de chaque mode somment à 1 ; dans le mode inter-zones de Kundur, G1–G2 sont en opposition de phase avec G3–G4.', en: 'Each mode’s participations sum to 1; in Kundur’s inter-area mode, G1–G2 are in phase opposition with G3–G4.' }, why: { fr: 'Vérifie les données pré-calculées et la forme modale.', en: 'Checks the precomputed data and the mode shape.' } },
+    ],
+  },
+  '8.9': {
+    summary: {
+      fr: 'Un même réseau se simule à plusieurs niveaux de détail : EMT (valeurs instantanées), RMS (phaseurs), puis machines d’ordre 6, 4, 3 et classique. Chaque réduction retire les dynamiques les plus rapides ; G2ELin montre ce qu’on y gagne (états, temps de calcul) et ce qu’on y perd (amortissement, phénomènes rapides).',
+      en: 'One grid can be simulated at several levels of detail: EMT (instantaneous values), RMS (phasors), then 6th, 4th, 3rd-order and classical machines. Each reduction removes the fastest dynamics; G2ELin shows what is gained (states, run time) and what is lost (damping, fast phenomena).',
+    },
+    objective: {
+      fr: 'Choisir le bon niveau de modèle pour une étude, et savoir quand le RMS ne suffit plus.',
+      en: 'Choose the right model level for a study, and know when RMS is no longer enough.',
+    },
+    formulas: [
+      { tex: r`\varepsilon\dot z = g(x,z) \to 0 = g(x,z)`, meaning: { fr: 'Perturbation singulière : les états rapides deviennent algébriques.', en: 'Singular perturbation: fast states become algebraic.' } },
+      { tex: r`\underline V = (R + jX)\underline I`, meaning: { fr: 'Le réseau quasi-stationnaire du modèle RMS.', en: 'The quasi-stationary network of the RMS model.' } },
+    ],
+    exercises: [
+      { fr: 'Observer la référence EMT.', en: 'Watch the EMT reference.' },
+      { fr: 'Passer au modèle RMS.', en: 'Switch to the RMS model.' },
+      { fr: 'Simplifier la machine (ordres 4 et 3).', en: 'Simplify the machine (orders 4 and 3).' },
+      { fr: 'Voir les limites du modèle classique.', en: 'See the limits of the classical model.' },
+      { fr: 'Comparer à la réponse linéarisée.', en: 'Compare with the linearised response.' },
+    ],
+    tests: [
+      { what: { fr: 'Le nombre d’états décroît à chaque niveau ; l’écart RMS–EMT reste sous 5 mHz ; les modes de Kundur bougent peu jusqu’à l’ordre 4 et l’amortissement tombe sous 2 % en classique.', en: 'The number of states decreases at each level; the RMS–EMT gap stays below 5 mHz; Kundur’s modes barely move down to order 4 and damping falls below 2 % in the classical model.' }, why: { fr: 'Garantit les étapes 2 à 4.', en: 'Guarantees steps 2 to 4.' } },
     ],
   },
 };
