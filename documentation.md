@@ -163,7 +163,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 | `signals` | Traces available on the oscilloscope: unit, colour, default visibility, dashed or not. |
 | `canvas`, `instruments` | The left-hand drawing and the panels under the oscilloscope. |
 | `equations` | Live equation cards. Each has KaTeX built from current values, optional term-size `bars`, a `derive` sequence, a `note`, and the `personas` (profiles) that see it. |
-| `steps` | Guided steps: Markdown text, an optional `hint`, and a `check(lab)` that marks the step done. |
+| `steps` | Guided steps: Markdown text, a `hint`, a full `answer`, and a `check(lab)` that marks the step done. Hints and answers usually live in `lessons/answers/m0.ts`–`m8.ts`, keyed by experiment and step id. |
 | `predict` | Optional predict-then-reveal: which signal, a y-range that does not give the answer away, and a `diagnose` function that returns misconception feedback. |
 | `bode`, `phasors` | Optional specifications for the frequency-response and phasor-diagram instruments. |
 | `axis` | Optional: a different cursor variable (NR iteration, load multiplier) with its own label and format, replacing time. |
@@ -184,6 +184,10 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
   live, in a large window. Charts zoom with the wheel (Shift: x only, Alt: y only), pan by
   dragging, and reset with a double-click or ⟲. In the large window, charts get a larger drawing
   area rather than a magnified one, so text keeps a readable size.
+- **Hints and explanations:** every step offers a hint (▸ Indice) while it is not done. Once it is
+  done, the hint is replaced by the full explanation ("Ce qu'il fallait voir"), with its formula,
+  scrolled into view. `lessons/answers/answers.test.ts` checks that every step of every lesson has
+  both, in French and English, and that every formula renders in KaTeX.
 - **Step completion is sticky:** once a check passes, the step stays done. Some checks require an
   earlier step (e.g. 2.4 step 5 requires step 4) so they cannot pass at page load.
 - **Profiles:**
@@ -208,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 265 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts` and `lessons/notes.test.ts` (note completeness): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 317 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) and `lessons/answers/answers.test.ts` (hints and explanations): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |

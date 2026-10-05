@@ -15,7 +15,7 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 265 unit tests: solver, models and teaching-note completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
+| `npm test` | 317 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
 | `npm run smoke` | Walks all 51 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
@@ -83,6 +83,7 @@ Shared by every lesson:
   on demand. Hovering any term highlights it everywhere.
 - **Oscilloscope:** probes, frozen ghost traces, sweep fans, predict-then-reveal with scoring and
   misconception feedback.
+- **Hints and explanations:** every guided step has a hint, and once done, a full explanation with its formula.
 - **Enlarge and zoom:** every panel opens live in a large window; charts zoom and pan.
 - **Profiles:** Learner, Researcher and Engineer, each with their own equation cards.
 - **Client solver:** exact ZOH discretisation via the matrix exponential. Sinusoidal sources are

@@ -76,6 +76,10 @@ await page.getByRole('button', { name: '❄ Figer et comparer' }).click();
 await setParam(1, 40e-3, 1e-3, 1, true); // L × 4
 await page.locator('.param').first().getByRole('button', { name: /Balayer/ }).click();
 check('1.2 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+check('1.2 a completed step shows its full explanation', (await page.locator('.lesson .answer .katex').count()) > 0);
+await page.locator('.dot').nth(2).click(); // a done step
+check('1.2 explanation shown on a done step', (await page.locator('.lesson .answer').count()) === 1);
+await page.screenshot({ path: `${out}/smoke-answer.png` });
 await page.getByRole('button', { name: 'Chercheur' }).click();
 check('1.2 researcher sees state-space form', (await page.getByText('Représentation d’état').count()) === 1);
 await page.getByRole('button', { name: 'Apprenant' }).click();
@@ -747,6 +751,12 @@ await page.getByRole('radio', { name: 'local 2' }).click();
 await setParam(3, 10, 0, 10); // damping
 check('8.7 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 await page.screenshot({ path: `${out}/smoke-8.7.png` });
+
+// Hints are offered before a step is done
+await open('8.8');
+await page.locator('.dot').nth(1).click();
+await page.locator('.lesson button.link').click();
+check('8.8 hint opens on a step not yet done', (await page.locator('.lesson .hintbox').count()) === 1);
 
 // 8.8 Modes and participation on real networks (baked G2ELin results)
 await open('8.8');

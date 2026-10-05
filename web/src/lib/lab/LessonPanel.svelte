@@ -3,6 +3,7 @@
   import { S, tr, ui } from '../ui/ui.svelte';
   import { renderMarkdown } from '../ui/markdown';
   import { lessons } from '../../lessons/curriculum';
+  import { answers } from '../../lessons/answers';
 
   let { lab, onnote }: { lab: Lab; onnote?: () => void } = $props();
 
@@ -17,6 +18,15 @@
   });
 
   const body = $derived((void ui.lang, renderMarkdown(tr(step.body))));
+  const help = $derived(answers[lab.exp.id]?.[step.id]);
+  const hint = $derived(step.hint ?? help?.hint);
+  const answer = $derived(step.answer ?? help?.answer);
+  const done = $derived(!!lab.completed[step.id]);
+  // Bring the explanation into view when the step is completed.
+  let answerBox = $state<HTMLElement>();
+  $effect(() => {
+    if (done && answerBox) answerBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
   const nextLesson = $derived.by(() => {
     const k = lessons.findIndex((l) => l.experiment === lab.exp);
     return k >= 0 ? lessons[k + 1] : undefined;
@@ -70,9 +80,14 @@
       </div>
     {/if}
 
-    {#if step.hint}
+    {#if done && answer}
+      <div class="answer" bind:this={answerBox}>
+        <h3>✓ {tr({ fr: 'Ce qu’il fallait voir', en: 'What to take away' })}</h3>
+        {@html renderMarkdown(tr(answer))}
+      </div>
+    {:else if hint}
       <button class="link" onclick={() => (showHint = !showHint)}>{showHint ? '▾' : '▸'} {tr(S.hint)}</button>
-      {#if showHint}<div class="hintbox">{@html renderMarkdown(tr(step.hint))}</div>{/if}
+      {#if showHint}<div class="hintbox">{@html renderMarkdown(tr(hint))}</div>{/if}
     {/if}
   </div>
   <footer>
@@ -194,6 +209,30 @@
   }
   .hintbox :global(p) {
     margin: 0;
+  }
+  .answer {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-left: 3px solid var(--good);
+    background: var(--good-soft);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .answer h3 {
+    margin: 0 0 4px;
+    font-size: 12.5px;
+    color: var(--good);
+  }
+  .answer :global(p) {
+    margin: 0 0 6px;
+  }
+  .answer :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .answer :global(.katex-display) {
+    margin: 6px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   a.btn {
     text-decoration: none;

@@ -82,6 +82,8 @@ export interface StepSpec {
   body: L; // markdown + $math$
   check?: (lab: Lab) => boolean;
   hint?: L;
+  /** The full explanation, shown once the step is done. Usually supplied by lessons/answers. */
+  answer?: L;
   /** Turns on predict-then-reveal for this step. */
   predict?: boolean;
 }
