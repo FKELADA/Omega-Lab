@@ -15,6 +15,7 @@
   const bench = new Bench();
   const lab = $derived(bench.lab);
   let canvas = $state<Canvas>();
+  let tool = $state<'select' | 'pan'>('select');
 
   function add(type: string) {
     const [x, y] = canvas?.centre() ?? [10, 6];
@@ -27,9 +28,12 @@
     const mod = e.ctrlKey || e.metaKey;
     if (mod && e.key.toLowerCase() === 'z') (e.preventDefault(), e.shiftKey ? bench.redo() : bench.undo());
     else if (mod && e.key.toLowerCase() === 'y') (e.preventDefault(), bench.redo());
-    else if (e.key === 'Delete' || e.key === 'Backspace') bench.remove();
+    else if (mod && e.key.toLowerCase() === 'a') (e.preventDefault(), bench.selectAll());
+    else if (e.key === 'Delete' || e.key === 'Backspace') bench.removePicked();
     else if ((e.key === 'r' || e.key === 'R') && bench.selection?.kind === 'el') bench.rotate(bench.selection.id);
     else if (e.key === 'Escape') (bench.pending = null), (bench.selection = null);
+    else if (e.key === 'v' || e.key === 'V') tool = 'select';
+    else if (e.key === 'h' || e.key === 'H') tool = 'pan';
   }
 
   // Playback of the time cursor, as in the lessons.
@@ -59,6 +63,13 @@
     <div class="toolbar">
       <button class="btn" disabled={!bench.canUndo} onclick={() => bench.undo()} title="Ctrl+Z">↶</button>
       <button class="btn" disabled={!bench.canRedo} onclick={() => bench.redo()} title="Ctrl+Y">↷</button>
+      <div class="seg" role="group" aria-label={tr({ fr: 'Outil', en: 'Tool' })}>
+        <button class:on={tool === 'select'} onclick={() => (tool = 'select')} title={tr({ fr: 'Sélectionner (V) : glisser pour encadrer, Maj+clic pour ajouter', en: 'Select (V): drag a box, Shift+click to add' })}>⬚ {tr({ fr: 'Sélection', en: 'Select' })}</button>
+        <button class:on={tool === 'pan'} onclick={() => (tool = 'pan')} title={tr({ fr: 'Déplacer la vue (H, ou bouton du milieu, ou Espace)', en: 'Pan the view (H, or middle button, or Space)' })}>✥ {tr({ fr: 'Vue', en: 'Pan' })}</button>
+      </div>
+      <button class="btn" onclick={() => bench.selectAll()} title="Ctrl+A">{tr({ fr: 'Tout sélectionner', en: 'Select all' })}</button>
+      <button class="btn" disabled={!bench.picked.els.length && !bench.picked.wires.length} onclick={() => bench.removePicked()} title={tr({ fr: 'Suppr', en: 'Del' })}>✕ {tr({ fr: 'Effacer la sélection', en: 'Delete selection' })}</button>
+      <button class="btn danger" disabled={!bench.doc.elements.length && !bench.doc.wires.length} onclick={() => bench.clearAll()}>🗑 {tr({ fr: 'Tout effacer', en: 'Clear all' })}</button>
       <button class="btn" onclick={() => canvas?.fit()}>⤧ {tr({ fr: 'Tout voir', en: 'Fit' })}</button>
       <span class="sep"></span>
       <button class="btn play" onclick={togglePlay} aria-label={lab.playing ? tr(S.pause) : tr(S.play)}>{lab.playing ? '❚❚' : '▶'}</button>
@@ -67,7 +78,7 @@
       <button class="btn" onclick={() => lab.freeze()}>❄ {tr(S.freeze)}</button>
       <button class="btn" disabled={!lab.ghosts.length} onclick={() => lab.clearGhosts()}>{tr(S.clear)}</button>
     </div>
-    <Canvas {bench} bind:this={canvas} />
+    <Canvas {bench} {tool} bind:this={canvas} />
     {#key lab}
       <div class="dock">
         <Zoomable {lab} comp={Scope} cls="scope-wrap" />
@@ -105,6 +116,27 @@
   .toolbar input[type='range'] {
     flex: 1;
     min-width: 120px;
+  }
+  .danger {
+    color: var(--warn);
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .seg button {
+    border: none;
+    background: var(--panel);
+    color: var(--muted);
+    padding: 4px 10px;
+    font-size: 12.5px;
+  }
+  .seg button.on {
+    background: var(--accent-soft);
+    color: var(--ink);
+    font-weight: 600;
   }
   .sep {
     width: 8px;

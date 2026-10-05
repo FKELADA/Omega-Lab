@@ -855,6 +855,26 @@ await page.locator('circle.port[aria-label="R2.a"]').click();
 await page.locator('circle.port[aria-label="C1.a"]').click();
 check('two terminal clicks draw a wire', (await page.locator('g.wire').count()) === 6);
 await page.screenshot({ path: `${out}/smoke-atelier.png` });
+// Selection tool: box, select all, delete selection, clear all (undoable)
+{
+  const box = await page.locator('.canvas svg').boundingBox();
+  await page.mouse.move(box.x + 8, box.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 8, box.y + box.height - 8, { steps: 6 });
+  await page.mouse.up();
+  check('box selection takes every element', (await page.locator('g.el.sel').count()) === 6);
+  await page.screenshot({ path: `${out}/smoke-atelier-box.png` });
+  await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
+  await page.keyboard.press('Control+a');
+  check('Ctrl+A selects everything', (await page.locator('g.el.sel').count()) === 6 && (await page.locator('g.wire.sel').count()) === 6);
+  await page.getByRole('button', { name: /Effacer la sélection/ }).first().click();
+  check('delete the selection', (await page.locator('g.el').count()) === 0);
+  await page.locator('.toolbar button[title="Ctrl+Z"]').click();
+  await page.getByRole('button', { name: /Tout effacer/ }).first().click();
+  check('clear all', (await page.locator('g.el').count()) === 0 && (await page.locator('g.wire').count()) === 0);
+  await page.locator('.toolbar button[title="Ctrl+Z"]').click();
+  check('clear all can be undone', (await page.locator('g.el').count()) === 6);
+}
 await page.getByRole('button', { name: 'Leçons' }).click();
 await page.waitForSelector('.lesson');
 

@@ -14,6 +14,7 @@
   const sel = $derived(bench.selection);
   const el = $derived(sel?.kind === 'el' ? bench.el(sel.id) : undefined);
   const def = $derived(el ? DEFS[el.type] : undefined);
+  const nPicked = $derived(bench.picked.els.length + bench.picked.wires.length);
 
   const STEPS = 1000;
   const toPos = (p: ElParam, v: number) => (p.scale === 'log' ? (STEPS * Math.log(Math.max(v, p.min) / p.min)) / Math.log(p.max / p.min) : (STEPS * (v - p.min)) / (p.max - p.min));
@@ -44,7 +45,7 @@
 
 <section class="panel insp">
   <header>
-    <span>{el ? `${el.id} — ${tr(def!.name)}` : sel?.kind === 'wire' ? tr({ fr: 'Fil', en: 'Wire' }) : tr({ fr: 'Projet', en: 'Project' })}</span>
+    <span>{el ? `${el.id} — ${tr(def!.name)}` : sel?.kind === 'wire' ? tr({ fr: 'Fil', en: 'Wire' }) : nPicked > 1 ? tr({ fr: 'Sélection', en: 'Selection' }) : tr({ fr: 'Projet', en: 'Project' })}</span>
   </header>
   <div class="body">
     {#if el && def}
@@ -72,6 +73,16 @@
         <button class="btn" onclick={() => bench.rotate(el.id)}>⟳ {tr({ fr: 'Tourner', en: 'Rotate' })} (R)</button>
         <button class="btn danger" onclick={() => bench.remove()}>✕ {tr({ fr: 'Supprimer', en: 'Delete' })}</button>
       </div>
+    {:else if nPicked > 1}
+      <p class="count">
+        {bench.picked.els.length} {tr({ fr: 'élément(s)', en: 'element(s)' })}, {bench.picked.wires.length} {tr({ fr: 'fil(s)', en: 'wire(s)' })}
+      </p>
+      <p class="ids">{bench.picked.els.join(', ')}</p>
+      <div class="acts">
+        <button class="btn danger" onclick={() => bench.removePicked()}>✕ {tr({ fr: 'Effacer la sélection', en: 'Delete selection' })} (Suppr)</button>
+        <button class="btn" onclick={() => (bench.selection = null)}>{tr({ fr: 'Désélectionner', en: 'Deselect' })} (Échap)</button>
+      </div>
+      <p class="help">{tr({ fr: 'Glissez l’un des éléments sélectionnés pour déplacer tout le groupe.', en: 'Drag any selected element to move the whole group.' })}</p>
     {:else if sel?.kind === 'wire'}
       <div class="acts"><button class="btn danger" onclick={() => bench.remove()}>✕ {tr({ fr: 'Supprimer le fil', en: 'Delete wire' })}</button></div>
     {:else}
@@ -104,11 +115,13 @@
       <div class="acts">
         <button class="btn" onclick={share}>🔗 {copied ? tr({ fr: 'Lien copié', en: 'Link copied' }) : tr({ fr: 'Partager', en: 'Share' })}</button>
         <button class="btn" onclick={() => bench.load({ version: 1, name: tr({ fr: 'Sans titre', en: 'Untitled' }), elements: [], wires: [], T: 0.05 })}>＋ {tr({ fr: 'Nouveau', en: 'New' })}</button>
+        <button class="btn" disabled={!bench.doc.elements.length} onclick={() => bench.selectAll()}>{tr({ fr: 'Tout sélectionner', en: 'Select all' })} (Ctrl+A)</button>
+        <button class="btn danger" disabled={!bench.doc.elements.length && !bench.doc.wires.length} onclick={() => bench.clearAll()}>🗑 {tr({ fr: 'Tout effacer', en: 'Clear all' })}</button>
       </div>
       <p class="help">
         {tr({
-          fr: 'Glisser : déplacer · R : tourner · Suppr : effacer · Ctrl+Z / Ctrl+Y : annuler / rétablir · molette : zoom · glisser le fond : se déplacer.',
-          en: 'Drag: move · R: rotate · Del: delete · Ctrl+Z / Ctrl+Y: undo / redo · wheel: zoom · drag the background: pan.',
+          fr: 'Glisser : déplacer · glisser le fond : encadrer · Maj+clic : ajouter à la sélection · Ctrl+A : tout sélectionner · R : tourner · Suppr : effacer · Ctrl+Z / Ctrl+Y : annuler / rétablir · molette : zoom · bouton du milieu, Espace ou outil Vue : se déplacer.',
+          en: 'Drag: move · drag the background: box select · Shift+click: add to selection · Ctrl+A: select all · R: rotate · Del: delete · Ctrl+Z / Ctrl+Y: undo / redo · wheel: zoom · middle button, Space or Pan tool: pan.',
         })}
       </p>
     {/if}
@@ -222,6 +235,16 @@
     color: var(--accent);
     font-weight: 600;
     text-align: left;
+  }
+  .count {
+    margin: 0 0 4px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .ids {
+    margin: 0;
+    font: 12px var(--mono, monospace);
+    color: var(--muted);
   }
   .help {
     margin-top: 10px;

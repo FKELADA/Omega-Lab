@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 329 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 334 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3627,7 +3627,18 @@ places elements from the library, wires them, and simulates. The full plan (phas
 - Click a terminal, then another, to draw a wire. Terminals that are not connected are drawn in
   orange.
 - Drag an element to move it; R rotates it; Del deletes the selection.
-- Ctrl+Z / Ctrl+Y undo and redo; the wheel zooms; dragging the background pans.
+- **Selection tool** (⬚, key V):
+  - dragging the background draws a selection box: the elements whose centre is inside, and the
+    wires between them;
+  - Shift+click adds or removes an element or a wire; Shift+box adds to the selection;
+  - Ctrl+A or « Tout sélectionner » selects everything;
+  - dragging any selected element moves the whole group;
+  - Del or « Effacer la sélection » deletes it, with the wires of the deleted elements;
+  - « Tout effacer » empties the bench.
+
+  All of these can be undone. With several items selected, the inspector lists them.
+- **View tool** (✥, key H), the middle mouse button or Space+drag pan the view; the wheel zooms.
+- Ctrl+Z / Ctrl+Y undo and redo.
 - The inspector takes values with units and SI prefixes (`4,7µ`, `10k`, `20 kV`). It also chooses
   what each element shows on the oscilloscope (v, i, p).
 - With nothing selected, the inspector shows the project (name, simulated time), the solver
@@ -3686,4 +3697,7 @@ with switch and meters.
   - the mode switch and a template;
   - the oscilloscope;
   - selection and formulas;
-  - typed units, undo, adding from the library, and wiring.
+  - typed units, undo, adding from the library, and wiring;
+  - box selection, Ctrl+A, deleting the selection, and clearing all with undo.
+- `atelier/bench.test.ts`: the selection logic (box, Shift+click, group move, delete with wires,
+  clear all, undo).

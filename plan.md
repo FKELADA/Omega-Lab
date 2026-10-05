@@ -68,7 +68,7 @@ tests are in [documentation.md](documentation.md).
 | 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
 | 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
 
-**Verification:** 329 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+**Verification:** 334 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
 all 51 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 

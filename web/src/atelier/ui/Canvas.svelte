@@ -7,7 +7,7 @@
   import { DEFS, GRID, si } from '../library';
   import { tr } from '../../lib/ui/ui.svelte';
 
-  let { bench }: { bench: Bench } = $props();
+  let { bench, tool = 'select' }: { bench: Bench; tool?: 'select' | 'pan' } = $props();
   const lab = $derived(bench.lab);
 
   let svg = $state<SVGSVGElement>();
@@ -81,53 +81,84 @@
   }
 
   // ── Interaction ──
-  let drag: { id: string; dx: number; dy: number; moved: boolean } | null = null;
+  // Drag on an element: moves it, or the whole selection if it is part of it.
+  // Drag on the background: selection rectangle (or pans the view with the
+  // "pan" tool, the middle button, or Space held down).
+  let drag: { ox: number; oy: number; start: Record<string, [number, number]>; moved: boolean } | null = null;
   let pan: { x: number; y: number; vx: number; vy: number } | null = null;
+  let box = $state<{ x0: number; y0: number; x1: number; y1: number; add: boolean } | null>(null);
   let mouse = $state<[number, number]>([0, 0]);
+  let space = false;
 
-  function downEl(e: PointerEvent, el: BenchEl) {
-    e.stopPropagation();
-    bench.selection = { kind: 'el', id: el.id };
-    const [x, y] = world(e);
-    drag = { id: el.id, dx: el.x * GRID - x, dy: el.y * GRID - y, moved: false };
+  const capture = (e: PointerEvent) => {
     try {
       svg!.setPointerCapture(e.pointerId);
     } catch {
       /* synthetic event */
     }
+  };
+  function downEl(e: PointerEvent, el: BenchEl) {
+    e.stopPropagation();
+    if (e.shiftKey) {
+      bench.togglePick('el', el.id);
+      return;
+    }
+    if (!bench.isPicked('el', el.id)) bench.selection = { kind: 'el', id: el.id };
+    const [x, y] = world(e);
+    const start = Object.fromEntries(bench.picked.els.map((id) => bench.el(id)).filter((q) => q).map((q) => [q!.id, [q!.x, q!.y] as [number, number]]));
+    drag = { ox: snap(x), oy: snap(y), start, moved: false };
+    capture(e);
+  }
+  function downWire(e: PointerEvent, id: string) {
+    e.stopPropagation();
+    if (e.shiftKey) bench.togglePick('wire', id);
+    else bench.selection = { kind: 'wire', id };
   }
   function downBg(e: PointerEvent) {
     if (bench.pending) {
       bench.pending = null;
       return;
     }
-    bench.selection = null;
-    pan = { x: e.clientX, y: e.clientY, vx, vy };
-    try {
-      svg!.setPointerCapture(e.pointerId);
-    } catch {
-      /* synthetic event */
+    if (tool === 'pan' || e.button === 1 || space) {
+      pan = { x: e.clientX, y: e.clientY, vx, vy };
+    } else {
+      if (!e.shiftKey) bench.selection = null;
+      const [x, y] = world(e);
+      box = { x0: x, y0: y, x1: x, y1: y, add: e.shiftKey };
     }
+    capture(e);
   }
   function move(e: PointerEvent) {
     mouse = world(e);
     if (drag) {
-      const nx = snap(mouse[0] + drag.dx), ny = snap(mouse[1] + drag.dy);
-      const el = bench.el(drag.id);
-      if (el && (el.x !== nx || el.y !== ny)) {
-        if (!drag.moved) bench.beginMove();
-        drag.moved = true;
-        bench.move(drag.id, nx, ny, false);
-      }
+      const dx = snap(mouse[0]) - drag.ox, dy = snap(mouse[1]) - drag.oy;
+      if (!drag.moved && !dx && !dy) return;
+      if (!drag.moved) bench.beginMove();
+      drag.moved = true;
+      bench.moveGroup(drag.start, dx, dy);
     } else if (pan) {
       vx = pan.vx - (e.clientX - pan.x) / zoom;
       vy = pan.vy - (e.clientY - pan.y) / zoom;
+    } else if (box) {
+      box.x1 = mouse[0];
+      box.y1 = mouse[1];
     }
   }
   function up() {
+    if (box && (Math.abs(box.x1 - box.x0) > 4 || Math.abs(box.y1 - box.y0) > 4))
+      bench.selectBox(box.x0 / GRID, box.y0 / GRID, box.x1 / GRID, box.y1 / GRID, box.add);
     drag = null;
     pan = null;
+    box = null;
   }
+  $effect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !(e.target instanceof HTMLInputElement)) space = e.type === 'keydown';
+    };
+    addEventListener('keydown', k);
+    addEventListener('keyup', k);
+    return () => (removeEventListener('keydown', k), removeEventListener('keyup', k));
+  });
   $effect(() => {
     if (!svg) return;
     const onWheel = (e: WheelEvent) => {
@@ -168,13 +199,14 @@
     const el = p && bench.el(p.el);
     return el ? portXY(el, p!.port) : null;
   });
-  const isSel = (kind: 'el' | 'wire', id: string) => bench.selection?.kind === kind && bench.selection.id === id;
+  const isSel = (kind: 'el' | 'wire', id: string) => bench.isPicked(kind, id);
   const live = (id: string, s: string) => lab.run.s[`${id}.${s}`]?.[lab.idx];
 </script>
 
 <div class="canvas" bind:clientWidth={w} bind:clientHeight={h}>
   <svg
     bind:this={svg}
+    class:pan={tool === 'pan'}
     viewBox="{vx} {vy} {w / zoom} {h / zoom}"
     role="application"
     aria-label={tr({ fr: 'Plan de travail', en: 'Workbench' })}
@@ -196,7 +228,7 @@
       {#if d}
         {@const off = flow(wr.a, wr.b)}
         <g class="wire" class:sel={isSel('wire', wr.id)}>
-          <path {d} class="hit" role="button" tabindex="-1" aria-label={wr.id} onpointerdown={(e) => (e.stopPropagation(), (bench.selection = { kind: 'wire', id: wr.id }))} />
+          <path {d} class="hit" role="button" tabindex="-1" aria-label={wr.id} onpointerdown={(e) => downWire(e, wr.id)} />
           <path {d} class="line" />
           {#if off !== null && charge.scale > 0}<path {d} class="flow" style="stroke-dashoffset: {off}" />{/if}
         </g>
@@ -247,6 +279,9 @@
       {/if}
     {/each}
 
+    {#if box}
+      <rect x={Math.min(box.x0, box.x1)} y={Math.min(box.y0, box.y1)} width={Math.abs(box.x1 - box.x0)} height={Math.abs(box.y1 - box.y0)} class="box" />
+    {/if}
     {#if pendingXY}
       <line x1={pendingXY[0]} y1={pendingXY[1]} x2={mouse[0]} y2={mouse[1]} class="rubber" />
     {/if}
@@ -369,6 +404,15 @@
   .port.pend,
   .port:hover {
     fill: var(--accent);
+  }
+  .box {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-dasharray: 4 3;
+    pointer-events: none;
+  }
+  svg.pan {
+    cursor: grab;
   }
   .rubber {
     stroke: var(--accent);
