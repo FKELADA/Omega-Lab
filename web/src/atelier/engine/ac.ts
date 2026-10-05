@@ -11,7 +11,7 @@ export type AcModel =
   | { kind: 'V'; phasor: (p: Record<string, number>, f: number) => Complex | null; meter?: boolean }
   | { kind: 'I'; phasor: (p: Record<string, number>, f: number) => Complex | null }
   /** Several terminals (three-phase elements): stamps its own admittances and sources. */
-  | { kind: 'multi'; nV: number; nInt?: number; stamp: (ctx: AcCtx, nodes: number[], p: Record<string, number>) => void }
+  | { kind: 'multi'; nV: number; nInt?: number | ((p: Record<string, number>) => number); stamp: (ctx: AcCtx, nodes: number[], p: Record<string, number>) => void }
   | { kind: 'none' };
 
 /** How a source is driven in one solve: its own phasor, a unit phasor (transfer functions), or off. */
@@ -97,7 +97,8 @@ export function solveAc(nNodes: number, items: AcItem[], w: number, driveOf: (it
   const drive = phasor;
   const extra = items.filter((it) => it.model.kind === 'V');
   const nMulti = items.reduce((s, it) => s + (it.model.kind === 'multi' ? it.model.nV : 0), 0);
-  const nInt = items.reduce((s, it) => s + (it.model.kind === 'multi' ? (it.model.nInt ?? 0) : 0), 0);
+  const intOf = (it: AcItem) => (it.model.kind !== 'multi' ? 0 : typeof it.model.nInt === 'function' ? it.model.nInt(it.p) : (it.model.nInt ?? 0));
+  const nInt = items.reduce((s, it) => s + intOf(it), 0);
   const n = nNodes - 1 + extra.length + nMulti + nInt;
   const INT = 1e6;
   let nextInt = 0;
@@ -165,6 +166,9 @@ export function solveAc(nNodes: number, items: AcItem[], w: number, driveOf: (it
       if (rb >= 0) b[rb] = sub(b[rb], I);
     }
   }
+  // gmin, as in SPICE: a tiny conductance from every node to ground, so a part of
+  // the circuit left floating (e.g. behind open switches) does not make A singular.
+  for (let r = 0; r < nNodes - 1; r++) A[r][r] = add(A[r][r], cx(1e-12));
   const x = n ? csolve(A, b) : [];
   const nodes = Array.from({ length: nNodes }, (_, k) => (k === 0 || !x ? cx(0) : x[k - 1]));
   const v: Record<string, Complex> = {}, i: Record<string, Complex> = {};

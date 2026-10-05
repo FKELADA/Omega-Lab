@@ -7,6 +7,7 @@ import { ammeter, capacitor, inductor, isource, resistor, timedSwitch, voltmeter
 import type { L } from '../lib/ui/ui.svelte';
 import { lead, si, two, type ElementDef, type Family } from './defs';
 import { POWER } from './lib-power';
+import { GRID_LIB } from './lib-grid';
 
 export * from './defs';
 
@@ -312,7 +313,7 @@ export const LIBRARY: ElementDef[] = [
   },
 ];
 
-LIBRARY.push(...POWER);
+LIBRARY.push(...POWER, ...GRID_LIB);
 
 export const DEFS: Record<string, ElementDef> = Object.fromEntries(LIBRARY.map((d) => [d.type, d]));
 

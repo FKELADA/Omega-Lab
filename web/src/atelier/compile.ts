@@ -4,7 +4,7 @@
 // cards work on it unchanged.
 
 import { runEmt } from './engine/emt';
-import { N_OUT, buildElements, substeps, modalOf, steadyState } from './analyses';
+import { N_OUT, buildElements, initMachines, substeps, modalOf, steadyState } from './analyses';
 import { benchCharts, benchPhasors } from './charts';
 
 export { substeps };
@@ -158,7 +158,7 @@ export function compile(doc: BenchDoc, ui: BenchUi, circuitEqs: (net: Netlist) =
   const simulate = (p: Params, tEnd: number): Run => {
     const sub = substeps(net, p, tEnd);
     const h = tEnd / (N_OUT * sub);
-    const { els, nAll } = buildElements(net, p, h);
+    const { els, nAll } = buildElements(net, initMachines(net, p), h);
     const r = runEmt(nAll, els, tEnd, N_OUT, sub);
     const s: Record<string, Float64Array> = {};
     for (const { el, def } of net.active)
@@ -192,7 +192,7 @@ export function compile(doc: BenchDoc, ui: BenchUi, circuitEqs: (net: Netlist) =
     model,
     params,
     signals,
-    info: (p) => ({ net, ss: steadyState(net, p), modal: modalOf(net, p) }),
+    info: (p) => ({ net, ss: steadyState(net, initMachines(net, p)), modal: modalOf(net, p) }),
     phasors: benchPhasors(net),
     charts: benchCharts(net, ui, () => signals),
     get equations() {

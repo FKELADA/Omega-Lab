@@ -9,6 +9,7 @@
   import PhasorPanel from './PhasorPanel.svelte';
   import PolesPanel from './PolesPanel.svelte';
   import ThdPanel from './ThdPanel.svelte';
+  import PowerFlowPanel from './PowerFlowPanel.svelte';
   import { tr, type L } from '../../lib/ui/ui.svelte';
 
   let { lab }: { lab: Lab } = $props();
@@ -19,6 +20,7 @@
     { id: 'ph', name: { fr: 'Phaseurs', en: 'Phasors' }, comp: PhasorPanel },
     { id: 'poles', name: { fr: 'Pôles', en: 'Poles' }, comp: PolesPanel },
     { id: 'thd', name: { fr: 'Harmoniques', en: 'Harmonics' }, comp: ThdPanel },
+    { id: 'pf', name: { fr: 'Répartition', en: 'Power flow' }, comp: PowerFlowPanel },
   ];
   let tab = $state('scope');
   const current = $derived(TABS.find((t) => t.id === tab)!);

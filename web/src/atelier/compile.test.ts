@@ -89,3 +89,16 @@ describe('signal symbols', () => {
     expect(bad).toEqual([]);
   });
 });
+
+import { steadyState } from './analyses';
+describe('AC equations of every template', () => {
+  it('are never singular when the bench has a fundamental', () => {
+    const bad: string[] = [];
+    for (const t of TEMPLATES) {
+      const { exp, net } = compile(t.doc(), ui(), circuitEquations);
+      const ss = steadyState(net, defaults(exp));
+      if (ss?.res.singular) bad.push(t.id);
+    }
+    expect(bad).toEqual([]);
+  });
+});

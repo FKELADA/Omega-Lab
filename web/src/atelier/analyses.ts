@@ -17,6 +17,9 @@ export const N_OUT = 1200;
 export function paramsOf(el: BenchEl, def: ElementDef, p: Params): Record<string, number> {
   const out: Record<string, number> = Object.fromEntries(def.params.map((q) => [q.id, p[`${el.id}.${q.id}`] ?? el.params[q.id] ?? q.default]));
   out.T = p.T;
+  // Values computed by the initialisation (e.g. a machine's initial rotor angle).
+  const init = p[`${el.id}.__delta0`];
+  if (init !== undefined) out.__delta0 = init;
   return out;
 }
 
@@ -52,7 +55,7 @@ export function acItems(net: Netlist, p: Params): AcItem[] {
 
 /** The fundamental frequency of the bench: the first AC (or square-wave) source's. */
 export function fundamental(net: Netlist, p: Params): number | null {
-  for (const type of ['vac', 'vsquare'])
+  for (const type of ['vac', 'vsquare', 'src3', 'sm3'])
     for (const { el, def } of net.active) if (def.type === type) return paramsOf(el, def, p).f;
   return null;
 }
@@ -114,3 +117,49 @@ export function modalOf(net: Netlist, p: Params): Modal {
   return md;
 }
 const cache = new WeakMap<Netlist, { key: string; md: Modal }>();
+
+/**
+ * Initial rotor angles of the synchronous machines: for each machine, the angle
+ * δ0 for which its steady-state electrical power equals its mechanical power
+ * setpoint (bisection; a few Gauss–Seidel sweeps when there are several).
+ */
+export function initMachines(net: Netlist, p: Params): Params {
+  const sms = net.active.filter(({ def }) => def.type === 'sm3');
+  if (!sms.length) return p;
+  const q: Params = { ...p };
+  for (const { el } of sms) q[`${el.id}.__delta0`] = 0;
+  const f1 = fundamental(net, q);
+  if (!f1) return q;
+  const w = 2 * Math.PI * f1;
+  const powerOf = (id: string): number => {
+    const res = solveAc(net.nNodes, acItems(net, q), w, () => 'own');
+    const item = net.active.find(({ el }) => el.id === id)!;
+    const pp = paramsOf(item.el, item.def, q);
+    const Zb = (pp.Vn * pp.Vn) / pp.Sn;
+    const z = { re: pp.ra * Zb, im: (w * pp.xd * Zb) / (2 * Math.PI * pp.f) };
+    const Vph = (Math.SQRT2 * pp.Vn) / Math.sqrt(3);
+    let P = 0;
+    item.nodes.forEach((n, k) => {
+      const ang = (pp.__delta0 ?? 0) - (2 * Math.PI * k) / 3;
+      const E = { re: Vph * pp.E0 * Math.cos(ang), im: Vph * pp.E0 * Math.sin(ang) };
+      const V = res.nodes[n];
+      const dv = { re: E.re - V.re, im: E.im - V.im };
+      const d = z.re * z.re + z.im * z.im;
+      const I = { re: (dv.re * z.re + dv.im * z.im) / d, im: (dv.im * z.re - dv.re * z.im) / d };
+      P += 0.5 * (E.re * I.re + E.im * I.im);
+    });
+    return P / pp.Sn;
+  };
+  for (let sweep = 0; sweep < (sms.length > 1 ? 4 : 1); sweep++)
+    for (const { el, def } of sms) {
+      const key = `${el.id}.__delta0`;
+      const P0 = paramsOf(el, def, q).P0;
+      let lo = -Math.PI / 2 + 0.01, hi = Math.PI / 2 - 0.01;
+      for (let it = 0; it < 40; it++) {
+        q[key] = (lo + hi) / 2;
+        if (powerOf(el.id) < P0) lo = q[key];
+        else hi = q[key];
+      }
+    }
+  return q;
+}

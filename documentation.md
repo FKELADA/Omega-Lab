@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 357 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 373 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3615,7 +3615,7 @@ before using them in a formal context.
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
-[plan.md](plan.md) §10. Phases A0 to A3 are built.
+[plan.md](plan.md) §10. Phases A0 to A4 are built.
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
@@ -3814,3 +3814,64 @@ owned by L1 and C1).
   - inrush exceeds 4× rated current when closing at a voltage zero with residual flux, and stays
     under 10 % of it when closing at the voltage peak without residual flux.
 - Every signal symbol of every template renders in KaTeX.
+
+### 15.3 Three-phase grids and machines (phase A4)
+
+**Elements** (`lib-grid.ts`, engines in `engine/grid.ts` and `engine/machines.ts`).
+
+| Element | Model |
+|---|---|
+| Three-phase line | Two models (choice). **π**: series R–L and C/2 at each end, per phase. **Waves (Bergeron)**: lossless travelling waves, $Z_c = \sqrt{L'/C'}$, travel time $\tau = \ell\sqrt{L'C'}$, history interpolated at $t - \tau$, with R/2 lumped at each end. In AC: exact π (from the line's ABCD parameters). Falls back to π when τ < 2h |
+| Series impedance, capacitor bank | Per-phase R–L; star capacitors from $Q_C$ at $U_n$ |
+| Three-phase transformer (YNyn) | Per phase: $R + L_{cc}$ then an ideal transformer, neutrals grounded |
+| Breaker | Initial state (closed or open), opening order, closing time. **Interrupts each phase at its next current zero** after the order |
+| Fault | Three-phase, a–ground, a–b, a–b–ground, through $R_f$, between $t_d$ and $t_e$ |
+| Synchronous generator | Classical model: EMF $E'$ behind $r_a + jx'_d$; swing equation with H and D; optional voltage regulator ($K_A$) and governor (droop R). Outputs δ, f, $P_e$, $P_m$, $V_t$, currents |
+| Induction motor | Rotor-flux model: voltage behind the transient inductance $L' = L_s - L_m^2/L_r$; $\dot\psi_r = (L_m/T_r) i_s - \psi_r/T_r + j\omega_r\psi_r$; $T_e = 1.5\,p\,(L_m/L_r)\,\mathrm{Im}(\psi_r^* i_s)$; constant-torque or fan load; starts from standstill |
+
+**Machine initialisation** (`analyses.initMachines`). Before each run, every generator's rotor
+angle δ0 is found by bisection so that its steady-state electrical power (AC solve, machines as
+$E'\angle\delta_0$ behind $x'_d$) equals its mechanical power. With several machines, a few
+Gauss–Seidel sweeps are made. The rotor is then held at synchronous speed until $t_{lib}$, while
+the network's energisation transients die out, and released. This is how EMT programs start
+machines in steady state.
+
+**gmin.** As in SPICE, the AC solve adds $10^{-12}$ S from every node to ground, so parts of the
+circuit left floating behind open switches do not make the matrix singular. A test checks that no
+template gives a singular AC system.
+
+**Power flow** (`powerflow.ts`, Dock tab "Répartition"). A positive-sequence Newton–Raphson (the
+lessons' solver, `lib/core/powerflow.ts`) on the same drawing:
+- **Buses**: three-phase nodes, merged through closed breakers.
+- **Base voltages**: propagated from sources and machines across lines and transformers.
+- **Branches**: lines (π), impedances, transformers.
+- **Sources**: each source or generator EMF sits on an internal bus behind its impedance. The
+  first network source is the slack bus; generators are PV buses at $P_m$ and $E'$.
+- **Loads**: PQ at constant power. Motors: PQ.
+- **Capacitor banks**: shunt susceptance.
+
+The table gives V, θ, generation, load, branch flows and losses. It also shows the voltage of the
+sinusoidal steady state, where loads are constant-impedance, to show the effect of the load model.
+
+**Templates.**
+- Generator, transformer, 225 kV line and grid with a three-phase fault (8.1).
+- Motor start (4.5).
+- Energising a 300 km open line, travelling-wave model (4.1).
+- Substation, feeder, load and capacitors for the power flow (5.1).
+- Three-phase inverter with an LCL filter on the grid (6.4).
+
+**Tests** (`engine/grid.test.ts`, `engine/machines.test.ts`, `templates-a4.test.ts`).
+- Bergeron line: the wave arrives after τ and doubles at the open end.
+- Breaker: it opens only at a current zero.
+- Machine on an infinite bus:
+  - $P_e = P_m$ at start;
+  - a 60 ms fault is ridden through;
+  - a 500 ms fault loses synchronism.
+- Motor: inrush above 4× rated, then near synchronous speed.
+- Templates:
+  - 8.1: rides through a 100 ms fault, loses synchronism at 400 ms;
+  - 4.5: motor start;
+  - 4.1: no voltage at the open end before τ, then overshoot;
+  - 5.1: power flow converges and agrees with the steady state within 0.04 pu;
+  - 6.4: grid current THD under 8 % against more than 50 % for the inverter voltage.
+- No singular AC system in any template.
