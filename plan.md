@@ -64,9 +64,9 @@ tests are in [documentation.md](documentation.md).
 | 8.4 Frequency stability | ✅ Done | `fe3f5c5` |
 | 8.5 Converter-driven stability | ✅ Done | `fe3f5c5` |
 | 8.6 Resonance stability (SSR) | ✅ Done | `fe3f5c5` |
-| 8.7 Inter-area oscillations | ✅ Done | `fe3f5c5`, reworked in PENDING |
-| 8.8 Modes and participation factors (G2ELin) | ✅ Done | PENDING |
-| 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | PENDING |
+| 8.7 Inter-area oscillations | ✅ Done | `fe3f5c5`, reworked in `bd0d003` |
+| 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
+| 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
 
 **Verification:** 265 unit tests (solver, models, baked G2ELin data, note completeness), and a browser test that walks
 all 51 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
