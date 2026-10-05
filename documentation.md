@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 317 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) and `lessons/answers/answers.test.ts` (hints and explanations): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 329 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window. |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3608,3 +3608,82 @@ before using them in a formal context.
 | Weak-grid SCR thresholds (< 3 weak, < 2 very weak); ERCOT and Xinjiang (2015) oscillations | 8.5 | CIGRE TB 671; IEEE PES TR-80 |
 | SSCI at ERCOT (2009) | 8.6 | IEEE SSR working group; ERCOT incident report |
 | Inter-area modes 0.1–0.8 Hz, ≈ 0.2 Hz east–west in continental Europe | 8.7 | ENTSO-E inter-area oscillation analysis |
+
+---
+
+## 15. The Atelier (free-style mode) · `#atelier` · `atelier/`
+
+The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
+places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
+[plan.md](plan.md) §10. Phases A0 and A1 are built.
+
+**Screen.**
+- Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
+- Below the canvas: the oscilloscope and the equation cards, the same components as in the lessons.
+- Right: the library and the inspector.
+
+**Using it.**
+- Drag an element from the library (or tap it: it lands in the middle of the view).
+- Click a terminal, then another, to draw a wire. Terminals that are not connected are drawn in
+  orange.
+- Drag an element to move it; R rotates it; Del deletes the selection.
+- Ctrl+Z / Ctrl+Y undo and redo; the wheel zooms; dragging the background pans.
+- The inspector takes values with units and SI prefixes (`4,7µ`, `10k`, `20 kV`). It also chooses
+  what each element shows on the oscilloscope (v, i, p).
+- With nothing selected, the inspector shows the project (name, simulated time), the solver
+  messages, the templates, and a share link (the whole project encoded in the URL,
+  `#atelier=…`). The project is also saved in the browser.
+- Dots move along the wires with the charge that has flowed, $q(t) = \int i\,dt$, read at the time
+  cursor: they swing back and forth in AC and flow steadily in DC.
+
+**Architecture.** The drawing compiles into an `Experiment`, so the `Lab` and its instruments work
+unchanged.
+
+| File | Role |
+|---|---|
+| `atelier/doc.ts` | The project: elements (type, position, rotation, parameters, scope signals), wires between ports, simulated time |
+| `atelier/library.ts` | Each element: symbol, ports, parameters, solver element, formulas (with personas) |
+| `atelier/compile.ts` | Ports joined by wires become nodes (union–find, ground = 0); diagnostics; the dynamic `Experiment` (`params` = every element parameter as `R1.R`, `signals` = every `id.v`, `id.i`, `id.p`, `equations` = the selected element's cards or the circuit's) |
+| `atelier/circuitEqs.ts` | The circuit's cards: node and state counts, what the solver does, and the nodal matrix written out live (up to 8 unknowns) |
+| `atelier/bench.svelte.ts` | Selection, wiring, undo/redo, saving, sharing; recompiles only when the topology changes, and re-runs on parameter changes |
+| `atelier/engine/emt.ts`, `elements.ts` | The solver |
+
+**Solver.** Nodal EMT, as in EMTP:
+- Every element becomes a conductance and a history current source (trapezoidal companion
+  models).
+- Ideal voltage sources and ammeters add one unknown each (modified nodal analysis).
+- Each step solves $A\,x_n = b_n$ by LU with partial pivoting. The factorisation is reused until a
+  switch operates.
+- The run starts from rest and records 1200 samples. There are at least 20 solver steps per
+  sample, and at least 400 per period of the fastest source.
+- Sign conventions: $v$ is measured from the + port to the − port. $i$ flows through the element
+  from + to −, except for sources, whose current is the one they deliver.
+
+**Library (A1).**
+- Sources: DC, AC, step, square-wave voltage sources and a DC current source.
+- Passives: R, L, C and ground.
+- A timed switch.
+- Ideal voltmeter and ammeter.
+
+**Templates.** Series RLC step (lesson 1.2), series RLC on AC at resonance (1.4), RC charging
+with switch and meters.
+
+**Tests** (`atelier/**/*.test.ts`).
+- The engine:
+  - Ohm's law and the source current sign;
+  - the 1.2 step response against its closed form within 0.1 %, and Kirchhoff's voltage law at
+    every sample;
+  - the 1.4 steady state at resonance;
+  - RC charging through a switch, read by the meters.
+- The compiler:
+  - node numbering;
+  - templates against closed forms;
+  - missing-ground and loose-terminal diagnostics;
+  - the nodal matrix;
+  - equations following the selection.
+- Unit parsing.
+- The smoke test checks, on the Atelier:
+  - the mode switch and a template;
+  - the oscilloscope;
+  - selection and formulas;
+  - typed units, undo, adding from the library, and wiring.

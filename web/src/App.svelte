@@ -13,13 +13,18 @@
   import NoteView from './lib/ui/NoteView.svelte';
   import Zoomable from './lib/ui/Zoomable.svelte';
   import { ui } from './lib/ui/ui.svelte';
+  import Atelier from './atelier/Atelier.svelte';
 
   /** Lessons are addressed by their course number in the URL hash, e.g. #1.4. */
   const fromHash = () => lessons.find((l) => l.id === location.hash.slice(1)) ?? lessons[0];
 
   let lab = $state(new Lab(fromHash().experiment!));
   let mapOpen = $state(false);
-  let view = $state<'lab' | 'docs'>(location.hash === '#docs' ? 'docs' : 'lab');
+  const viewOf = (h: string): 'lab' | 'docs' | 'atelier' => (h === '#docs' ? 'docs' : h.startsWith('#atelier') ? 'atelier' : 'lab');
+  let view = $state(viewOf(location.hash));
+  /** The lesson to come back to from the Atelier or the docs. */
+  let lastLesson = lessons.find((l) => l.id === location.hash.slice(1))?.id ?? lessons[0].id;
+  const setMode = (m: 'lessons' | 'atelier') => (location.hash = m === 'atelier' ? 'atelier' : lastLesson);
   /** Open teaching note: a module, optionally scrolled to one of its lessons. */
   let note = $state<{ module: number; lesson?: string } | null>(null);
   const openNote = (module: number, lesson?: string) => {
@@ -40,11 +45,9 @@
 
   $effect(() => {
     const onHash = () => {
-      if (location.hash === '#docs') {
-        view = 'docs';
-        return;
-      }
-      view = 'lab';
+      view = viewOf(location.hash);
+      if (view !== 'lab') return;
+      lastLesson = fromHash().id;
       open(fromHash().experiment!);
     };
     addEventListener('hashchange', onHash);
@@ -68,9 +71,18 @@
 </script>
 
 <div class="app" data-hover={lab.hover ?? ''}>
-  <TopBar exp={lab.exp} onmap={() => (mapOpen = true)} ondocs={() => (location.hash = 'docs')} docs={view === 'docs'} />
+  <TopBar
+    exp={view === 'atelier' ? { ...lab.exp, path: [{ fr: 'Atelier', en: 'Workbench' }], title: { fr: 'Construire et simuler librement', en: 'Build and simulate freely' } } : lab.exp}
+    onmap={() => (mapOpen = true)}
+    ondocs={() => (location.hash = 'docs')}
+    docs={view === 'docs'}
+    mode={view === 'atelier' ? 'atelier' : 'lessons'}
+    onmode={setMode}
+  />
 
-  {#if view === 'docs'}
+  {#if view === 'atelier'}
+    <Atelier />
+  {:else if view === 'docs'}
     <DocsPage onback={() => (location.hash = currentLesson()?.id ?? '')} />
   {:else}
   {#key lab}

@@ -2,7 +2,14 @@
   import type { Experiment } from '../lab/types';
   import { S, savePrefs, tr, ui, type Persona, type Theme } from './ui.svelte';
 
-  let { exp, onmap, ondocs, docs = false }: { exp: Experiment; onmap: () => void; ondocs: () => void; docs?: boolean } = $props();
+  let {
+    exp,
+    onmap,
+    ondocs,
+    docs = false,
+    mode = 'lessons',
+    onmode,
+  }: { exp: Experiment; onmap: () => void; ondocs: () => void; docs?: boolean; mode?: 'lessons' | 'atelier'; onmode?: (m: 'lessons' | 'atelier') => void } = $props();
 
   const personas: Persona[] = ['learner', 'research', 'utility'];
   const themes: Theme[] = ['auto', 'light', 'dark'];
@@ -34,6 +41,12 @@
   </button>
 
   <div class="controls">
+    {#if onmode}
+      <div class="seg mode" role="group" aria-label={tr({ fr: 'Mode', en: 'Mode' })}>
+        <button class:on={mode === 'lessons' && !docs} onclick={() => onmode('lessons')}>{tr({ fr: 'Leçons', en: 'Lessons' })}</button>
+        <button class:on={mode === 'atelier'} onclick={() => onmode('atelier')}>🛠 {tr({ fr: 'Atelier', en: 'Workbench' })}</button>
+      </div>
+    {/if}
     <button class="btn" class:on={docs} onclick={ondocs} title="Documentation">📖 Documentation</button>
     <div class="seg" role="group" aria-label={tr(S.persona)}>
       {#each personas as p (p)}

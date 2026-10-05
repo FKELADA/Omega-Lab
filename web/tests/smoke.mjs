@@ -834,6 +834,30 @@ check('a lesson note lists one objective per exercise', (await page.locator('[ro
 await page.screenshot({ path: `${out}/smoke-note-module.png` });
 await page.getByRole('button', { name: 'Close' }).click();
 
+// ── Atelier (free-style mode) ─────────────────────────────────────────────────
+await page.getByRole('button', { name: /Atelier/ }).click();
+await page.waitForSelector('.atelier');
+check('Atelier opens from the mode switch', (await page.evaluate(() => location.hash)) === '#atelier');
+await page.getByRole('button', { name: /RLC série sous échelon/ }).click();
+await page.waitForSelector('g.el[aria-label="L1"]');
+check('Atelier template draws its elements and wires', (await page.locator('g.el').count()) === 5 && (await page.locator('g.wire').count()) === 5);
+check('Atelier oscilloscope plots the bench', (await page.locator('.atelier .u-over').count()) === 1);
+await page.locator('g.el[aria-label="L1"] .hitbox').click();
+check('selecting an element shows its formulas', (await page.getByText('L1 — Loi de la bobine').count()) === 1);
+await page.locator('.insp input.num').fill('40 mH');
+await page.locator('.insp input.num').press('Enter');
+check('typed values with units', (await page.locator('g.el[aria-label="L1"] .val').textContent()) === '40 mH');
+await page.locator('.toolbar button[title="Ctrl+Z"]').click();
+check('undo', (await page.locator('g.el[aria-label="L1"] .val').textContent()) === '10 mH');
+await page.locator('.lib button.item', { hasText: 'Résistance' }).click();
+check('a library item lands on the bench', (await page.locator('g.el').count()) === 6);
+await page.locator('circle.port[aria-label="R2.a"]').click();
+await page.locator('circle.port[aria-label="C1.a"]').click();
+check('two terminal clicks draw a wire', (await page.locator('g.wire').count()) === 6);
+await page.screenshot({ path: `${out}/smoke-atelier.png` });
+await page.getByRole('button', { name: 'Leçons' }).click();
+await page.waitForSelector('.lesson');
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light
