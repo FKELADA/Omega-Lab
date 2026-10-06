@@ -8,9 +8,9 @@
 
 ---
 
-## Status (5 October 2026)
+## Status (6 October 2026)
 
-**Modules 0 to 9 are built: 60 lessons, in French and English.** Module 10 (the distribution operator) is in progress. Code is on
+**All eleven modules (0 to 10) are built: 65 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -76,10 +76,14 @@ tests are in [documentation.md](documentation.md).
 | 9.4 The transmission voltage plan | ✅ Done | Module 9 |
 | 9.5 Stability and the defence plan | ✅ Done | Module 9 |
 | 9.6 Connection studies | ✅ Done | Module 9 |
-| 10.1–10.5 The distribution system operator | 🚧 In progress | |
+| 10.1 Architecture: the MV loop | ✅ Done | Module 10 |
+| 10.2 The distribution voltage plan | ✅ Done | Module 10 |
+| 10.3 Neutral earthing and 3I0 | ✅ Done | Module 10 |
+| 10.4 The MV protection plan | ✅ Done | Module 10 |
+| 10.5 Flexibility and planning | ✅ Done | Module 10 |
 
-**Verification:** 471 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
-all 60 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 503 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+all 65 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -476,7 +480,8 @@ lessons as to be checked against RTE and ENTSO-E publications.
 
 ### Module 10: The distribution system operator (the Enedis view)
 
-🚧 Five lessons:
+✅ Built as five lessons. Figures are orders of magnitude, flagged in the lessons as to be checked
+against Enedis and CRE publications.
 - **10.1 Distribution architecture:** primary substations (HV/MV), radial-but-loopable MV
   feeders, MV/LV substations, LV networks; the voltage profile of a feeder and the open point.
 - **10.2 The voltage plan:** the primary substation's tap changer with line-drop compensation,

@@ -24,8 +24,9 @@ contributors who extend them or check the physics.
 12. [Module 7 — Inverter-based resources and HVDC](#12-module-7--inverter-based-resources-and-hvdc)
 13. [Module 8 — Power-system stability](#13-module-8--power-system-stability)
 14. [Module 9 — The transmission system operator](#14-module-9--the-transmission-system-operator)
-15. [Standards and figures quoted in the lessons](#15-standards-and-figures-quoted-in-the-lessons)
-16. [The Atelier (free-style mode)](#16-the-atelier-free-style-mode--atelier--atelier)
+15. [Module 10 — The distribution system operator](#15-module-10--the-distribution-system-operator)
+16. [Standards and figures quoted in the lessons](#16-standards-and-figures-quoted-in-the-lessons)
+17. [The Atelier (free-style mode)](#17-the-atelier-free-style-mode--atelier--atelier)
 
 ---
 
@@ -214,9 +215,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 471 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module9.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 503 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module10.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 60 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
+| Browser test | `npm run smoke` (dev server running) | Drives all 65 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -4061,7 +4062,265 @@ inverters); size (10–1,500 MW, log, default 300 MW).
 - B takes 400 MW, limited by capacity.
 - At A, 1,000 MW synchronous exceed 63 kA, 1,000 MW of inverters do not.
 
-## 15. Standards and figures quoted in the lessons
+## 15. Module 10 — The distribution system operator
+
+Module 10 looks at the grid from the distribution system operator's (DSO's) side, applied to
+Enedis, the main French DSO:
+- HV/MV primary substations, and MV feeders built in loops but run radially;
+- MV/LV substations, and low voltage down to the meter.
+
+The lessons cover the DSO's own questions:
+- the voltage plan;
+- neutral earthing and residual currents (3I0);
+- the protection plan;
+- back-up, flexibility and planning.
+
+Models are in `lib/models/module10.ts`, tested in `module10.test.ts`. Figures are teaching orders
+of magnitude, flagged in the lessons ("ordre de grandeur, à vérifier"). These include substation
+and feeder sizes, the producers' tan φ, the neutral currents (300 A overhead, 1,000 A
+underground), the short-circuit power, and the flexibility prices and investment costs. None of
+the five lessons has a prediction step.
+
+### 10.1 Architecture: the MV loop · `#10.1` · `lessons/hta`
+
+**Objectives.** After this lesson the learner can:
+- explain why MV networks are looped but run open;
+- place the open point to balance a loop;
+- compare overhead and underground feeders;
+- back-feed after a fault, and find the limit of back-feeding.
+
+**Model** (`loopState`).
+- Two 20 kV feeders from substations A and B form a loop of 20 sections of 1.5 km, with 19
+  MV/LV substations. The loads are a little higher near both towns.
+- Each side is a radial linear load flow: section currents are accumulated from the far end, and
+  drops summed from the source.
+- A fault opens both ends of its section; "close the open point" then back-feeds.
+- Limits: a 5 % drop in normal operation and 7.5 % in back-feed; 400 A for underground cable and
+  300 A for overhead line.
+- The x-axis is the distance along the loop; the open section leaves a gap in the voltage curve.
+
+**Parameters.** Open point (section 0–19, default 4); load (40–160 %, default 100 %); conductor
+(underground 240 mm² Al: 0.125 + j0.11 Ω/km; overhead 148 mm² AAAC: 0.22 + j0.35 Ω/km);
+faulty section (−1 to 19, default none); back-feed (off/on).
+
+**Panels.**
+- The unrolled loop, with substations coloured by their source, the open point and the faulty
+  section.
+- The largest drop against the open point's position.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Placing the open point | No fault, largest drop within 0.05 % of the optimum |
+| 2 | Overhead or underground | Overhead, no fault |
+| 3 | A fault on a section | Underground, a fault, substations cut off |
+| 4 | Back-feeding from the other substation | Fault, open point closed, within limits |
+| 5 | How far can back-feeding go? | Back-feed within limits at ≥ 130 % load |
+
+**Tests.**
+- The balanced open point (sections 8–11) beats the default by more than 0.5 %.
+- Overhead nearly doubles the drop.
+- A fault on section 2 cuts 8 substations, and back-feeding restores them.
+- Back-feeding holds at 130 % load, not at 140 %.
+
+### 10.2 The voltage plan · `#10.2` · `lessons/dvplan`
+
+**Objectives.** After this lesson the learner can:
+- write the voltage budget from the primary substation to the last LV customer;
+- use the MV/LV transformer's off-load tap and the substation's line-drop compensation;
+- explain the voltage rise from PV and the limited effect of reactive absorption in distribution;
+- compare a fixed tan φ with Q(U).
+
+**Model** (`dvpAt`). A 24 h winter day with PV, sampled every 5 min.
+- Feeder load: 6 MW at the peak with tan φ 0.3, and a clear-sky PV shape.
+- The feeder is lumped at its far end ($R = 3$ Ω, $X = 2.6$ Ω).
+- Busbar voltage: $V_c + k_c P_{net}/P_{max}$.
+- The MV/LV transformer has an off-load tap and a 2 % drop at full load.
+- The LV feeder carries 250 kW and some LV PV.
+- Producers run at cos φ = 1, at tan φ = −0.35, or under Q(U): absorbing from 102 %, up to
+  tan φ = −0.35 at 104 %.
+- Limits: 95–105 % at the far MV end and 90–110 % for the LV customer (EN 50160).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Setpoint $V_c$ | 99–104 % | 102 % |
+| Line-drop compensation $k_c$ | 0–4 % | 0 |
+| MV/LV tap | −2.5 to +5 % in 2.5 % steps | 0 |
+| PV on the feeder | 0–12 MW | 0 |
+| Producers' reactive power | cos φ = 1 / tan φ = −0.35 / Q(U) | cos φ = 1 |
+
+**Panels.**
+- The chain from substation to last customer with the voltages at the cursor hour and the flow
+  direction.
+- The voltage budget at the cursor hour (four points) against the EN 50160 band.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | The winter evening peak | No PV, tap ≥ +2.5 %, within limits all day |
+| 2 | PV arrives | PV ≥ 9.5 MW, last customer > 110 % |
+| 3 | Producers absorb reactive power | PV ≥ 9.5 MW, tan φ = −0.35 |
+| 4 | Line-drop compensation | PV ≥ 9.5 MW, $k_c \ge 2$ %, within limits |
+| 5 | Q(U) rather than a fixed tan φ | PV ≥ 9.5 MW, Q(U), within limits |
+
+**Tests.**
+- Below 90 % without PV, fixed by a +2.5 % tap.
+- 10 MW of PV exceeds 110 %, and tan φ alone does not fix it.
+- Line-drop compensation holds the range; Q(U) does it with less than half the reactive energy.
+- The flow reverses at noon.
+
+### 10.3 Neutral earthing and 3I0 · `#10.3` · `lessons/neutral`
+
+**Objectives.** After this lesson the learner can:
+- compute the neutral displacement and the earth-fault current for isolated, resistance-earthed
+  and compensated neutrals;
+- explain what residual relays see on faulty and healthy feeders;
+- set a selective threshold, recognise a high-resistance fault, and explain the wattmetric
+  relay.
+
+**Model** (`faultPhasors`). Phasors in steady state during a phase-a-to-earth fault on a 20 kV
+network.
+- Capacitance to earth: 0.3 µF/km per phase for cable, plus 400 km of overhead line at 5 nF/km.
+- Neutral admittance $Y_N$:
+  - isolated: 0;
+  - resistance: $I_N/E$;
+  - compensated: $G - jB$, with $B = 3\omega C(1 + \delta)$ and $G = 5\,\%$ of it.
+- $\underline V_N = -(\underline E_a/R_d)/(Y_N + 3j\omega C + 1/R_d)$.
+- The faulty feeder holds 10 % of the capacitance, the largest healthy feeder 20 %.
+- Residual currents: $3I_0^{healthy} = 3j\omega C_h V_N$ and
+  $3I_0^{faulty} = -V_N(Y_N + 3j\omega(C - C_f))$.
+- Overcurrent relays trip above $I_{s0}$. Wattmetric relays trip above $0.2\,I_{s0}$ with residual
+  active power above 1.5 kW towards the fault.
+- Waveforms over three cycles are built from the phasors.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Neutral | isolated / resistance / compensated | isolated |
+| Underground cable | 10–300 km | 50 km |
+| Neutral current limit | 150–1,000 A | 300 A |
+| Coil detuning | −30 to 30 % | 0 |
+| Fault resistance | 0.5–5,000 Ω (log) | 1 Ω |
+| Relay threshold $I_{s0}$ | 5–400 A (log) | 40 A |
+| Relay type | overcurrent / wattmetric | overcurrent |
+
+**Panels.**
+- The busbar with its neutral earthing, the faulty and healthy feeders with their relays
+  (tripped or not) and the fault.
+- Phasors of the phase-to-earth voltages, the neutral shift and both residual currents.
+- Fault current against cable length for the three regimes.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Isolated neutral and cables | Isolated, ≥ 190 km, fault current > 500 A |
+| 2 | Setting the threshold | Resistance, ≥ 190 km, overcurrent, only the faulty feeder trips |
+| 3 | The high-resistance fault | Resistance, $R_d \ge 500$ Ω, faulty feeder not tripped |
+| 4 | The compensated neutral | Compensated, \|δ\| ≤ 5 %, $R_d \le 10$ Ω, fault current < 50 A |
+| 5 | The wattmetric relay | Compensated, wattmetric, only the faulty feeder trips |
+
+**Tests.**
+- Isolated: the fault current equals the capacitive current (about 3 A/km of cable), and the
+  healthy phases rise to √3.
+- Resistance-earthed: 40 A trips the healthy feeder, 150 A is selective, and 500 Ω escapes.
+- A tuned coil gives under 50 A, and 20 % detuning gives over 100 A.
+- With a compensated neutral, only the wattmetric relay is selective.
+
+### 10.4 The MV protection plan · `#10.4` · `lessons/protection`
+
+**Objectives.** After this lesson the learner can:
+- set a phase-overcurrent threshold between load and the smallest fault;
+- grade a feeder with the transformer incomer;
+- explain rapid and slow auto-reclosing, transient and permanent faults.
+
+**Model** (`protRun`).
+- MV busbar at 250 MVA short-circuit power; 20 km overhead feeder at 0.22 + j0.35 Ω/km.
+- Fault currents: $I_{3} = U/(\sqrt3|Z_s + zd|)$ and $I_{2} = (\sqrt3/2)\,I_3$.
+- Highest load current: 250 A.
+- A phase-to-phase fault at $t = 1$ s. The feeder trips after $t_d + 60$ ms if $I_2 > I_s$;
+  otherwise the incomer (0.7 s) trips the whole busbar.
+- Reclosing cycle: 0.3 s (rapid) then 15 s (slow). A transient fault is gone at the first
+  reclosure; a permanent one locks out.
+- Over 40 s.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Threshold $I_s$ | 200–3,000 A (log) | 1,200 A |
+| Feeder delay $t_d$ | 0.1–1 s | 0.6 s |
+| Fault distance | 0.5–20 km | 10 km |
+| Fault type | transient / permanent | transient |
+| Recloser | off / rapid + slow | off |
+
+**Panels.**
+- The substation with incomer and feeder breakers, the feeder and the fault, at the cursor
+  time.
+- Three-phase and phase-to-phase fault current along the feeder (log), with the threshold and
+  the load.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Setting the threshold | 325 A ≤ $I_s$ ≤ 0.8 × end-of-feeder phase-to-phase current |
+| 2 | A fault at the end of the feeder | d ≥ 19.5 km, seen by the feeder, not the incomer |
+| 3 | Grading | $t_d + 0.3 \le 0.7$ s, threshold set |
+| 4 | Rapid reclosing | Recloser on, transient, seen, not locked out |
+| 5 | The permanent fault | Recloser on, permanent, seen, locked out |
+
+**Tests.**
+- $I_2/I_3 = \sqrt3/2$, and the current falls along the feeder.
+- At 1,200 A, the end fault goes to the incomer.
+- At 400 A and 0.4 s, the feeder is set, graded and sees the end fault.
+- A transient fault is one trip, then restored; a permanent one is three trips, then lockout.
+
+### 10.5 Flexibility and planning · `#10.5` · `lessons/planning`
+
+**Objectives.** After this lesson the learner can:
+- compute a primary substation's N-1 firm capacity and the year it is exceeded;
+- value MV back-up and local flexibility as ways to defer reinforcement;
+- run a simple discounted cost-benefit test.
+
+**Model** (`planInfo`).
+- Two 36 MVA transformers. The firm capacity is $36 \times 1.2 \times 0.95$ MW plus MV back-up.
+- The peak is 34 MW today, growing at $g$ per year.
+- Flexibility shaves the peak; the remedy is a third transformer, about 4 M€.
+- The deferral value is $C[(1+r)^{-a_0} - (1+r)^{-(a_0+\Delta a)}]$ at $r = 5\,\%$.
+- The flexibility cost is paid each year from the first violation to the deferred one,
+  discounted.
+- The x-axis is the years, over 20 years.
+
+**Parameters.** Growth (0–5 %/yr, default 2); MV back-up (0–10 MW, default 0); flexibility
+(0–10 MW, default 0); flexibility price (5–100 k€/MW/yr, default 50).
+
+**Panels.**
+- The substation, with one transformer lost and the third one appearing once built, the MV
+  back-up, the flexible customers and the year.
+- The deferral value and the flexibility cost against the flexibility volume.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | When the substation no longer holds N-1 | No flexibility or back-up, cursor within 0.6 years of the violation |
+| 2 | MV back-up | Back-up ≥ 4.9 MW, violation after 14 years |
+| 3 | Buying flexibility | No back-up, deferral ≥ 3 years |
+| 4 | Does it pay? | Flexibility, deferral ≥ 1 year, positive net value |
+| 5 | Electrification speeds up | Growth ≥ 4 %/yr, flexibility, deferral < 2 years |
+
+**Tests.**
+- The violation comes at about 9.5 years; 5 MW of back-up pushes it beyond 14 years.
+- 3 MW of flexibility defers by over 3 years. It pays at 20 k€/MW/yr, not at 50.
+- At 4 %/yr, the deferral is under 2 years.
+
+## 16. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.
@@ -4093,10 +4352,21 @@ before using them in a formal context.
 | Weak-grid SCR thresholds (< 3 weak, < 2 very weak); ERCOT and Xinjiang (2015) oscillations | 8.5 | CIGRE TB 671; IEEE PES TR-80 |
 | SSCI at ERCOT (2009) | 8.6 | IEEE SSR working group; ERCOT incident report |
 | Inter-area modes 0.1–0.8 Hz, ≈ 0.2 Hz east–west in continental Europe | 8.7 | ENTSO-E inter-area oscillation analysis |
+| Tap changers ±12 × 1.25 %, first delay tens of seconds; Dyn11 for MV/LV transformers | 4.3 | Common utility practice (orders of magnitude) |
+| Droop 4–6 %, static exciter ceilings, negative damping from fast AVRs | 4.5 | Kundur, *Power System Stability and Control* |
+| Load frequency sensitivity ≈ 1–2 %/% (self-regulation ≈ 1 %/Hz used in continental Europe) | 4.7 | Kundur; ENTSO-E operation handbook |
+| RTE ≈ 100,000 km of 63–400 kV lines, ≈ 3,000 substations; Enedis ≈ 1.4 million km, > 2,000 primary and ≈ 800,000 MV/LV substations | 9.1, 10.1 | RTE and Enedis annual reports (orders of magnitude, to be checked) |
+| FCR ≈ 3,000 MW in continental Europe, fully deployed at 200 mHz in 30 s; aFRR 5 min; mFRR 12.5 min; 3,000 MW reference incident | 9.2 | ENTSO-E SOGL and balancing products (to be checked) |
+| N-1 rule, temporary admissible overloads | 9.3 | ENTSO-E SOGL; RTE network rules |
+| Pilot-node secondary voltage control | 9.4 | RTE practice (RST), CIGRE literature |
+| Under-frequency shedding ≈ 45 % of load between 49 and 48 Hz; generators connected 47.5–51.5 Hz; 2006 European split | 9.5 | Network code NC ER and RfG; UCTE final report on 4 November 2006 (to be checked) |
+| SCR ≥ 3 for standard inverters; 63 kA breakers at 400 kV | 9.6 | CIGRE TB 671; common switchgear ratings |
+| MV neutral currents ≈ 300 A (overhead) and 1,000 A (underground); compensated neutral; about 3 A/km of cable capacitive current | 10.3 | Enedis technical references (orders of magnitude, to be checked) |
+| tan φ = −0.35 for MV producers, Q(U) laws | 10.2 | Enedis connection rules (to be checked) |
 
 ---
 
-## 16. The Atelier (free-style mode) · `#atelier` · `atelier/`
+## 17. The Atelier (free-style mode) · `#atelier` · `atelier/`
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
@@ -4104,7 +4374,7 @@ places elements from the library, wires them, and simulates. The full plan (phas
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
-- Below the canvas: the instrument dock (oscilloscope, Bode, impedance, phasors, poles, harmonics; §16.1) and the equation cards.
+- Below the canvas: the instrument dock (oscilloscope, Bode, impedance, phasors, poles, harmonics; §17.1) and the equation cards.
 - Right: the library and the inspector.
 
 **Using it.**
@@ -4187,7 +4457,7 @@ with switch and meters.
 - `atelier/bench.test.ts`: the selection logic (box, Shift+click, group move, delete with wires,
   clear all, undo).
 
-### 16.1 Analyses (phase A2)
+### 17.1 Analyses (phase A2)
 
 The dock under the bench has six tabs, each enlargeable (⤢):
 
@@ -4246,7 +4516,7 @@ owned by L1 and C1).
   and the LC filter's THD.
 - The smoke test opens every tab, clicks a pole, and reads the THD and the measurements.
 
-### 16.2 Power electronics and three-phase (phase A3)
+### 17.2 Power electronics and three-phase (phase A3)
 
 **Solver extensions** (`engine/emt.ts`).
 - **State-driven switching.** After each solve, elements may report that the solution changes
@@ -4300,7 +4570,7 @@ owned by L1 and C1).
     under 10 % of it when closing at the voltage peak without residual flux.
 - Every signal symbol of every template renders in KaTeX.
 
-### 16.3 Three-phase grids and machines (phase A4)
+### 17.3 Three-phase grids and machines (phase A4)
 
 **Elements** (`lib-grid.ts`, engines in `engine/grid.ts` and `engine/machines.ts`).
 
@@ -4361,7 +4631,7 @@ sinusoidal steady state, where loads are constant-impedance, to show the effect 
   - 6.4: grid current THD under 8 % against more than 50 % for the inverter voltage.
 - No singular AC system in any template.
 
-### 16.4 Control blocks and inverter-based resources (phase A5)
+### 17.4 Control blocks and inverter-based resources (phase A5)
 
 **Signal domain.**
 - Ports can be control signals (`signal: 'in' | 'out'`), drawn as green squares and joined by
@@ -4425,7 +4695,7 @@ The three-phase source gains a **phase jump** (time and angle) to test the conve
   triggers a ResizeObserver loop.
 - The Atelier is loaded on demand: lesson pages do not load its solver and library.
 
-### 16.5 Lessons ↔ Atelier and challenges (phase A6)
+### 17.5 Lessons ↔ Atelier and challenges (phase A6)
 
 **From a lesson to its bench** (`atelier/links.ts`). The 21 lessons below have an equivalent bench.
 Their panel shows a 🛠 Atelier button that opens it with the lesson's current settings:

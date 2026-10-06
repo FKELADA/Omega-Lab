@@ -15,15 +15,15 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 471 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
+| `npm test` | 503 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 60 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 65 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Sixty lessons are complete (Modules 0–9), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
+Sixty-five lessons are complete (Modules 0–10), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
 baked into the app (`web/scripts/bake-g2elin.mjs` and `bake-shapes.py` regenerate them from a local G2ELin). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
@@ -78,6 +78,11 @@ e.g. `http://localhost:5173/#1.4`.
 | **9.4 The voltage plan** | Sees the pilot node sag without secondary control, saturates the generators, adds capacitors, overdoes them, raises the setpoint | Control zone with pilot node and level N, pilot-voltage gauge, alignment chart |
 | **9.5 The defence plan** | Predicts the frequency after a 15 % deficit, blacks out without shedding, over-sheds, saves a 30 % deficit, adapts stages to low inertia | Shedding stages opening in turn, frequency gauge, the shedding plan |
 | **9.6 Connection studies** | Finds the largest wind farm on a 63 kV substation, places 400 MW, sees a synchronous plant refused for short-circuit current, accepts the same power in inverters | Three candidate substations with a criteria checklist, largest connectable power |
+| **10.1 The MV loop** | Balances a loop with its open point, compares overhead and underground, cuts a section, back-feeds from the other substation, finds the back-feed limit | The unrolled loop coloured by source, largest drop versus open point |
+| **10.2 The voltage plan** | Holds the winter peak with the MV/LV tap, adds PV until 110 % is exceeded, tries tan φ, line-drop compensation and Q(U) | Chain from substation to last customer, the voltage budget at the cursor hour |
+| **10.3 Neutral earthing and 3I0** | Grows the capacitive current of an isolated neutral, sets a selective threshold, misses a high-resistance fault, tunes a Petersen coil, switches to a wattmetric relay | Busbar with its neutral and two feeders' relays, phasors, fault current versus cable length |
+| **10.4 The MV protection plan** | Sets the threshold window, clears an end-of-feeder fault, grades with the incomer, recloses on a transient fault, locks out on a permanent one | Substation breakers and feeder at the cursor time, fault current along the feeder |
+| **10.5 Flexibility and planning** | Dates the N-1 constraint of a primary substation, defers it with MV back-up and flexibility, finds when flexibility pays, sees electrification shrink the deferral | Substation with a lost transformer, deferral value against flexibility cost |
 
 Shared by every lesson:
 

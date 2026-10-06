@@ -62,6 +62,11 @@ import { n1Lesson } from './n1/experiment';
 import { vplanLesson } from './vplan/experiment';
 import { defenceLesson } from './defence/experiment';
 import { connectLesson } from './connect/experiment';
+import { htaLesson } from './hta/experiment';
+import { dvplanLesson } from './dvplan/experiment';
+import { neutralLesson } from './neutral/experiment';
+import { protectionLesson } from './protection/experiment';
+import { planningLesson } from './planning/experiment';
 
 export interface LessonEntry {
   id: string;
@@ -196,6 +201,17 @@ export const curriculum: ModuleEntry[] = [
       { id: '9.4', title: { fr: 'Le plan de tension du transport', en: 'The transmission voltage plan' }, experiment: vplanLesson },
       { id: '9.5', title: { fr: 'Stabilité et plan de défense', en: 'Stability and the defence plan' }, experiment: defenceLesson },
       { id: '9.6', title: { fr: 'Études de raccordement', en: 'Connection studies' }, experiment: connectLesson },
+    ],
+  },
+  {
+    n: 10,
+    title: { fr: 'Le gestionnaire du réseau de distribution (GRD)', en: 'The distribution system operator (DSO)' },
+    lessons: [
+      { id: '10.1', title: { fr: 'Architecture : la boucle HTA', en: 'Architecture: the MV loop' }, experiment: htaLesson },
+      { id: '10.2', title: { fr: 'Le plan de tension', en: 'The voltage plan' }, experiment: dvplanLesson },
+      { id: '10.3', title: { fr: 'Régimes de neutre et 3I0', en: 'Neutral earthing and 3I0' }, experiment: neutralLesson },
+      { id: '10.4', title: { fr: 'Le plan de protection HTA', en: 'The MV protection plan' }, experiment: protectionLesson },
+      { id: '10.5', title: { fr: 'Flexibilité et planification', en: 'Flexibility and planning' }, experiment: planningLesson },
     ],
   },
 ];

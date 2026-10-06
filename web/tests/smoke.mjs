@@ -59,7 +59,15 @@ async function predict(y) {
   return (await page.locator('.feedback').textContent().catch(() => '')) ?? '';
 }
 
+let opened = 0;
 async function open(id) {
+  // A fresh tab every 40 lessons: hundreds of reloads of one tab in dev mode exhaust Chrome.
+  if (++opened % 40 === 0) {
+    const size = page.viewportSize();
+    await page.close();
+    page = watch(await context.newPage());
+    if (size) await page.setViewportSize(size);
+  }
   await page.goto(`${URL}#${id}`);
   await page.reload();
   try {
@@ -938,6 +946,58 @@ check('9.6 synchronous plant refused', /refusé/.test(await panelText()));
 await radio('Éolien / PV (onduleurs)');
 check('9.6 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
 
+// ── Module 10 ─────────────────────────────────────────────────────────────────
+// 10.1 MV loop
+await open('10.1');
+await setParam(0, 9, 0, 19); // balanced open point
+await radio('Aérien 148 mm² Almélec');
+await radio('Souterrain 240 mm² Al');
+await setParam(2, 2, -1, 19); // fault on section 2
+check('10.1 substations cut off', /postes coupés/.test(await panelText()));
+await radio('Fermer le point d’ouverture');
+await setParam(1, 130, 40, 160);
+check('10.1 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 10.2 Voltage plan
+await open('10.2');
+await setParam(2, 2.5, -2.5, 5);
+await setParam(3, 10, 0, 12);
+await radio('tan φ = −0,35');
+await setParam(1, 3, 0, 4);
+await radio('Q(U)');
+check('10.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 10.3 Neutral earthing
+await open('10.3');
+await setParam(0, 200, 10, 300);
+await radio('Impédant (résistance)');
+check('10.3 healthy feeder trips wrongly', /intempestif/.test(await panelText()));
+await setParam(4, 150, 5, 400, true);
+await setParam(3, 600, 0.5, 5000, true);
+await setParam(3, 1, 0.5, 5000, true);
+await radio('Compensé (bobine de Petersen)');
+await radio('Wattmétrique');
+check('10.3 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 10.4 Protection plan
+await open('10.4');
+await setParam(0, 400, 200, 3000, true);
+await setParam(2, 20, 0.5, 20);
+await setParam(1, 0.4, 0.1, 1);
+await radio('Rapide + lent');
+await radio('Permanent (câble endommagé)');
+check('10.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 10.5 Planning
+await open('10.5');
+await setCursor(9.5 / 20);
+await setParam(1, 5, 0, 10);
+await setParam(1, 0, 0, 10);
+await setParam(2, 3, 0, 10);
+await setParam(3, 20, 5, 100);
+await setParam(0, 4, 0, 5);
+check('10.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
 // The lesson list opens on the current lesson, not at the top.
 await page.locator('button.crumbs').click();
 await page.waitForTimeout(300);
@@ -1081,7 +1141,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10.1', '10.2', '10.3', '10.4', '10.5']) {
   if (['2.1', '4.1', '6.1', '8.1', '9.4'].includes(id)) {
     await page.close();
     page = watch(await context.newPage());

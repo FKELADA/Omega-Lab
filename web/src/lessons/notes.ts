@@ -11,6 +11,7 @@ import { module6Note, module6Notes } from './notes6';
 import { module7Note, module7Notes } from './notes7';
 import { module8Note, module8Notes } from './notes8';
 import { module9Note, module9Notes } from './notes9';
+import { module10Note, module10Notes } from './notes10';
 
 const r = String.raw;
 
@@ -88,6 +89,7 @@ export const moduleNotes: Record<number, ModuleNote> = {
   7: module7Note,
   8: module8Note,
   9: module9Note,
+  10: module10Note,
   3: {
     summary: {
       fr: 'La colonne vertébrale de la commande : pôles, marges de stabilité, linéarisation et régulateurs. Indispensable pour comprendre machines et onduleurs.',
@@ -625,4 +627,5 @@ export const lessonNotes: Record<string, LessonNote> = {
   ...module7Notes,
   ...module8Notes,
   ...module9Notes,
+  ...module10Notes,
 };
