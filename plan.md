@@ -158,7 +158,7 @@ no console errors).
 4. **Capstone labs** from §5 Module 8 and Modules 9–10 (for example "plan a primary substation
    for 2035"), and the split view (two cases side by side).
 5. ✅ **Atelier ↔ Module 10:** MV-neutral transformer and protection-relay elements, benches for the MV loop, neutral earthing and feeder protection, two challenges (Petersen coil, grading).
-6. **Deployment:** a static build on a public URL, with a production check of the smoke test.
+6. ✅ **Deployment:** GitHub Actions workflow (check, test, build with the Pages base path, publish on GitHub Pages); the smoke test passes on the production build. Pages must be enabled once in the repository settings (a private repository needs a paid plan).
 7. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
 
 Done: the Atelier, A0 to A6 (§10; no predict-then-run exercise there, by choice).

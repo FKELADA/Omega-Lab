@@ -19,7 +19,31 @@ npm run dev        # http://localhost:5173
 | `npm run check` | Svelte + TypeScript type check |
 | `npm run smoke` | Walks all 65 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
-| `npm run build` | Static build into `web/dist/` |
+| `npm run build` | Static build into `web/dist/` (set `BASE=/Omega-Lab/` to serve it from a sub-path) |
+
+### Publish it
+
+The app is fully static: no server, routes in the URL hash, the G2ELin results baked in.
+`.github/workflows/deploy.yml` type-checks, tests, builds with `BASE=/<repository>/` and
+publishes `web/dist/` on GitHub Pages at every push to `main`.
+
+One-time setup:
+1. In the repository, open **Settings → Pages** and set the source to **GitHub Actions**.
+2. GitHub Pages on a private repository needs a paid plan. Otherwise, make the repository public.
+
+The site is then at `https://fkelada.github.io/Omega-Lab/`.
+
+To check a production build locally before publishing (in Git Bash, `MSYS_NO_PATHCONV=1` keeps
+`/Omega-Lab/` from being turned into a Windows path):
+
+```bash
+cd web
+MSYS_NO_PATHCONV=1 BASE=/Omega-Lab/ npm run build
+MSYS_NO_PATHCONV=1 BASE=/Omega-Lab/ npx vite preview --port 4173
+OMEGA_URL=http://localhost:4173/Omega-Lab/ npm run smoke
+```
+
+The last full check on the production build passed all 264 smoke-test checks.
 
 ## Status
 
