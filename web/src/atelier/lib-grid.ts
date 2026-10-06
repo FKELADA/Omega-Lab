@@ -328,7 +328,7 @@ export const GRID_LIB: ElementDef[] = [
       { id: 'xd', symbol: "x'_d", name: { fr: 'Réactance transitoire (pu)', en: 'Transient reactance (pu)' }, unit: '', default: 0.3, min: 0.1, max: 0.6, scale: 'lin' },
       { id: 'ra', symbol: 'r_a', name: { fr: 'Résistance statorique (pu)', en: 'Stator resistance (pu)' }, unit: '', default: 0.003, min: 0, max: 0.05, scale: 'lin' },
       { id: 'KA', symbol: 'K_A', name: { fr: 'Gain du régulateur de tension (0 : sans)', en: 'Voltage regulator gain (0: none)' }, unit: '', default: 0, min: 0, max: 400, scale: 'lin' },
-      { id: 'Vref', symbol: 'V_{ref}', name: { fr: 'Consigne de tension (pu)', en: 'Voltage setpoint (pu)' }, unit: '', default: 1, min: 0.8, max: 1.2, scale: 'lin' },
+      { id: 'Vref', symbol: 'V_{ref}', name: { fr: 'Consigne de tension (pu ; 0 : tension initiale)', en: 'Voltage setpoint (pu; 0: initial voltage)' }, unit: '', default: 0, min: 0, max: 1.2, scale: 'lin' },
       { id: 'R', symbol: 'R', name: { fr: 'Statisme du régulateur de vitesse (0 : sans)', en: 'Governor droop (0: none)' }, unit: '', default: 0, min: 0, max: 0.2, scale: 'lin' },
       { id: 'tRel', symbol: 't_{lib}', name: { fr: 'Libération du rotor (initialisation)', en: 'Rotor release (initialisation)' }, unit: 's', default: 0.5, min: 0, max: 10, scale: 'lin' },
     ],

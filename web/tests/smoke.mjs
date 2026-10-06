@@ -848,7 +848,7 @@ await page.screenshot({ path: `${out}/smoke-note-module.png` });
 await page.getByRole('button', { name: 'Close' }).click();
 
 // ── Atelier (free-style mode) ─────────────────────────────────────────────────
-await page.getByRole('button', { name: /Atelier/ }).click();
+await page.locator('.seg.mode button', { hasText: 'Atelier' }).click();
 await page.waitForSelector('.atelier');
 check('Atelier opens from the mode switch', (await page.evaluate(() => location.hash)) === '#atelier');
 await page.getByRole('button', { name: /RLC série sous échelon/ }).click();
@@ -910,6 +910,31 @@ check('Bode gain and phase charts', (await page.locator('.bode .panel').count())
 await page.locator('g.el[aria-label="R1"] .hitbox').click();
 check('measurements in the inspector', /cos φ/.test((await page.locator('.insp').textContent()) ?? ''));
 await page.screenshot({ path: `${out}/smoke-atelier-a2.png` });
+await page.getByRole('button', { name: 'Leçons' }).click();
+await page.waitForSelector('.lesson');
+
+// A6: lesson → Atelier, and a challenge from start to finish
+await open('1.2');
+await page.locator('.note-btn.atelier').click();
+await page.waitForSelector('g.el[aria-label="R1"]');
+check('a lesson opens its bench in the Atelier, with its settings', (await page.locator('g.el[aria-label="R1"] .val').textContent()) === '2 Ω');
+await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
+await page.locator('.insp button.link', { hasText: 'Amortir sans dépasser' }).click();
+await page.waitForSelector('.challenge');
+check('a challenge starts unmet', (await page.locator('.challenge.ok').count()) === 0);
+await page.locator('g.el[aria-label="L1"] .hitbox').click();
+check('locked parameters are read-only', (await page.locator('.insp .param.ro').count()) === 1);
+await page.locator('g.el[aria-label="R1"] .hitbox').click();
+await page.locator('.insp input.num').fill('20');
+await page.locator('.insp input.num').press('Enter');
+await page.waitForSelector('.challenge.ok', { timeout: 10000 }).catch(() => {});
+check('the challenge is met at critical damping, and explained', (await page.locator('.challenge.ok .answer').count()) === 1);
+await page.screenshot({ path: `${out}/smoke-challenge.png` });
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(300);
+check('Atelier: no horizontal scroll at 390 px', (await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
+await page.screenshot({ path: `${out}/smoke-atelier-phone.png`, fullPage: true });
+await page.setViewportSize({ width: 1600, height: 1000 });
 await page.getByRole('button', { name: 'Leçons' }).click();
 await page.waitForSelector('.lesson');
 

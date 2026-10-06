@@ -33,6 +33,8 @@ export interface BenchDoc {
   wires: Wire[];
   /** Simulated duration (s). */
   T: number;
+  /** The challenge this project is, if any (see challenges.ts). */
+  challenge?: string;
 }
 
 export const emptyDoc = (): BenchDoc => ({ version: 1, name: 'Sans titre', elements: [], wires: [], T: 0.05 });

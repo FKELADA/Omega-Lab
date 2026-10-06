@@ -63,3 +63,34 @@ describe('Atelier selection', () => {
     expect(b.el('R1')!.x).toBe(8);
   });
 });
+
+describe('Atelier challenges: locks', () => {
+  it('locked elements resist deletion, moves and edits; open parameters stay editable', () => {
+    const b = new Bench();
+    b.startChallenge('ch-critical');
+    expect(b.challenge?.id).toBe('ch-critical');
+    b.selectAll();
+    b.removePicked();
+    expect(b.doc.elements.length).toBe(5); // all locked
+    b.setParam('L1', 'L', 1);
+    expect(b.el('L1')!.params.L).toBe(0.01); // locked parameter
+    b.setParam('R1', 'R', 20);
+    expect(b.el('R1')!.params.R).toBe(20); // open parameter
+    b.beginMove();
+    b.moveGroup({ R1: [8, 4] }, 3, 3);
+    expect(b.el('R1')!.x).toBe(8);
+  });
+
+  it('clear all keeps the challenge, removes what the learner added; leaving unlocks', () => {
+    const b = new Bench();
+    b.startChallenge('ch-buck');
+    b.add('R', 30, 4);
+    expect(b.doc.elements.length).toBe(8);
+    b.clearAll();
+    expect(b.doc.elements.length).toBe(7);
+    b.leaveChallenge();
+    expect(b.challenge).toBeUndefined();
+    b.setParam('V1', 'V', 24);
+    expect(b.el('V1')!.params.V).toBe(24);
+  });
+});

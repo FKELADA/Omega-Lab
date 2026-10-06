@@ -5,6 +5,9 @@
   import type { Bench } from '../bench.svelte';
   import { DEFS, si, sigSpec, type ElParam } from '../library';
   import { TEMPLATES } from '../templates';
+  import { lessonsOf } from '../links';
+  import { CHALLENGES } from '../challenges';
+  import { doneChallenges } from '../done';
   import { parseSI } from '../units';
   import { lastPeriods, meanProduct, stats } from '../engine/harmonics';
   import { fundamental } from '../analyses';
@@ -75,8 +78,9 @@
     {#if el && def}
       {#each def.params as p (p.id)}
         {@const v = el.params[p.id] ?? p.default}
-        <div class="param">
-          <label for="p-{p.id}">{@html renderMath(p.symbol)} <span class="pn">{tr(p.name)}</span></label>
+        {@const ro = !bench.canEdit(el.id, p.id)}
+        <div class="param" class:ro>
+          <label for="p-{p.id}">{@html renderMath(p.symbol)} <span class="pn">{tr(p.name)}</span>{#if ro} 🔒{/if}</label>
           {#if p.choices}
             <div class="seg" id="p-{p.id}" role="radiogroup">
               {#each p.choices as ch (ch.value)}
@@ -154,12 +158,24 @@
           {#each bench.compiled.net.diagnostics as d, k (k)}<li class={d.level}>{tr(d.text)}</li>{/each}
         </ul>
       {/if}
+      <h4>🎯 {tr({ fr: 'Défis', en: 'Challenges' })}</h4>
+      <ul class="tpl">
+        {#each CHALLENGES as c (c.id)}
+          <li>
+            <button class="link" onclick={() => (bench.startChallenge(c.id), setTimeout(onfit, 0))}>{doneChallenges().includes(c.id) ? '✓ ' : ''}{tr(c.name)}</button>
+            <span class="md">{@html renderMarkdown(tr(c.statement))}</span>
+          </li>
+        {/each}
+      </ul>
       <h4>{tr({ fr: 'Modèles', en: 'Templates' })}</h4>
       <ul class="tpl">
         {#each TEMPLATES as t (t.id)}
           <li>
             <button class="link" onclick={() => (bench.load(t.doc()), setTimeout(onfit, 0))}>{tr(t.name)}</button>
             <span class="md">{@html renderMarkdown(tr(t.note))}</span>
+            {#if lessonsOf(t.id).length}
+              <span class="back">{tr({ fr: 'Leçon', en: 'Lesson' })} {#each lessonsOf(t.id) as l, k (l)}{k ? ', ' : ''}<a href="#{l}">{l}</a>{/each}</span>
+            {/if}
           </li>
         {/each}
       </ul>
@@ -185,6 +201,10 @@
   }
   .param {
     margin-bottom: 8px;
+  }
+  .param.ro {
+    opacity: 0.55;
+    pointer-events: none;
   }
   label {
     display: block;
@@ -293,6 +313,9 @@
     display: block;
     color: var(--muted);
     font-size: 11px;
+  }
+  .tpl .back a {
+    color: var(--accent);
   }
   .tpl .md :global(p) {
     margin: 0;

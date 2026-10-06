@@ -20,7 +20,8 @@ export interface SmParams {
   E0: number; // internal EMF, pu
   KA: number; // AVR gain (0: constant EMF)
   TA: number; // s
-  Vref: number; // pu
+  /** Voltage setpoint (pu); 0: the terminal voltage reached at the end of initialisation. */
+  Vref: number;
   R: number; // governor droop, pu (0: constant mechanical power)
   Tg: number; // s
   tRel: number; // s: rotor held at synchronous speed while the network transients die out
@@ -39,6 +40,7 @@ export function syncMachine(id: string, [a, b, c]: number[], p: SmParams, h: num
   const w0 = 2 * Math.PI * p.f;
   const Zb = (p.Vn * p.Vn) / p.Sn;
   const Vph = (Math.SQRT2 * p.Vn) / Math.sqrt(3);
+  let Vt0 = 1;
   let delta = p.delta0 ?? 0, w = 1, E = p.E0, Pm = p.P0, Pe = 0, t = 0;
   const e = [0, 0, 0];
   const x = [node(), node(), node()];
@@ -59,7 +61,10 @@ export function syncMachine(id: string, [a, b, c]: number[], p: SmParams, h: num
       // Air-gap power delivered by the EMFs (machine convention: positive when generating).
       Pe = (e[0] * br[0].i + e[1] * br[1].i + e[2] * br[2].i) / p.Sn;
       const Vt = Math.sqrt((2 / 3) * (va * va + vb * vb + vc * vc)) / Vph;
-      if (p.KA > 0) E += (h / p.TA) * (p.E0 + p.KA * (p.Vref - Vt) - E);
+      // Voltage regulator around the initial operating point; field limits 0–3 pu.
+      if (t < p.tRel) Vt0 = Vt;
+      const ref = p.Vref > 0 ? p.Vref : Vt0;
+      if (p.KA > 0 && t >= p.tRel) E = Math.max(0, Math.min(3, E + (h / p.TA) * (p.E0 + p.KA * (ref - Vt) - E)));
       if (p.R > 0) Pm += (h / p.Tg) * (p.P0 + (1 - w) / p.R - Pm);
       if (t < p.tRel) {
         // Initialisation: rotor locked at δ0 and synchronous speed.

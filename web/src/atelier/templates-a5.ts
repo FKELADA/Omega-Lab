@@ -9,7 +9,8 @@ const w = (id: string, a: string, b: string): Wire => {
   const [ae, ap] = a.split('.'), [be, bp] = b.split('.');
   return { id, a: { el: ae, port: ap }, b: { el: be, port: bp } };
 };
-const weakGrid = (SCR: number, Sn: number, Vn: number) => {
+/** Grid impedance (R, L per phase) giving a short-circuit ratio SCR for a unit of rating Sn. */
+export const weakGrid = (SCR: number, Sn: number, Vn: number) => {
   const Z = (Vn * Vn) / (SCR * Sn);
   return { R: Z / 20, L: Z / (2 * Math.PI * 50) };
 };

@@ -103,6 +103,7 @@
       return;
     }
     if (!bench.isPicked('el', el.id)) bench.selection = { kind: 'el', id: el.id };
+    if (bench.isLocked(el.id)) return;
     const [x, y] = world(e);
     const start = Object.fromEntries(bench.picked.els.map((id) => bench.el(id)).filter((q) => q).map((q) => [q!.id, [q!.x, q!.y] as [number, number]]));
     drag = { ox: snap(x), oy: snap(y), start, moved: false };
@@ -193,6 +194,16 @@
     vy = (y0 + y1) / 2 - h / zoom / 2;
   }
 
+  // Re-frame the drawing when the canvas width changes a lot (phone, rotation, docking).
+  let framedW = 0;
+  $effect(() => {
+    if (!w || !bench.doc.elements.length) return;
+    if (!framedW || Math.abs(w - framedW) / framedW > 0.3) {
+      framedW = w;
+      fit();
+    }
+  });
+
   const pendingXY = $derived.by(() => {
     const p = bench.pending;
     const el = p && bench.el(p.el);
@@ -252,6 +263,7 @@
             <path d={def.symbol} class="sym" />
           </g>
           {#if def.glyph}<text class="glyph" y="5">{def.glyph}</text>{/if}
+          {#if bench.isLocked(el.id)}<text class="lock" x={bw - 2} y={-bh + 2}>🔒</text>{/if}
           {#if !def.ground}
             <text class="lbl id" x={horiz ? 0 : ly} y={horiz ? -ly : -4} text-anchor={horiz ? 'middle' : 'start'}>{el.id}</text>
             {#if def.label}<text class="lbl val" x={horiz ? 0 : ly} y={horiz ? ly + 8 : 10} text-anchor={horiz ? 'middle' : 'start'}>{def.label(el.params)}</text>{/if}
@@ -300,8 +312,8 @@
   {#if !bench.doc.elements.length}
     <div class="empty">
       {tr({
-        fr: 'Glissez des éléments depuis la bibliothèque (à droite), ou ouvrez un modèle. Cliquez sur une borne puis sur une autre pour tirer un fil.',
-        en: 'Drag elements from the library (right), or open a template. Click one terminal then another to draw a wire.',
+        fr: 'Glissez des éléments depuis la bibliothèque (à droite, ou plus bas sur téléphone), ou ouvrez un modèle. Cliquez sur une borne puis sur une autre pour tirer un fil.',
+        en: 'Drag elements from the library (right, or further down on a phone), or open a template. Click one terminal then another to draw a wire.',
       })}
     </div>
   {/if}
@@ -371,6 +383,10 @@
   }
   .el {
     cursor: grab;
+  }
+  .lock {
+    font-size: 9px;
+    pointer-events: none;
   }
   .glow {
     fill: var(--accent);

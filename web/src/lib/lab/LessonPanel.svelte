@@ -4,6 +4,8 @@
   import { renderMarkdown } from '../ui/markdown';
   import { lessons } from '../../lessons/curriculum';
   import { answers } from '../../lessons/answers';
+  import { docForLesson, LINKS } from '../../atelier/links';
+  import { openInAtelier } from '../../atelier/store';
 
   let { lab, onnote }: { lab: Lab; onnote?: () => void } = $props();
 
@@ -27,6 +29,11 @@
   $effect(() => {
     if (done && answerBox) answerBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
+  const lessonId = $derived(lessons.find((l) => l.experiment === lab.exp)?.id ?? '');
+  function toAtelier() {
+    const doc = docForLesson(lessonId, lab.params);
+    if (doc) openInAtelier(doc);
+  }
   const nextLesson = $derived.by(() => {
     const k = lessons.findIndex((l) => l.experiment === lab.exp);
     return k >= 0 ? lessons[k + 1] : undefined;
@@ -41,6 +48,9 @@
   <header>
     <span>{tr(S.step)} {lab.stepIndex + 1}/{steps.length}</span>
     {#if onnote}<button class="note-btn" onclick={onnote}>ⓘ {tr({ fr: 'Note pédagogique', en: 'Teaching note' })}</button>{/if}
+    {#if LINKS[lessonId]}
+      <button class="note-btn atelier" onclick={toAtelier} title={tr({ fr: 'Ouvrir ce montage dans l’Atelier, avec les réglages actuels', en: 'Open this set-up in the Workbench, with the current settings' })}>🛠 {tr({ fr: 'Ouvrir dans l’Atelier', en: 'Open in the Workbench' })}</button>
+    {/if}
     <span class="spacer"></span>
     <div class="dots">
       {#each steps as s, k (s.id)}

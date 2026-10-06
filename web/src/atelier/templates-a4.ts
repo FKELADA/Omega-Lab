@@ -22,7 +22,7 @@ export const TEMPLATES_A4: TemplateA[] = [
       name: 'Stabilité transitoire',
       T: 3,
       elements: [
-        el('SM1', 'sm3', 4, 8, 0, { Sn: 500e6, Vn: 20e3, f: 50, P0: 0.8, E0: 1.1, H: 4, D: 1, xd: 0.3, ra: 0.003, KA: 0, Vref: 1, R: 0, tRel: 0.5 }, ['delta', 'Pe']),
+        el('SM1', 'sm3', 4, 8, 0, { Sn: 500e6, Vn: 20e3, f: 50, P0: 0.8, E0: 1.1, H: 4, D: 1, xd: 0.3, ra: 0.003, KA: 0, Vref: 0, R: 0, tRel: 0.5 }, ['delta', 'Pe']),
         el('TR1', 'trafo3', 10, 8, 0, { V1: 20e3, V2: 225e3, S: 500e6, x: 0.12, r: 0.003, f: 50 }),
         el('LG1', 'line3', 16, 8, 0, { len: 100, r: 0.03, l: 1, c: 11.5, model: 0 }),
         el('G1', 'src3', 22, 8, 180, { Vll: 225e3, f: 50, ph: 0, R: 0.01, L: 1e-3 }),

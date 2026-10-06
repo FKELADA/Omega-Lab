@@ -7,8 +7,9 @@ import { circuitEquations } from './circuitEqs';
 import { compile, type Compiled } from './compile';
 import { emptyDoc, type BenchDoc, type BenchEl, type PortRef, type Rot } from './doc';
 import { DEFS } from './library';
+import { challengeOf } from './challenges';
 
-const STORE = 'omega-atelier-v1';
+import { STORE } from './store';
 
 export type Selection = { kind: 'el' | 'wire'; id: string } | null;
 
@@ -51,6 +52,32 @@ export class Bench {
   set selection(sel: Selection) {
     this.picked = sel ? (sel.kind === 'el' ? { els: [sel.id], wires: [] } : { els: [], wires: [sel.id] }) : none();
   }
+  // ── Challenges: locked elements and editable parameters ──
+  get challenge() {
+    return challengeOf(this.doc.challenge);
+  }
+  isLocked(id: string) {
+    return !!this.challenge?.locked.includes(id);
+  }
+  canEdit(id: string, param: string) {
+    return !this.isLocked(id) || !!this.challenge?.editable[id]?.includes(param);
+  }
+  /** Wires between two locked elements belong to the challenge. */
+  private wireLocked(w: { a: PortRef; b: PortRef }) {
+    return this.isLocked(w.a.el) && this.isLocked(w.b.el);
+  }
+  startChallenge(id: string) {
+    const c = challengeOf(id);
+    if (!c) return;
+    const doc = c.doc();
+    doc.challenge = id;
+    this.load(doc);
+  }
+  leaveChallenge() {
+    this.edit((d) => delete d.challenge);
+    this.rev++;
+  }
+
   isPicked(kind: 'el' | 'wire', id: string) {
     return (kind === 'el' ? this.picked.els : this.picked.wires).includes(id);
   }
@@ -74,6 +101,7 @@ export class Bench {
   /** Moves every selected element by (dx, dy) grid cells from the given start positions. */
   moveGroup(start: Record<string, [number, number]>, dx: number, dy: number) {
     for (const [id, [x, y]] of Object.entries(start)) {
+      if (this.isLocked(id)) continue;
       const el = this.el(id);
       if (el) (el.x = x + dx), (el.y = y + dy);
     }
@@ -81,7 +109,8 @@ export class Bench {
   }
   /** Deletes the selected elements (with their wires) and the selected wires. */
   removePicked() {
-    const els = new Set(this.picked.els), wires = new Set(this.picked.wires);
+    const els = new Set(this.picked.els.filter((id) => !this.isLocked(id)));
+    const wires = new Set(this.picked.wires.filter((id) => !this.wireLocked(this.doc.wires.find((w) => w.id === id)!)));
     if (!els.size && !wires.size) return;
     this.edit((d) => {
       d.elements = d.elements.filter((e) => !els.has(e.id));
@@ -92,9 +121,10 @@ export class Bench {
   /** Empties the bench (undoable). */
   clearAll() {
     if (!this.doc.elements.length && !this.doc.wires.length) return;
+    // In a challenge, only what the learner added goes.
     this.edit((d) => {
-      d.elements = [];
-      d.wires = [];
+      d.elements = d.elements.filter((e) => this.isLocked(e.id));
+      d.wires = d.wires.filter((w) => this.wireLocked(w));
     });
     this.picked = none();
     this.pending = null;
@@ -216,6 +246,7 @@ export class Bench {
     this.commit();
   }
   rotate(id: string) {
+    if (this.isLocked(id)) return;
     this.edit((d) => {
       const el = d.elements.find((e) => e.id === id);
       if (el) el.rot = ((el.rot + 90) % 360) as Rot;
@@ -249,7 +280,7 @@ export class Bench {
   /** Change a parameter: stored in the project, and re-run without recompiling. */
   setParam(id: string, param: string, v: number) {
     const el = this.el(id);
-    if (!el) return;
+    if (!el || !this.canEdit(id, param)) return;
     el.params[param] = v;
     this.lab.setParam(`${id}.${param}`, v);
     this.save();

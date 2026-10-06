@@ -8,6 +8,7 @@
   import Inspector from './ui/Inspector.svelte';
   import LibraryPanel from './ui/LibraryPanel.svelte';
   import Dock from './ui/Dock.svelte';
+  import ChallengeBanner from './ui/ChallengeBanner.svelte';
   import { provideBench } from './ui/context';
   import Equations from '../lib/instruments/Equations.svelte';
   import { S, tr } from '../lib/ui/ui.svelte';
@@ -79,6 +80,7 @@
       <button class="btn" onclick={() => lab.freeze()}>❄ {tr(S.freeze)}</button>
       <button class="btn" disabled={!lab.ghosts.length} onclick={() => lab.clearGhosts()}>{tr(S.clear)}</button>
     </div>
+    {#if bench.challenge}<ChallengeBanner {bench} />{/if}
     <Canvas {bench} {tool} bind:this={canvas} />
     {#key lab}
       <div class="dock">
@@ -183,10 +185,12 @@
       grid-template-columns: minmax(0, 1fr);
     }
     .center > :global(.canvas) {
-      min-height: 420px;
+      flex: none;
+      height: 420px;
+      min-height: 0;
     }
     .dock > :global(*) {
-      min-height: 300px;
+      min-height: 380px;
     }
   }
 </style>

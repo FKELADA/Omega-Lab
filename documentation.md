@@ -212,7 +212,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 385 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 415 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -3615,7 +3615,7 @@ before using them in a formal context.
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
-[plan.md](plan.md) §10. Phases A0 to A5 are built.
+[plan.md](plan.md) §10. Phases A0 to A6 are built (without predict-then-run in the Atelier, by choice).
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
@@ -3939,3 +3939,59 @@ The three-phase source gains a **phase jump** (time and angle) to test the conve
 - The oscilloscope resizes on the next frame and ignores sub-2 px changes, so it no longer
   triggers a ResizeObserver loop.
 - The Atelier is loaded on demand: lesson pages do not load its solver and library.
+
+### 15.5 Lessons ↔ Atelier and challenges (phase A6)
+
+**From a lesson to its bench** (`atelier/links.ts`). The 21 lessons below have an equivalent bench.
+Their panel shows a 🛠 Atelier button that opens it with the lesson's current settings:
+- 1.2, 1.4: series RLC (R, L, C, V, f).
+- 2.7: filtered square wave.
+- 4.1: line (length), 4.2: transformer inrush (closing angle, residual and saturation flux, r),
+  4.5: motor (load torque and type, $R_r$, H).
+- 5.1: power flow.
+- 6.1: chopper (D, $f_s$, L, C, R), 6.2: bridge (α, $L_s$), 6.3: PWM (m, $m_f$), 6.4: LCL
+  ($L_1$, $L_2$, $C_f$, $f_s$).
+- 7.1, 8.5: grid-following inverter (SCR, PLL and current bandwidths, P, Q).
+- 7.2: grid-forming vs grid-following (SCR, H, PLL).
+- 7.3: PV (irradiance, temperature), 7.4: wind (wind, gust), 7.5, 8.4: battery (mode),
+  7.6: HVDC (power).
+- 8.1: generator and fault (clearing time, $P_m$, H).
+
+The project goes through the browser's storage (`atelier/store.ts`), so lesson pages do not load
+the Atelier. In the Atelier, each template lists the lessons it reproduces, with links back.
+
+**Challenges** (`atelier/challenges.ts`). A challenge is:
+- a starting bench, with some elements locked: they cannot be moved, deleted or edited, except
+  the parameters it opens;
+- an objective measured live on the simulation;
+- a hint;
+- the explanation, shown once the objective is met.
+
+A banner above the canvas shows the statement and the live status. "Tout effacer" only removes
+what the learner added. Challenges met are ticked in the list (browser storage). No prediction
+exercise is attached to the Atelier.
+
+| Challenge | Objective | Open parameters |
+|---|---|---|
+| Damping without overshoot | 95 % within 6 ms, overshoot < 1 % (series RLC) | R |
+| A clean voltage | THD < 7 % and ≥ 5 V RMS on the load of a square-wave source | L, C of the filter |
+| Twelve smooth volts | 12 V ± 0.2 V from 48 V, ripple < 1 % | D, $f_s$, L, C |
+| Lifting the feeder voltage | Power-flow voltage of the load between 0.98 and 1.02 pu | Capacitor bank Q |
+| Riding through a 300 ms fault | Generator stays in synchronism at ≥ 0.7 pu | P, E′, $K_A$, D |
+| Holding 49.8 Hz with the smallest battery | Nadir ≥ 49.8 Hz after a load step, battery ≤ 1.5 MVA | Battery size, droop, FFR, threshold |
+
+**Tests.**
+- `links.test.ts`: every link points to an existing template, element and parameter, from the
+  lesson's defaults.
+- `challenges.test.ts`: every challenge is unmet at the start and met by a known solution that
+  uses only open parameters.
+- `bench.test.ts`: locks (no deletion, move or edit of locked elements; clear all keeps them;
+  leaving the challenge unlocks).
+- Smoke test:
+  - a lesson opens its bench with its settings;
+  - a challenge is played to the end;
+  - the Atelier has no horizontal scroll at 390 px.
+
+**Synchronous generator regulator.** Its setpoint defaults to the terminal voltage reached at the
+end of initialisation. The regulator only acts after the rotor is released, and the field is
+limited to 0–3 pu. A gain of 100 used to drive the EMF negative.
