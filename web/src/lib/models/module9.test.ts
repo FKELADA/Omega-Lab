@@ -161,7 +161,7 @@ describe('defence plan (9.5)', () => {
     expect(k.blackout || k.over).toBe(false);
   });
   it('low inertia: 7.5 % stages over-shed, 5 % stages save the system', () => {
-    const q = { ...d, deficit: 20, H: 1.5 };
+    const q = { ...d, deficit: 25, H: 1.5 };
     const a = defInfo(q);
     expect(a.over || a.blackout).toBe(true);
     const b = defInfo({ ...q, step: 5 });

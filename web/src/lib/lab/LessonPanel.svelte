@@ -6,6 +6,7 @@
   import { answers } from '../../lessons/answers';
   import { docForLesson, LINKS } from '../../atelier/links';
   import { openInAtelier } from '../../atelier/store';
+  import { markStep, markVisit } from '../ui/progress.svelte';
 
   let { lab, onnote }: { lab: Lab; onnote?: () => void } = $props();
 
@@ -16,8 +17,13 @@
 
   // Completion is sticky: once a check passes, the step stays done.
   $effect(() => {
-    for (const s of steps) if (!lab.completed[s.id] && s.check?.(lab)) lab.completed[s.id] = true;
+    for (const s of steps)
+      if (!lab.completed[s.id] && s.check?.(lab)) {
+        lab.completed[s.id] = true;
+        markStep(lab.exp.id, s.id);
+      }
   });
+  $effect(() => markVisit(lab.exp.id));
 
   const body = $derived((void ui.lang, renderMarkdown(tr(step.body))));
   const help = $derived(answers[lab.exp.id]?.[step.id]);

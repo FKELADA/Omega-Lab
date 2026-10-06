@@ -23,7 +23,7 @@ npm run dev        # http://localhost:5173
 
 ## Status
 
-Sixty-five lessons are complete (Modules 0–10), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
+The app opens on a **home page** (where to start by profile, the course map with your progress, a resume link). Sixty-five lessons are complete (Modules 0–10), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
 baked into the app (`web/scripts/bake-g2elin.mjs` and `bake-shapes.py` regenerate them from a local G2ELin). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 

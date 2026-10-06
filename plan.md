@@ -151,11 +151,8 @@ no console errors).
 
 ### Next
 
-1. **Home page** (`#home`, the default route): what Omega Lab is, the 11 modules as a map with
-   progress, entry points by profile (learner, researcher, engineer), "continue where I left off",
-   a link to the Atelier and its challenges, and a short demo animation. Bilingual, phone-friendly.
-2. **Expert review of Modules 9–10:** check every figure flagged "à vérifier" against RTE,
-   Enedis, CRE and ENTSO-E publications, and adjust the sources table.
+1. ✅ **Home page** (`#home`, the default route): pitch and demo animation, start or resume, entry points by profile, the course map with progress saved in the browser, the Atelier.
+2. ✅ **Review of Modules 9–10:** figures checked against RTE, Enedis, ENTSO-E, UCTE and CRE publications; corrections listed in the documentation (§16).
 3. **Progress and assessment:** per-lesson progress saved in the browser, a short quiz at the end
    of each module, and an export of results for teachers.
 4. **Capstone labs** from §5 Module 8 and Modules 9–10 (for example "plan a primary substation

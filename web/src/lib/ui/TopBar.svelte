@@ -9,7 +9,7 @@
     docs = false,
     mode = 'lessons',
     onmode,
-  }: { exp: Experiment; onmap: () => void; ondocs: () => void; docs?: boolean; mode?: 'lessons' | 'atelier'; onmode?: (m: 'lessons' | 'atelier') => void } = $props();
+  }: { exp: Experiment; onmap: () => void; ondocs: () => void; docs?: boolean; mode?: 'home' | 'lessons' | 'atelier'; onmode?: (m: 'lessons' | 'atelier') => void } = $props();
 
   const personas: Persona[] = ['learner', 'research', 'utility'];
   const themes: Theme[] = ['auto', 'light', 'dark'];
@@ -22,7 +22,7 @@
 </script>
 
 <header class="top">
-  <div class="brand">
+  <a class="brand" href="#home" title={tr({ fr: 'Accueil', en: 'Home' })}>
     <svg viewBox="0 0 32 32" aria-hidden="true" class="logo">
       <circle cx="16" cy="16" r="14" />
       <path d="M4,16 C8,4 12,4 16,16 S24,28 28,16" />
@@ -32,7 +32,7 @@
       <div class="name">Omega Lab</div>
       <div class="tag">{tr(S.tagline)}</div>
     </div>
-  </div>
+  </a>
 
   <button class="crumbs" onclick={onmap} title={tr(S.modules)}>
     <span class="map">☰</span>
@@ -43,6 +43,7 @@
   <div class="controls">
     {#if onmode}
       <div class="seg mode" role="group" aria-label={tr({ fr: 'Mode', en: 'Mode' })}>
+        <a class:on={mode === 'home'} href="#home" class="homebtn" title={tr({ fr: 'Accueil', en: 'Home' })}>⌂</a>
         <button class:on={mode === 'lessons' && !docs} onclick={() => onmode('lessons')}>{tr({ fr: 'Leçons', en: 'Lessons' })}</button>
         <button class:on={mode === 'atelier'} onclick={() => onmode('atelier')}>🛠 {tr({ fr: 'Atelier', en: 'Workbench' })}</button>
       </div>
@@ -79,6 +80,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    color: inherit;
+    text-decoration: none;
   }
   .logo {
     width: 32px;
@@ -148,6 +151,18 @@
     padding: 4px 10px;
     font-size: 12.5px;
     color: var(--muted);
+  }
+  .seg a.homebtn {
+    padding: 4px 10px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+  }
+  .seg a.homebtn.on {
+    background: var(--accent-soft);
+    color: var(--ink);
   }
   .seg button + button {
     border-left: 1px solid var(--line);

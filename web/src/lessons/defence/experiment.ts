@@ -49,8 +49,8 @@ export const defenceLesson: Experiment = {
       },
       points: (lab) => [{ x: Math.max(47.4, Math.min(50.1, lab.at('f') || 47.4)), y: lab.at('shed'), color: '--accent' }],
       note: () => ({
-        fr: 'Le code européen (NC ER) demande, pour l’Europe continentale, de délester de l’ordre de 45 % de la charge entre 49 Hz et 48 Hz, en plusieurs échelons (ordre de grandeur, à vérifier).',
-        en: 'The European code (NC ER) asks continental Europe to shed about 45 % of load between 49 Hz and 48 Hz, in several stages (order of magnitude, to be checked).',
+        fr: 'Le code européen (NC ER) demande, pour l’Europe continentale, de délester 45 % ± 7 % de la charge entre 49 Hz et 48 Hz, en au moins 6 échelons de 10 % au plus, avec 150 ms au plus de délai (disjoncteur compris).',
+        en: 'The European code (NC ER) asks continental Europe to shed 45 % ± 7 % of load between 49 Hz and 48 Hz, in at least 6 stages of at most 10 %, with at most 150 ms delay (breaker included).',
       }),
     },
   ],
@@ -159,12 +159,12 @@ export const defenceLesson: Experiment = {
       id: 'inertia',
       title: { fr: 'Peu d’inertie', en: 'Low inertia' },
       body: {
-        fr: `Déficit de **20 %**, inertie de **1,5 s**. Avec des échelons de 7,5 %, la chute est si rapide que trop d’échelons partent avant le creux : sur-délestage. Trouvez des échelons plus fins qui sauvent le système.`,
-        en: `A **20 %** deficit, **1.5 s** of inertia. With 7.5 % stages the fall is so fast that too many stages trip before the nadir: over-shedding. Find finer stages that save the system.`,
+        fr: `Déficit de **25 %**, inertie de **1,5 s**. Avec des échelons de 7,5 %, la chute est si rapide que trop d’échelons partent avant le creux : sur-délestage. Trouvez des échelons plus fins qui sauvent le système.`,
+        en: `A **25 %** deficit, **1.5 s** of inertia. With 7.5 % stages the fall is so fast that too many stages trip before the nadir: over-shedding. Find finer stages that save the system.`,
       },
       check: (lab) => {
         const k = lab.info as DefInfo;
-        return lab.params.deficit >= 20 && lab.params.H <= 1.6 && lab.params.step > 0 && !k.blackout && !k.over;
+        return lab.params.deficit >= 25 && lab.params.H <= 1.6 && lab.params.step > 0 && !k.blackout && !k.over;
       },
     },
   ],

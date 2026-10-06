@@ -199,6 +199,20 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
   - *Researcher* adds the mathematical-structure cards (state space, transfer functions,
     conventions).
 - **URLs:** each lesson has one (`#1.4`), and the last step links to the next lesson.
+- **Home page** (`#home`, the default when there is no hash; `lib/ui/HomePage.svelte`):
+  - what Omega Lab is, with a rotating-phasor animation (still when the system asks for reduced
+    motion);
+  - "Start" or "Resume" (the last lesson opened), the Atelier and the documentation;
+  - three entry points by profile, each setting the profile and opening its first lesson:
+    learner from 0.1, researcher from 3.1, engineer from 4.1;
+  - the course map with every module's progress bar and each lesson's completed steps;
+  - the number of Atelier challenges met.
+
+  The logo and the ⌂ button in the top bar lead back to it.
+- **Progress** (`lib/ui/progress.svelte.ts`): the steps completed in each lesson and the last
+  lesson opened are saved in the browser, keyed by experiment id so they survive renumbering.
+  Lessons still start afresh on each visit; the record only feeds the home page, which can clear
+  it.
 - **Teaching notes:** an ⓘ button next to each module and lesson in the course map, and a
   "Teaching note" button in the lesson panel, open a plain-language note (`lessons/notes.ts`,
   French and English). It gives the summary, the objective, each formula with its meaning, the
@@ -3842,7 +3856,7 @@ continental Europe (300 GW).
 - Swing: $M\,\dot{\Delta f} = \sum(\text{FCR} + \text{aFRR} + \text{mFRR}) - \Delta P - D\,P_L\,\Delta f$,
   with $M = 2H\,P_L/f_0$, $H = 5$ s and $D = 1\,\%$/Hz.
 - France's interchange deviation is its own balance minus its share of the acceleration.
-- FCR: 600 and 2,400 MW, fully deployed at 200 mHz, through a lag of 8 s.
+- FCR: 540 MW (France) and 2,460 MW (the rest), fully deployed at 200 mHz, through a lag of 8 s.
 - aFRR: $\text{aFRR} = -\frac{1}{T_r}\int \text{ACE}$, with
   $\text{ACE} = \Delta P_{ech} + \lambda_{zone}\,\Delta f$ and limits of 1,000 and 4,000 MW.
 - mFRR: the area in deficit calls it $t_m$ after the incident, ramping with a 180 s time
@@ -3984,7 +3998,7 @@ a late one does not.
 - Swing: $2H\,\dot{\Delta f} = 1 - \Delta P + \Delta P_m - (1 - P_{del})(1 + D\,\Delta f)$, with
   $D = 1$.
 - Primary reserve: 5 %, 5 % droop, 6 s lag.
-- Six shedding stages, 0.2 Hz apart from $f_1$, each with a 0.2 s relay delay.
+- Six shedding stages, 0.2 Hz apart from $f_1$, each tripping 150 ms after its threshold is crossed (the NC ER maximum, breaker included).
 - The generators trip below 47.5 Hz or above 51.5 Hz: a blackout.
 - Explicit Euler, 2 ms step, over 30 s; the loss is at $t = 1$ s.
 
@@ -4009,7 +4023,7 @@ a late one does not.
 | 2 | No shedding | Stages at 0 %, blackout |
 | 3 | Shedding too much | Deficit ≤ 12 %, frequency > 51 Hz |
 | 4 | A very large deficit | Deficit ≥ 30 %, stages 5–10 %, saved, no over-frequency |
-| 5 | Low inertia | Deficit ≥ 20 %, $H \le 1.6$ s, saved, no over-frequency |
+| 5 | Low inertia | Deficit ≥ 25 %, $H \le 1.6$ s, saved, no over-frequency |
 
 **Misconceptions detected** (y-range 47.5–50.5 Hz):
 - the frequency stays low after shedding: the sketch ends below 49.5 Hz without going under 48 Hz;
@@ -4020,7 +4034,7 @@ a late one does not.
 - The RoCoF formula holds.
 - 15 % stages for 10 % over-shed.
 - 30 % is saved by 7.5 % stages.
-- At $H = 1.5$ s, 7.5 % stages over-shed and 5 % stages save the system.
+- At $H = 1.5$ s and a 25 % deficit, 7.5 % stages over-shed and 5 % stages save the system.
 
 ### 9.6 Connection studies · `#9.6` · `lessons/connect`
 
@@ -4322,6 +4336,26 @@ network.
 
 ## 16. Standards and figures quoted in the lessons
 
+**Review of Modules 9 and 10 (6 October 2026).** The figures first flagged "to be checked" were
+compared with public sources:
+- [RTE key figures](https://www.connaissancedesenergies.org/fiche-pedagogique/rte-reseau-de-transport-delectricite);
+- [Enedis](https://www.connaissancedesenergies.org/fiche-pedagogique/enedis-gestionnaire-du-reseau-de-distribution-delectricite-en-france);
+- [ENTSO-E NC ER](https://www.entsoe.eu/Documents/Network%20codes%20documents/NC%20ER/150325_ENTSO-E_NC%20ER_final.pdf) and [RG CE Policy 5](https://eepublicdownloads.entsoe.eu/clean-documents/Publications/SOC/safa/5_-_Policy__on_Emergency_and_Restoration.pdf);
+- the [UCTE report on 4 November 2006](https://eepublicdownloads.entsoe.eu/clean-documents/pre2015/publications/ce/otherreports/Final-Report-20070130.pdf);
+- the CRE deliberations on [French system services](https://www.cre.fr/fileadmin/Documents/Deliberations/import/220728_2022-226_Regles_SSY_7-1_annexe_2_Regles_CRE.pdf);
+- [photovoltaique.info on reactive absorption](https://reseaux.photovoltaique.info/fr/integrer-les-enr-aux-reseaux/enjeux-techniques-du-raccordement-des-producteurs/absorption-de-reactif/exigences-reglementaires-et-mise-en-application/).
+
+Corrections made:
+- France's FCR share is 540 MW, not 600 MW.
+- The French aFRR is at least 500 MW, varying with the hour and season.
+- The shedding relay delay is 150 ms; the low-inertia step of 9.5 was recalibrated to a 25 % deficit.
+- −0.35 is the LV reference; MV producers get a study-specific tan φ or Q(U).
+- Neutral-earthing practice was made explicit (historical 1,000 A / 300 A, compensated neutral in
+  rural areas).
+
+The MV/LV substation count could not be confirmed and is now given as "several hundred
+thousand".
+
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.
 
@@ -4355,14 +4389,14 @@ before using them in a formal context.
 | Tap changers ±12 × 1.25 %, first delay tens of seconds; Dyn11 for MV/LV transformers | 4.3 | Common utility practice (orders of magnitude) |
 | Droop 4–6 %, static exciter ceilings, negative damping from fast AVRs | 4.5 | Kundur, *Power System Stability and Control* |
 | Load frequency sensitivity ≈ 1–2 %/% (self-regulation ≈ 1 %/Hz used in continental Europe) | 4.7 | Kundur; ENTSO-E operation handbook |
-| RTE ≈ 100,000 km of 63–400 kV lines, ≈ 3,000 substations; Enedis ≈ 1.4 million km, > 2,000 primary and ≈ 800,000 MV/LV substations | 9.1, 10.1 | RTE and Enedis annual reports (orders of magnitude, to be checked) |
-| FCR ≈ 3,000 MW in continental Europe, fully deployed at 200 mHz in 30 s; aFRR 5 min; mFRR 12.5 min; 3,000 MW reference incident | 9.2 | ENTSO-E SOGL and balancing products (to be checked) |
+| RTE ≈ 106,000 km of 63–400 kV lines (7,000 km underground), ≈ 2,800 substations; Enedis ≈ 1.4 million km, ≈ 2,250 primary substations, ≈ 37.5 million customers, several hundred thousand MV/LV substations | 9.1, 10.1 | RTE key figures (2023); Enedis key figures. The MV/LV substation count is not confirmed |
+| FCR ≈ 3,000 MW in continental Europe (France ≈ 540 MW), fully deployed at 200 mHz in 30 s; French aFRR ≥ 500 MW; aFRR 5 min (PICASSO); mFRR 12.5 min (MARI); 3,000 MW reference incident | 9.2 | ENTSO-E SOGL and balancing platforms; CRE deliberations on the French system services rules |
 | N-1 rule, temporary admissible overloads | 9.3 | ENTSO-E SOGL; RTE network rules |
 | Pilot-node secondary voltage control | 9.4 | RTE practice (RST), CIGRE literature |
-| Under-frequency shedding ≈ 45 % of load between 49 and 48 Hz; generators connected 47.5–51.5 Hz; 2006 European split | 9.5 | Network code NC ER and RfG; UCTE final report on 4 November 2006 (to be checked) |
+| Under-frequency shedding 45 % ± 7 % of load between 49 and 48 Hz, ≥ 6 stages of ≤ 10 %, ≤ 150 ms delay; generators connected 47.5–51.5 Hz; 2006 split: 17 GW of load and 1.6 GW of pumping shed in the western area | 9.5 | ENTSO-E RG CE Policy 5 and NC ER; NC RfG; UCTE final report on 4 November 2006 |
 | SCR ≥ 3 for standard inverters; 63 kA breakers at 400 kV | 9.6 | CIGRE TB 671; common switchgear ratings |
-| MV neutral currents ≈ 300 A (overhead) and 1,000 A (underground); compensated neutral; about 3 A/km of cable capacitive current | 10.3 | Enedis technical references (orders of magnitude, to be checked) |
-| tan φ = −0.35 for MV producers, Q(U) laws | 10.2 | Enedis connection rules (to be checked) |
+| Resistance-earthed MV neutral historically limited to 1,000 A (urban underground) and 300 A (elsewhere); compensated (Petersen) neutral spreading on rural networks since the 2000s; about 3 A/km of cable capacitive current | 10.3 | Enedis technical references (Malten programme), CT-062 (Schneider) |
+| tan φ = −0.35: Enedis reference for LV producers; MV producers get a constant tan φ or a Q = f(U) law from their connection study | 10.2 | Enedis technical reference documentation; photovoltaique.info |
 
 ---
 

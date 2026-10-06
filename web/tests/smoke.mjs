@@ -929,7 +929,7 @@ await setParam(0, 10, 2, 40);
 await setParam(3, 15, 0, 15);
 await setParam(0, 30, 2, 40);
 await setParam(3, 7.5, 0, 15);
-await setParam(0, 20, 2, 40);
+await setParam(0, 25, 2, 40);
 await setParam(1, 1.5, 1, 6);
 await setParam(3, 5, 0, 15);
 check('9.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
@@ -1005,6 +1005,23 @@ const cur = await page.locator('.drawer .lesson.cur').boundingBox();
 check('lesson list opens on the current lesson', cur !== null && cur.y > 0 && cur.y < (page.viewportSize()?.height ?? 1000), `y ${cur?.y}`);
 await page.keyboard.press('Escape');
 await page.locator('.scrim').click({ force: true }).catch(() => {});
+
+// The home page: default route, progress recorded by the lessons above, resume link, phone width.
+await page.goto(URL);
+await page.reload();
+await page.waitForSelector('.home');
+check('home page opens by default', (await page.locator('.home h1').textContent()) === 'Omega Lab');
+check('home page shows recorded progress', /Ma progression : [1-9]/.test((await page.locator('.home').textContent()) ?? ''));
+check('home page offers to resume', (await page.locator('.home a.btn.primary', { hasText: 'Reprendre' }).count()) === 1);
+check('home page lists every module', (await page.locator('.home .mod').count()) === 11);
+await page.screenshot({ path: `${out}/smoke-home.png`, fullPage: true });
+await page.setViewportSize({ width: 390, height: 844 });
+await page.waitForTimeout(200);
+check('home page: no horizontal scroll at 390 px', (await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
+await page.setViewportSize({ width: 1600, height: 1000 });
+await page.locator('.home .profile', { hasText: 'Ingénieur' }).click();
+await page.waitForSelector('.u-over');
+check('engineer profile starts at 4.1', page.url().endsWith('#4.1'));
 
 // Enlarged charts draw their curves (each copy has its own clip region).
 await open('4.9');

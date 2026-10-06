@@ -80,8 +80,8 @@ export const balancingLesson: Experiment = {
       },
       vlines: (lab) => [{ x: Math.max(1, lab.t - BAL.tInc), label: 't' }],
       note: () => ({
-        fr: 'Les produits européens fixent des délais de mobilisation complète : FCR en 30 s, aFRR en 5 min, mFRR en 12,5 min (ordres de grandeur actuels, à vérifier).',
-        en: 'European products set full-activation times: FCR in 30 s, aFRR in 5 min, mFRR in 12.5 min (current orders of magnitude, to be checked).',
+        fr: 'Les produits européens fixent des délais de mobilisation complète : FCR en 30 s, aFRR en 5 min (plateforme PICASSO), mFRR en 12,5 min (plateforme MARI).',
+        en: 'European products set full-activation times: FCR in 30 s, aFRR in 5 min (PICASSO platform), mFRR in 12.5 min (MARI platform).',
       }),
     },
   ],
@@ -118,8 +118,8 @@ export const balancingLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'Toute l’Europe continentale répond ensemble, chaque pays au prorata de sa part de FCR (environ 3 000 MW au total, dont quelques centaines en France). L’incident de dimensionnement est la perte de 3 000 MW.',
-          en: 'All of continental Europe responds together, each country in proportion to its FCR share (about 3,000 MW in total, a few hundred of them in France). The design incident is a 3,000 MW loss.',
+          fr: 'Toute l’Europe continentale répond ensemble, chaque pays au prorata de sa part de FCR (environ 3 000 MW au total, dont environ 540 MW en France). L’incident de dimensionnement est la perte de 3 000 MW.',
+          en: 'All of continental Europe responds together, each country in proportion to its FCR share (about 3,000 MW in total, about 540 MW of them in France). The design incident is a 3,000 MW loss.',
         }),
     },
     {

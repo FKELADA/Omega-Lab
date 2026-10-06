@@ -12,6 +12,8 @@
   import DocsPage from './lib/ui/DocsPage.svelte';
   import NoteView from './lib/ui/NoteView.svelte';
   import Zoomable from './lib/ui/Zoomable.svelte';
+  import HomePage from './lib/ui/HomePage.svelte';
+  import { progress } from './lib/ui/progress.svelte';
   import { ui } from './lib/ui/ui.svelte';
   /** The Atelier is loaded on demand: lessons do not pay for its solver and library. */
   const loadAtelier = () => import('./atelier/Atelier.svelte');
@@ -21,10 +23,12 @@
 
   let lab = $state(new Lab(fromHash().experiment!));
   let mapOpen = $state(false);
-  const viewOf = (h: string): 'lab' | 'docs' | 'atelier' => (h === '#docs' ? 'docs' : h.startsWith('#atelier') ? 'atelier' : 'lab');
+  // No hash (or #home) opens the home page; a lesson number opens that lesson.
+  const viewOf = (h: string): 'home' | 'lab' | 'docs' | 'atelier' =>
+    h === '' || h === '#' || h === '#home' ? 'home' : h === '#docs' ? 'docs' : h.startsWith('#atelier') ? 'atelier' : 'lab';
   let view = $state(viewOf(location.hash));
   /** The lesson to come back to from the Atelier or the docs. */
-  let lastLesson = lessons.find((l) => l.id === location.hash.slice(1))?.id ?? lessons[0].id;
+  let lastLesson = (lessons.find((l) => l.id === location.hash.slice(1)) ?? lessons.find((l) => l.experiment!.id === progress.last) ?? lessons[0]).id;
   const setMode = (m: 'lessons' | 'atelier') => (location.hash = m === 'atelier' ? 'atelier' : lastLesson);
   /** Open teaching note: a module, optionally scrolled to one of its lessons. */
   let note = $state<{ module: number; lesson?: string } | null>(null);
@@ -73,11 +77,15 @@
 
 <div class="app" data-hover={lab.hover ?? ''}>
   <TopBar
-    exp={view === 'atelier' ? { ...lab.exp, path: [{ fr: 'Atelier', en: 'Workbench' }], title: { fr: 'Construire et simuler librement', en: 'Build and simulate freely' } } : lab.exp}
+    exp={view === 'atelier'
+      ? { ...lab.exp, path: [{ fr: 'Atelier', en: 'Workbench' }], title: { fr: 'Construire et simuler librement', en: 'Build and simulate freely' } }
+      : view === 'home'
+        ? { ...lab.exp, path: [{ fr: 'Accueil', en: 'Home' }], title: { fr: 'Choisir une leçon', en: 'Choose a lesson' } }
+        : lab.exp}
     onmap={() => (mapOpen = true)}
     ondocs={() => (location.hash = 'docs')}
     docs={view === 'docs'}
-    mode={view === 'atelier' ? 'atelier' : 'lessons'}
+    mode={view === 'atelier' ? 'atelier' : view === 'home' ? 'home' : 'lessons'}
     onmode={setMode}
   />
 
@@ -87,6 +95,8 @@
     {:then m}
       <m.default />
     {/await}
+  {:else if view === 'home'}
+    <HomePage onnote={(m) => openNote(m)} />
   {:else if view === 'docs'}
     <DocsPage onback={() => (location.hash = currentLesson()?.id ?? '')} />
   {:else}

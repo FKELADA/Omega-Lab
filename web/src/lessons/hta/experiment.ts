@@ -107,8 +107,8 @@ export const htaLesson: Experiment = {
       tex: () => `\\begin{aligned} &\\text{HTB/HTA} : 63\\,/\\,90 \\to 20\\ \\text{kV}, \\ 2\\text{–}3 \\times 20\\text{–}40\\ \\text{MVA} \\\\ &\\text{HTA/BT} : 20 \\to 0{,}4\\ \\text{kV}, \\ 100\\text{–}1000\\ \\text{kVA} \\end{aligned}`,
       note: (c) =>
         c.tr({
-          fr: 'Un poste source alimente typiquement une dizaine à une vingtaine de départs HTA de quelques MW chacun, longs de quelques km (urbain, souterrain) à plusieurs dizaines de km (rural, aérien). Ordres de grandeur à vérifier.',
-          en: 'A primary substation typically feeds ten to twenty MV feeders of a few MW each, from a few km long (urban, underground) to several tens of km (rural, overhead). Orders of magnitude, to be checked.',
+          fr: 'Transformateurs normalisés : 20 MVA en 63 kV, 36 MVA en 90 kV, 40 à 100 MVA en 225 kV. Un poste source alimente typiquement une dizaine à une vingtaine de départs HTA de quelques MW chacun, longs de quelques km (urbain, souterrain) à plusieurs dizaines de km (rural). Ordres de grandeur.',
+          en: 'Standard transformers: 20 MVA at 63 kV, 36 MVA at 90 kV, 40 to 100 MVA at 225 kV. A primary substation typically feeds ten to twenty MV feeders of a few MW each, from a few km long (urban, underground) to several tens of km (rural). Orders of magnitude.',
         }),
     },
   ],

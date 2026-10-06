@@ -127,8 +127,8 @@ export const levelsLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'Ordres de grandeur à vérifier dans les publications des gestionnaires. Le GRT (RTE) exploite environ 100 000 km de lignes de 63 à 400 kV et près de 3 000 postes ; le GRD principal (Enedis) environ 1,4 million de km en HTA et BT, plus de 2 000 postes sources et quelque 800 000 postes HTA/BT.',
-          en: 'Orders of magnitude, to be checked against the operators’ publications. The French TSO (RTE) runs about 100,000 km of 63–400 kV lines and nearly 3,000 substations; the main DSO (Enedis) about 1.4 million km of MV and LV lines, over 2,000 primary substations and some 800,000 MV/LV substations.',
+          fr: 'D’après les publications des gestionnaires (ordres de grandeur récents) : RTE exploite environ 106 000 km de lignes de 63 à 400 kV (dont 7 000 km souterrains) et environ 2 800 postes ; Enedis environ 1,4 million de km en HTA et BT, quelque 2 250 postes sources, plusieurs centaines de milliers de postes HTA/BT, pour 37 millions de clients.',
+          en: 'From the operators’ publications (recent orders of magnitude): RTE runs about 106,000 km of 63–400 kV lines (7,000 km underground) and about 2,800 substations; Enedis about 1.4 million km of MV and LV lines, some 2,250 primary substations and several hundred thousand MV/LV substations, for 37 million customers.',
         }),
     },
   ],

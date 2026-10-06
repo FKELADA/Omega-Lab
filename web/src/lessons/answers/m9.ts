@@ -67,8 +67,8 @@ export const answers9: Answers = {
     release: {
       hint: { fr: r`Délai de l’mFRR à 2 minutes ou moins, 1 000 MW en France.`, en: r`mFRR delay of 2 minutes or less, 1,000 MW in France.` },
       answer: {
-        fr: r`L’mFRR (en France, le **mécanisme d’ajustement**) remplace progressivement l’aFRR : $$\text{aFRR} + \text{mFRR} \approx \Delta P \quad\Rightarrow\quad \text{aFRR} \to 0$$ Le réglage secondaire est une réserve chère et limitée (de l’ordre de 1 000 MW en France) : il faut le **reconstituer** au plus vite, pour être prêt à l’incident suivant. Dans l’ordre : FCR (secondes), aFRR (minutes), mFRR (un quart d’heure), puis le marché reprend la main pour les heures suivantes.`,
-        en: r`mFRR (in France, the **balancing mechanism**) gradually replaces aFRR: $$\text{aFRR} + \text{mFRR} \approx \Delta P \quad\Rightarrow\quad \text{aFRR} \to 0$$ Secondary control is an expensive and limited reserve (about 1,000 MW in France): it must be **rebuilt** quickly, ready for the next incident. In order: FCR (seconds), aFRR (minutes), mFRR (a quarter of an hour), then the market takes over for the following hours.`,
+        fr: r`L’mFRR (en France, le **mécanisme d’ajustement**) remplace progressivement l’aFRR : $$\text{aFRR} + \text{mFRR} \approx \Delta P \quad\Rightarrow\quad \text{aFRR} \to 0$$ Le réglage secondaire est une réserve chère et limitée (en France, au moins 500 MW, selon l’heure et la saison) : il faut le **reconstituer** au plus vite, pour être prêt à l’incident suivant. Dans l’ordre : FCR (secondes), aFRR (minutes), mFRR (un quart d’heure), puis le marché reprend la main pour les heures suivantes.`,
+        en: r`mFRR (in France, the **balancing mechanism**) gradually replaces aFRR: $$\text{aFRR} + \text{mFRR} \approx \Delta P \quad\Rightarrow\quad \text{aFRR} \to 0$$ Secondary control is an expensive and limited reserve (in France, at least 500 MW, depending on the hour and season): it must be **rebuilt** quickly, ready for the next incident. In order: FCR (seconds), aFRR (minutes), mFRR (a quarter of an hour), then the market takes over for the following hours.`,
       },
     },
   },
@@ -160,15 +160,15 @@ export const answers9: Answers = {
     none: {
       hint: { fr: r`Échelons à 0 %.`, en: r`Stages at 0 %.` },
       answer: {
-        fr: r`Sans délestage, seuls la réserve (5 %) et l’autoréglage de la charge freinent la chute : $$\Delta f_\infty \approx -\frac{\Delta P - R}{D}\,f_0 \ll -2{,}5\ \text{Hz}$$ La fréquence passe sous 47,5 Hz, les groupes se découplent pour se protéger et la zone s’éteint. C’est le scénario des grandes pannes : la séparation du réseau européen de 2006 a été contenue grâce au délestage automatique de quelque 17 GW de charge en Europe de l’Ouest (ordre de grandeur, à vérifier).`,
-        en: r`Without shedding, only the reserve (5 %) and load self-regulation slow the fall: $$\Delta f_\infty \approx -\frac{\Delta P - R}{D}\,f_0 \ll -2.5\ \text{Hz}$$ The frequency drops below 47.5 Hz, the generators disconnect to protect themselves and the area goes dark. This is the large-blackout scenario: the 2006 split of the European grid was contained thanks to the automatic shedding of some 17 GW of load in Western Europe (order of magnitude, to be checked).`,
+        fr: r`Sans délestage, seuls la réserve (5 %) et l’autoréglage de la charge freinent la chute : $$\Delta f_\infty \approx -\frac{\Delta P - R}{D}\,f_0 \ll -2{,}5\ \text{Hz}$$ La fréquence passe sous 47,5 Hz, les groupes se découplent pour se protéger et la zone s’éteint. C’est le scénario des grandes pannes : la séparation du réseau européen de 2006 a été contenue grâce au délestage automatique de 17 GW de consommation (et 1,6 GW de pompage) dans la zone ouest (rapport final de l’UCTE).`,
+        en: r`Without shedding, only the reserve (5 %) and load self-regulation slow the fall: $$\Delta f_\infty \approx -\frac{\Delta P - R}{D}\,f_0 \ll -2.5\ \text{Hz}$$ The frequency drops below 47.5 Hz, the generators disconnect to protect themselves and the area goes dark. This is the large-blackout scenario: the 2006 split of the European grid was contained thanks to the automatic shedding of 17 GW of load (and 1.6 GW of pumping) in the western area (UCTE final report).`,
       },
     },
     over: {
       hint: { fr: r`Déficit 10 %, échelons de 15 %.`, en: r`10 % deficit, 15 % stages.` },
       answer: {
-        fr: r`Un seul échelon retire 15 % de charge pour un déficit de 10 % : la zone se retrouve avec 5 % de production **en trop** et la fréquence dépasse 51 Hz. $$\Delta P_{apres} = \delta - \Delta P = +5\,\%$$ Au-delà de 51,5 Hz, des groupes pourraient se découpler à leur tour. Les échelons sont donc **fins** (de l’ordre de 5 à 10 %) et nombreux, et les producteurs doivent réduire leur puissance en surfréquence (mode LFSM-O des codes de réseau).`,
-        en: r`A single stage removes 15 % of load for a 10 % deficit: the area ends up with 5 % **too much** generation and the frequency goes above 51 Hz. $$\Delta P_{after} = \delta - \Delta P = +5\,\%$$ Above 51.5 Hz, generators could disconnect in turn. Stages are therefore **small** (about 5 to 10 %) and numerous, and generators must cut their output at over-frequency (the LFSM-O mode of grid codes).`,
+        fr: r`Un seul échelon retire 15 % de charge pour un déficit de 10 % : la zone se retrouve avec 5 % de production **en trop** et la fréquence dépasse 51 Hz. $$\Delta P_{apres} = \delta - \Delta P = +5\,\%$$ Au-delà de 51,5 Hz, des groupes pourraient se découpler à leur tour. Les échelons sont donc **fins** (le code européen les limite à 10 % chacun) et nombreux, et les producteurs doivent réduire leur puissance en surfréquence (mode LFSM-O des codes de réseau).`,
+        en: r`A single stage removes 15 % of load for a 10 % deficit: the area ends up with 5 % **too much** generation and the frequency goes above 51 Hz. $$\Delta P_{after} = \delta - \Delta P = +5\,\%$$ Above 51.5 Hz, generators could disconnect in turn. Stages are therefore **small** (the European code caps each at 10 %) and numerous, and generators must cut their output at over-frequency (the LFSM-O mode of grid codes).`,
       },
     },
     big: {
@@ -179,10 +179,10 @@ export const answers9: Answers = {
       },
     },
     inertia: {
-      hint: { fr: r`Inertie 1,5 s, déficit 20 % : essayez des échelons de 5 %.`, en: r`Inertia 1.5 s, 20 % deficit: try 5 % stages.` },
+      hint: { fr: r`Inertie 1,5 s, déficit 25 % : essayez des échelons de 5 %.`, en: r`Inertia 1.5 s, 25 % deficit: try 5 % stages.` },
       answer: {
-        fr: r`Avec $H = 1{,}5$ s, la fréquence tombe à plus de 3 Hz/s. Pendant les 0,2 s de temporisation d’un relais, elle perd encore 0,7 Hz : plusieurs seuils sont franchis avant que le premier échelon n’agisse, et trop de charge part. $$\Delta f_{retard} \approx \frac{df}{dt}\,t_{relais} = 3{,}3 \times 0{,}2 \approx 0{,}7\ \text{Hz}$$ Des échelons plus fins (5 %) corrigent ici. Plus largement, la baisse de l’inertie (plus d’onduleurs, moins de machines tournantes) pousse à revoir les plans de défense : relais sur la dérivée de fréquence, inertie synthétique, réserves très rapides (leçons 7.2, 7.5, 8.4).`,
-        en: r`With $H = 1.5$ s the frequency falls at over 3 Hz/s. During a relay’s 0.2 s delay it loses another 0.7 Hz: several thresholds are crossed before the first stage acts, and too much load goes. $$\Delta f_{delay} \approx \frac{df}{dt}\,t_{relay} = 3.3 \times 0.2 \approx 0.7\ \text{Hz}$$ Smaller stages (5 %) fix it here. More broadly, falling inertia (more inverters, fewer spinning machines) is pushing a rethink of defence plans: RoCoF relays, synthetic inertia, very fast reserves (lessons 7.2, 7.5, 8.4).`,
+        fr: r`Avec $H = 1{,}5$ s, la fréquence tombe à plus de 4 Hz/s. Pendant les 150 ms que le code européen laisse au relais et au disjoncteur, elle perd encore 0,6 Hz : plusieurs seuils sont franchis avant que le premier échelon n’agisse, et trop de charge part. $$\Delta f_{retard} \approx \frac{df}{dt}\,t_{relais} = 4{,}2 \times 0{,}15 \approx 0{,}6\ \text{Hz}$$ Des échelons plus fins (5 %) corrigent ici. Plus largement, la baisse de l’inertie (plus d’onduleurs, moins de machines tournantes) pousse à revoir les plans de défense : relais sur la dérivée de fréquence, inertie synthétique, réserves très rapides (leçons 7.2, 7.5, 8.4).`,
+        en: r`With $H = 1.5$ s the frequency falls at over 4 Hz/s. During the 150 ms the European code allows the relay and breaker, it loses another 0.6 Hz: several thresholds are crossed before the first stage acts, and too much load goes. $$\Delta f_{delay} \approx \frac{df}{dt}\,t_{relay} = 4.2 \times 0.15 \approx 0.6\ \text{Hz}$$ Smaller stages (5 %) fix it here. More broadly, falling inertia (more inverters, fewer spinning machines) is pushing a rethink of defence plans: RoCoF relays, synthetic inertia, very fast reserves (lessons 7.2, 7.5, 8.4).`,
       },
     },
   },

@@ -6,8 +6,8 @@ const r = String.raw;
 
 export const module10Note: ModuleNote = {
   summary: {
-    fr: 'Le métier du gestionnaire du réseau de distribution (GRD), vu à travers Enedis : des postes sources HTB/HTA, des départs HTA bouclés mais exploités en radial, des postes HTA/BT et la basse tension jusqu’au compteur. Plan de tension, régimes de neutre et 3I0, plan de protection, secours et flexibilités. Les chiffres sont des ordres de grandeur pédagogiques, à vérifier dans les publications d’Enedis et de la CRE.',
-    en: 'The job of the distribution system operator (DSO), seen through Enedis: HV/MV primary substations, MV feeders built in loops but run radially, MV/LV substations and low voltage down to the meter. Voltage plan, neutral earthing and 3I0, protection plan, back-up and flexibility. Figures are teaching orders of magnitude, to be checked against Enedis and CRE publications.',
+    fr: 'Le métier du gestionnaire du réseau de distribution (GRD), vu à travers Enedis : des postes sources HTB/HTA, des départs HTA bouclés mais exploités en radial, des postes HTA/BT et la basse tension jusqu’au compteur. Plan de tension, régimes de neutre et 3I0, plan de protection, secours et flexibilités. Les chiffres sont des ordres de grandeur pédagogiques, relus en octobre 2026 face aux publications d’Enedis (sources dans la documentation).',
+    en: 'The job of the distribution system operator (DSO), seen through Enedis: HV/MV primary substations, MV feeders built in loops but run radially, MV/LV substations and low voltage down to the meter. Voltage plan, neutral earthing and 3I0, protection plan, back-up and flexibility. Figures are teaching orders of magnitude, reviewed in October 2026 against Enedis publications (sources in the documentation).',
   },
   objective: {
     fr: 'Comprendre les contraintes propres à la distribution et les choix d’exploitation et de planification d’un GRD.',

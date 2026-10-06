@@ -6,8 +6,8 @@ const r = String.raw;
 
 export const module9Note: ModuleNote = {
   summary: {
-    fr: 'Le métier du gestionnaire du réseau de transport (GRT), vu à travers RTE : un réseau maillé de 63 à 400 kV, interconnecté à l’Europe, qu’il faut équilibrer à chaque seconde, garder sûr en N-1, tenir en tension, défendre contre les grands incidents, et ouvrir aux nouveaux producteurs. Les chiffres sont des ordres de grandeur pédagogiques, à vérifier dans les publications de RTE et d’ENTSO-E.',
-    en: 'The job of the transmission system operator (TSO), seen through RTE: a meshed 63–400 kV grid, interconnected with Europe, that must be balanced every second, kept N-1 secure, held in voltage, defended against major incidents, and opened to new generators. Figures are teaching orders of magnitude, to be checked against RTE and ENTSO-E publications.',
+    fr: 'Le métier du gestionnaire du réseau de transport (GRT), vu à travers RTE : un réseau maillé de 63 à 400 kV, interconnecté à l’Europe, qu’il faut équilibrer à chaque seconde, garder sûr en N-1, tenir en tension, défendre contre les grands incidents, et ouvrir aux nouveaux producteurs. Les chiffres sont des ordres de grandeur pédagogiques, relus en octobre 2026 face aux publications de RTE, d’ENTSO-E et de la CRE (sources dans la documentation).',
+    en: 'The job of the transmission system operator (TSO), seen through RTE: a meshed 63–400 kV grid, interconnected with Europe, that must be balanced every second, kept N-1 secure, held in voltage, defended against major incidents, and opened to new generators. Figures are teaching orders of magnitude, reviewed in October 2026 against RTE, ENTSO-E and CRE publications (sources in the documentation).',
   },
   objective: {
     fr: 'Comprendre les spécificités du transport face à la distribution et les études d’un ingénieur GRT : équilibre, sécurité, tension, défense, raccordement.',
@@ -148,7 +148,7 @@ export const module9Notes: Record<string, LessonNote> = {
     tests: [
       { what: { fr: 'Le plan par défaut sauve le système ; sans délestage, c’est la panne.', en: 'The default plan saves the system; without shedding, a blackout.' }, why: { fr: 'Vérifie les étapes 1 et 2.', en: 'Checks steps 1 and 2.' } },
       { what: { fr: 'Le RoCoF initial vaut $\\Delta P f_0/2H$ ; des échelons de 15 % pour 10 % de déficit dépassent 51 Hz.', en: 'The initial RoCoF is $\\Delta P f_0/2H$; 15 % stages for a 10 % deficit exceed 51 Hz.' }, why: { fr: 'Vérifie la formule et l’étape 3.', en: 'Checks the formula and step 3.' } },
-      { what: { fr: '30 % sont sauvés par des échelons de 7,5 % ; à $H = 1{,}5$ s, 7,5 % sur-délestent mais 5 % sauvent.', en: '30 % is saved by 7.5 % stages; at $H = 1.5$ s, 7.5 % over-sheds but 5 % saves.' }, why: { fr: 'Vérifie les étapes 4 et 5.', en: 'Checks steps 4 and 5.' } },
+      { what: { fr: '30 % sont sauvés par des échelons de 7,5 % ; à $H = 1{,}5$ s et 25 % de déficit, 7,5 % sur-délestent mais 5 % sauvent.', en: '30 % is saved by 7.5 % stages; at $H = 1.5$ s and a 25 % deficit, 7.5 % over-sheds but 5 % saves.' }, why: { fr: 'Vérifie les étapes 4 et 5.', en: 'Checks steps 4 and 5.' } },
     ],
   },
   '9.6': {

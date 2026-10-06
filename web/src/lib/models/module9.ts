@@ -90,7 +90,7 @@ export const BAL = {
   load: [60000, 300000],
   H: 5,
   D: 0.01, // self-regulation: 1 % of load per Hz
-  fcr: [600, 2400], // MW, fully deployed at 200 mHz
+  fcr: [540, 2460], // MW, fully deployed at 200 mHz (France: about 540 MW)
   Tfcr: 8,
   afrr: [1000, 4000], // MW available
   tInc: 10,
@@ -458,7 +458,7 @@ export const vplanModel: Model = {
  * generation. Primary reserve is limited and slow; load shedding stages trip at fixed
  * thresholds; below 47.5 Hz the generators disconnect (blackout); above 51.5 Hz they also trip.
  */
-export const DEF = { f0: 50, tLoss: 1, reserve: 0.05, Tg: 6, D: 1, stages: 6, gap: 0.2, delay: 0.2, fTrip: 47.5, fOver: 51.5, window: 30 };
+export const DEF = { f0: 50, tLoss: 1, reserve: 0.05, Tg: 6, D: 1, stages: 6, gap: 0.2, delay: 0.15, fTrip: 47.5, fOver: 51.5, window: 30 };
 
 export function defRun(p: Params, tEnd = DEF.window, n = 1501) {
   const t = linspace(0, tEnd, n);
