@@ -35,6 +35,24 @@ export const LINKS: Record<string, LessonLink> = {
   '7.6': { template: 'hvdc', map: (p) => ({ 'MMC2.Pset': Math.min(1.1, p.P / 500) }) },
   '8.1': { template: 'smib', map: (p) => ({ 'F1.toff': 1 + p.tc / 1000, 'SM1.P0': p.Pm, 'SM1.H': p.H }) },
   '8.4': { template: 'bess-ffr' },
+  '10.1': { template: 'mv-loop' },
+  // The bench earths the neutral through a resistor: isolated → a very large one; the lesson's
+  // compensated case keeps the resistor of the same current limit (swap in a coil on the bench).
+  '10.3': {
+    template: 'mv-neutral',
+    map: (p) => ({
+      'RN.R': p.regime === 0 ? 1e6 : 20e3 / Math.sqrt(3) / p.In,
+      'LG1.len': p.Lc / 3,
+      'LG2.len': (2 * p.Lc) / 3,
+      'F1.Rf': Math.min(p.Rf, 1e3),
+      'P1.Is0': p.Is0,
+      'P2.Is0': p.Is0,
+    }),
+  },
+  '10.4': {
+    template: 'mv-protection',
+    map: (p) => ({ 'P1.Is': p.Is, 'P1.td': p.td, 'LG1.len': p.d, 'F1.toff': p.type ? 10 : 0.8, 'P1.reclose': p.reclose ? 2 : 0 }),
+  },
   '8.5': { template: 'gfl-weak', map: (p) => ({ 'GFL1.fpll': p.fpll, 'GFL1.Pset': p.P, ...prefix('G1', weakGrid(p.SCR, 100e3, 400)) }) },
 };
 

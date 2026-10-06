@@ -177,6 +177,73 @@ export const CHALLENGES: Challenge[] = [
       return { ok: fmin >= 49.8 && Sn <= 1.5e6 + 1, status: both(`f min = ${fmt(fmin, 5)} Hz · batterie ${fmt(Sn / 1e6)} MVA`, `f min = ${fmt(fmin, 5)} Hz · battery ${fmt(Sn / 1e6)} MVA`) };
     },
   },
+  {
+    id: 'ch-petersen',
+    name: both('Accorder la bobine de Petersen', 'Tuning the Petersen coil'),
+    statement: both(
+      'Le neutre HTA est mis à la terre par une **bobine** (neutre compensé). Réglez son inductance pour que le courant d’un défaut a–terre franc tombe **sous 40 A** : l’arc s’éteindra seul.',
+      'The MV neutral is earthed through a **coil** (compensated neutral). Set its inductance so that the current of a solid a–earth fault falls **below 40 A**: the arc will go out on its own.',
+    ),
+    hint: both(
+      'La bobine doit compenser le courant capacitif des câbles : $\\frac{1}{\\omega L} = 3\\omega C$, avec $C$ la capacité d’une phase de tout le réseau (60 km × 250 nF/km).',
+      'The coil must cancel the cables’ capacitive current: $\\frac{1}{\\omega L} = 3\\omega C$, with $C$ one phase’s capacitance for the whole network (60 km × 250 nF/km).',
+    ),
+    answer: both(
+      'Avec $C = 15\\ \\mu$F par phase, l’accord est $L = 1/(3\\omega^2 C) \\approx 0{,}23$ H : le courant inductif de la bobine annule les 163 A capacitifs, et il ne reste que la composante active (pertes). Un désaccord de quelques pour cent suffit à faire remonter le courant : la bobine doit suivre l’évolution du réseau (leçon 10.3).',
+      'With $C = 15\\ \\mu$F per phase, tuning is $L = 1/(3\\omega^2 C) \\approx 0.23$ H: the coil’s inductive current cancels the 163 A of capacitive current, leaving only the active component (losses). A few per cent of detuning is enough to raise the current again: the coil must follow changes in the network (lesson 10.3).',
+    ),
+    doc: () => {
+      const doc = TEMPLATES.find((t) => t.id === 'mv-neutral')!.doc();
+      doc.name = 'Défi : neutre compensé';
+      const rn = doc.elements.find((e) => e.id === 'RN')!;
+      rn.id = 'LN';
+      rn.type = 'L';
+      rn.params = { L: 0.5 };
+      for (const wr of doc.wires) for (const end of [wr.a, wr.b]) if (end.el === 'RN') end.el = 'LN';
+      return doc;
+    },
+    locked: ['G1', 'TS1', 'LN', 'GND1', 'P1', 'LG1', 'CH1', 'F1', 'P2', 'LG2', 'CH2'],
+    editable: { LN: ['L'] },
+    goal: ({ run }) => {
+      const t = run.t, y = run.s['F1.ia'], T = t[t.length - 1];
+      let s = 0, n = 0;
+      t.forEach((x, k) => {
+        if (x > T - 0.04) (s += y[k] * y[k]), n++;
+      });
+      const I = Math.sqrt(s / Math.max(1, n));
+      return { ok: I < 40, status: both(`courant de défaut ${fmt(I)} A (efficace)`, `fault current ${fmt(I)} A (RMS)`) };
+    },
+  },
+  {
+    id: 'ch-grading',
+    name: both('Couper le bon départ', 'Tripping the right feeder'),
+    statement: both(
+      'Un défaut biphasé fugitif en bout de départ : c’est l’**arrivée** (P0, 0,7 s) qui coupe tout le poste. Réglez la protection du **départ** (P1) pour qu’elle élimine le défaut seule, sans que l’arrivée ne s’ouvre, et que les clients soient **réalimentés** à la fin.',
+      'A transient phase-to-phase fault at the end of the feeder: the **incomer** (P0, 0.7 s) trips the whole substation. Set the **feeder** relay (P1) so it clears the fault alone, without the incomer opening, and customers are **restored** by the end.',
+    ),
+    hint: both(
+      'Le départ doit être plus rapide que l’arrivée d’au moins 0,3 s, et un réenclenchement rapide referme après la disparition d’un défaut fugitif.',
+      'The feeder must be faster than the incomer by at least 0.3 s, and rapid reclosing closes again once a transient fault has gone.',
+    ),
+    answer: both(
+      'Avec $t_d \\le 0{,}4$ s, le départ s’ouvre avant que la temporisation de l’arrivée (0,7 s) n’expire : la sélectivité chronométrique est respectée. Le réenclenchement rapide (0,3 s) referme une fois le défaut disparu, et les clients ne subissent qu’une coupure brève (leçon 10.4).',
+      'With $t_d \\le 0.4$ s, the feeder opens before the incomer’s delay (0.7 s) runs out: time grading holds. Rapid reclosing (0.3 s) closes again once the fault has gone, and customers see only a short interruption (lesson 10.4).',
+    ),
+    doc: from('mv-protection', 'Défi : sélectivité', { 'P1.td': 0.8, 'P1.reclose': 0, 'F1.toff': 1.2 }),
+    locked: ['G1', 'TS1', 'RN', 'GND1', 'P0', 'P1', 'LG1', 'CH1', 'F1'],
+    editable: { P1: ['Is', 'td', 'reclose'] },
+    goal: ({ run }) => {
+      const p0 = run.s['P0.etat'], p1 = run.s['P1.etat'];
+      const incomer = Math.min(...p0) > 0.5, tripped = Math.min(...p1) < 0.5, restored = p1[p1.length - 1] > 0.5 && p0[p0.length - 1] > 0.5;
+      return {
+        ok: incomer && tripped && restored,
+        status: both(
+          `arrivée ${incomer ? 'restée fermée' : 'ouverte'} · départ ${tripped ? 'déclenché' : 'pas déclenché'} · ${restored ? 'clients réalimentés' : 'clients coupés'}`,
+          `incomer ${incomer ? 'stayed closed' : 'opened'} · feeder ${tripped ? 'tripped' : 'did not trip'} · ${restored ? 'customers restored' : 'customers off'}`,
+        ),
+      };
+    },
+  },
 ];
 
 export const challengeOf = (id: string | undefined) => CHALLENGES.find((c) => c.id === id);

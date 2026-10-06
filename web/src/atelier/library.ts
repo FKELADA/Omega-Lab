@@ -10,6 +10,7 @@ import { POWER } from './lib-power';
 import { GRID_LIB } from './lib-grid';
 import { CONTROL } from './lib-control';
 import { IBR } from './lib-ibr';
+import { DSO_LIB } from './lib-dso';
 
 export * from './defs';
 
@@ -315,7 +316,7 @@ export const LIBRARY: ElementDef[] = [
   },
 ];
 
-LIBRARY.push(...POWER, ...GRID_LIB, ...IBR, ...CONTROL);
+LIBRARY.push(...POWER, ...GRID_LIB, ...DSO_LIB, ...IBR, ...CONTROL);
 
 export const DEFS: Record<string, ElementDef> = Object.fromEntries(LIBRARY.map((d) => [d.type, d]));
 

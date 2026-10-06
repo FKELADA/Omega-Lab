@@ -2,7 +2,7 @@
 // source and load, thyristor bridge, PWM inverter bridge, saturable transformer.
 
 import { cx, polar, type Complex } from '../lib/core/linalg';
-import { idealXfmr, monitor, rlSeries, satInductor, vsource, waves } from './engine/elements';
+import { idealXfmr, monitor, resistor, rlSeries, satInductor, vsource, waves } from './engine/elements';
 import { diode, gates, igbt, thyristor } from './engine/switching';
 import type { EmtElement } from './engine/emt';
 import type { AcCtx } from './engine/ac';
@@ -173,6 +173,11 @@ export const POWER: ElementDef[] = [
       { id: 'Q', symbol: 'Q', name: { fr: 'Puissance réactive (inductive)', en: 'Reactive power (inductive)' }, unit: 'var', default: 3e3, min: 0, max: 1e9, scale: 'lin' },
       { id: 'Vn', symbol: 'U_n', name: { fr: 'Tension nominale', en: 'Rated voltage' }, unit: 'V', default: 400, min: 1, max: 1e6, scale: 'log' },
       { id: 'f', symbol: 'f', name: { fr: 'Fréquence nominale', en: 'Rated frequency' }, unit: 'Hz', default: 50, min: 1, max: 1000, scale: 'log' },
+      {
+        id: 'earth', symbol: '\\text{neutre}', name: { fr: 'Neutre de l’étoile', en: 'Star neutral' }, unit: '', default: 1, min: 0, max: 1, scale: 'lin',
+        // An MV/LV substation (delta on the MV side) offers no zero-sequence path: use the isolated neutral.
+        choices: [{ value: 1, label: { fr: 'à la terre', en: 'earthed' } }, { value: 0, label: { fr: 'isolé (poste Dyn)', en: 'isolated (Dyn substation)' } }],
+      },
     ],
     symbol: 'M-40,0 H-14 M-14,-14 H14 V14 H-14 Z M-10,8 L-6,-8 L-2,8 L2,-8 L6,8 L10,-8',
     label: (p) => `${si(p.P, 'W')} ${si(p.Q, 'var')}`,
@@ -180,14 +185,19 @@ export const POWER: ElementDef[] = [
     ac: {
       kind: 'multi',
       nV: 0,
+      nInt: (p) => (p.earth === 0 ? 1 : 0),
       stamp: (ctx, nodes, p) => {
         const { R, L } = loadRL(p);
-        nodes.forEach((n) => ctx.y(n, 0, rl(R, L, ctx.w)));
+        const star = p.earth === 0 ? ctx.node() : 0;
+        if (star) ctx.y(star, 0, cx(1e-9));
+        nodes.forEach((n) => ctx.y(n, star, rl(R, L, ctx.w)));
       },
     },
-    build: (id, nodes, p, h) => {
+    build: (id, nodes, p, h, node) => {
       const { R, L } = loadRL(p);
-      const br = nodes.map((n, k) => rlSeries(`${id}:${k}`, n, 0, R, L, h));
+      const star = p.earth === 0 ? node() : 0;
+      const br = nodes.map((n, k) => rlSeries(`${id}:${k}`, n, star, R, L, h));
+      if (star) br.push(resistor(`${id}:leak`, star, 0, 1e9));
       const mon = monitor(
         id,
         (_x, v) => {

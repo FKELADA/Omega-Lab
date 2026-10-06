@@ -1152,6 +1152,24 @@ await page.setViewportSize({ width: 1600, height: 1000 });
 await page.getByRole('button', { name: 'Leçons' }).click();
 await page.waitForSelector('.lesson');
 
+// Module 10 benches: lesson 10.4 opens the feeder-protection bench; the Petersen challenge is played.
+await open('10.4');
+await page.locator('.note-btn.atelier').click();
+await page.waitForSelector('g.el[aria-label="P1"]');
+check('10.4 opens the feeder-protection bench', (await page.locator('g.el[aria-label="P0"]').count()) === 1);
+await page.locator('.canvas').click({ position: { x: 5, y: 5 } });
+await page.locator('.insp button.link', { hasText: 'Accorder la bobine de Petersen' }).click();
+await page.waitForSelector('.challenge');
+check('Petersen challenge starts unmet', (await page.locator('.challenge.ok').count()) === 0);
+await page.locator('g.el[aria-label="LN"] .hitbox').click();
+await page.locator('.insp input.num').fill('225 mH');
+await page.locator('.insp input.num').press('Enter');
+await page.waitForSelector('.challenge.ok', { timeout: 20000 }).catch(() => {});
+check('Petersen challenge met with a tuned coil', (await page.locator('.challenge.ok').count()) === 1);
+await page.locator('.challenge button', { hasText: 'Quitter le défi' }).click();
+await page.getByRole('button', { name: 'Leçons' }).click();
+await page.waitForSelector('.lesson');
+
 // ── Language, theme, phone ────────────────────────────────────────────────────
 await page.getByRole('button', { name: 'EN', exact: true }).click();
 await page.locator('.icon').click(); // auto → light

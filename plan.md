@@ -82,7 +82,7 @@ tests are in [documentation.md](documentation.md).
 | 10.4 The MV protection plan | ✅ Done | Module 10 |
 | 10.5 Flexibility and planning | ✅ Done | Module 10 |
 
-**Verification:** 503 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+**Verification:** 518 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
 all 65 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
@@ -157,7 +157,7 @@ no console errors).
    of each module, and an export of results for teachers.
 4. **Capstone labs** from §5 Module 8 and Modules 9–10 (for example "plan a primary substation
    for 2035"), and the split view (two cases side by side).
-5. **Atelier ↔ Modules 9–10:** benches for the MV loop, neutral earthing and protection grading.
+5. ✅ **Atelier ↔ Module 10:** MV-neutral transformer and protection-relay elements, benches for the MV loop, neutral earthing and feeder protection, two challenges (Petersen coil, grading).
 6. **Deployment:** a static build on a public URL, with a production check of the smoke test.
 7. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
 

@@ -19,6 +19,8 @@ const SOLUTIONS: Record<string, Record<string, number>> = {
   'ch-var': { 'BC1.Q': 11e6 },
   'ch-fault': { 'SM1.E0': 1.5 },
   'ch-bess': { 'BAT1.ffr': 1 },
+  'ch-petersen': { 'LN.L': 0.225 },
+  'ch-grading': { 'P1.td': 0.4, 'P1.reclose': 1 },
 };
 
 describe('Atelier challenges', () => {

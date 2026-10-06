@@ -229,7 +229,7 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 503 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module10.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 518 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module10.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
 | Browser test | `npm run smoke` (dev server running) | Drives all 65 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
@@ -4731,7 +4731,7 @@ The three-phase source gains a **phase jump** (time and angle) to test the conve
 
 ### 17.5 Lessons ↔ Atelier and challenges (phase A6)
 
-**From a lesson to its bench** (`atelier/links.ts`). The 21 lessons below have an equivalent bench.
+**From a lesson to its bench** (`atelier/links.ts`). The 24 lessons below have an equivalent bench.
 Their panel shows a 🛠 Atelier button that opens it with the lesson's current settings:
 - 1.2, 1.4: series RLC (R, L, C, V, f).
 - 2.7: filtered square wave.
@@ -4745,6 +4745,9 @@ Their panel shows a 🛠 Atelier button that opens it with the lesson's current 
 - 7.3: PV (irradiance, temperature), 7.4: wind (wind, gust), 7.5, 8.4: battery (mode),
   7.6: HVDC (power).
 - 8.1: generator and fault (clearing time, $P_m$, H).
+- 10.1: MV loop and back-feed; 10.3: MV neutral (regime, cable length, neutral current, fault
+  resistance, earth threshold); 10.4: feeder protection (threshold, delay, fault distance and
+  type, reclosing).
 
 The project goes through the browser's storage (`atelier/store.ts`), so lesson pages do not load
 the Atelier. In the Atelier, each template lists the lessons it reproduces, with links back.
@@ -4768,6 +4771,8 @@ exercise is attached to the Atelier.
 | Lifting the feeder voltage | Power-flow voltage of the load between 0.98 and 1.02 pu | Capacitor bank Q |
 | Riding through a 300 ms fault | Generator stays in synchronism at ≥ 0.7 pu | P, E′, $K_A$, D |
 | Holding 49.8 Hz with the smallest battery | Nadir ≥ 49.8 Hz after a load step, battery ≤ 1.5 MVA | Battery size, droop, FFR, threshold |
+| Tuning the Petersen coil | Solid a–earth fault current < 40 A RMS | Coil inductance |
+| Tripping the right feeder | Feeder trips, incomer stays closed, customers restored | Feeder threshold, delay, reclosing |
 
 **Tests.**
 - `links.test.ts`: every link points to an existing template, element and parameter, from the
@@ -4784,3 +4789,55 @@ exercise is attached to the Atelier.
 **Synchronous generator regulator.** Its setpoint defaults to the terminal voltage reached at the
 end of initialisation. The regulator only acts after the rotor is released, and the field is
 limited to 0–3 pu. A gain of 100 used to drive the EMF negative.
+
+### 17.6 Distribution benches (Module 10)
+
+**Two elements** (`atelier/lib-dso.ts`).
+
+*Primary-substation transformer* (`trafo3n`, 63/20 kV, 36 MVA by default):
+- star on the HV side, with the neutral earthed;
+- star on the MV side, with its neutral on a terminal N.
+
+Wire N to earth through a resistor (resistance-earthed neutral), through an inductor (Petersen
+coil) or not at all (isolated neutral). A 1 GΩ leakage keeps an isolated neutral solvable. The
+neutral voltage $v_N$ is an output.
+
+*Breaker with protection* (`relay3`). Three poles and a relay:
+- the relay measures one-cycle RMS values of the phase currents and of 3I0;
+- definite-time phase and earth elements ($I_s$, $t_d$, $I_{s0}$, $t_{d0}$) order a trip;
+- each pole interrupts at its current zero;
+- the recloser closes after 0.3 s (rapid), then after the slow dead time, and locks out after
+  that.
+
+Outputs:
+- the phase currents and $3i_0$;
+- the RMS phase and residual currents;
+- the state (1 closed, 0 open).
+
+**The three-phase load** gains a *star neutral* setting: earthed (default) or isolated. An
+MV/LV substation, Dyn with its delta on the MV side, offers no zero-sequence path: use the
+isolated neutral for earth-fault studies.
+
+**Templates** (`atelier/templates-dso.ts`):
+
+| Template | What it shows |
+|---|---|
+| MV loop and back-feed (10.1) | Two 20 kV substations, a loop run open. DJ1 isolates side A at 0.2 s; the open point closes at 0.4 s and substation B picks up both MV/LV substations. |
+| MV neutral and 3I0 (10.3) | 63/20 kV, neutral through 38.5 Ω (300 A), two cable feeders (20 and 40 km at 250 nF/km), an a–earth fault on the first. Relays show each feeder's 3I0. |
+| Protecting an MV feeder (10.4) | Incomer (800 A, 0.7 s) and feeder (400 A, 0.4 s, rapid reclosing), 20 km overhead line, a transient phase-to-phase fault at its end. |
+
+**Tests** (`templates-dso.test.ts`):
+- The loop loses its voltage when DJ1 opens and recovers when the open point closes.
+- Isolated neutral: the fault current equals $3\omega C E$ within 5 %, and each feeder sees the
+  other's capacitive current.
+- Resistance-earthed: about 300 A combined with the capacitive current, and the faulty feeder's
+  3I0 is more than twice the healthy one's.
+- Protection:
+  - the feeder trips, recloses and restores, while the incomer stays closed;
+  - the end-of-feeder fault current is about 1,050 A (lesson 10.4);
+  - a permanent fault leaves the feeder open;
+  - a feeder slower than the incomer lets the incomer trip.
+
+Both new challenges are checked in `challenges.test.ts` (unmet at the start, met by
+$L \approx 0.225$ H and by $t_d = 0.4$ s with rapid reclosing).
+

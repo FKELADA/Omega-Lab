@@ -242,7 +242,7 @@ export const GRID_LIB: ElementDef[] = [
     ports: [port3('a', -2, '1'), port3('b', 2, '2')],
     params: [
       {
-        id: 's0', symbol: '\text{état initial}', name: { fr: 'État initial', en: 'Initial state' }, unit: '', default: 0, min: 0, max: 1, scale: 'lin',
+        id: 's0', symbol: '\\text{état initial}', name: { fr: 'État initial', en: 'Initial state' }, unit: '', default: 0, min: 0, max: 1, scale: 'lin',
         choices: [{ value: 0, label: { fr: 'fermé', en: 'closed' } }, { value: 1, label: { fr: 'ouvert', en: 'open' } }],
       },
       { id: 'to', symbol: 't_{o}', name: { fr: 'Ordre d’ouverture (0 : jamais)', en: 'Opening order (0: never)' }, unit: 's', default: 0, min: 0, max: 100, scale: 'lin' },
