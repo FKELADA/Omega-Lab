@@ -866,6 +866,25 @@ check('zoom window closes with Escape', (await page.locator('.zoom-modal').count
 // ── Module 9 ──────────────────────────────────────────────────────────────────
 const radio = (name) => page.getByRole('radio', { name, exact: true }).click();
 
+// 8.10 PSS on Kundur's two-area system (G2ELin)
+await open('8.10');
+await predict((f) => 0.5 - 0.15 * Math.sin(2 * Math.PI * 9 * f) * (1 - f * 0.8));
+await scored('8.10');
+await radio('G1');
+await radio('G3');
+await radio('G1 et G3');
+await radio('Les quatre');
+check('8.10 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 8.11 Converter model reduction (G2ELin)
+await open('8.11');
+await radio('RMS');
+await radio('sans filtre');
+await radio('Suiveur (GFL)');
+await radio('RMS');
+await radio('complet');
+check('8.11 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
 // 9.1 Voltage levels
 await open('9.1');
 await radio('400 kV');
@@ -1176,7 +1195,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10.1', '10.2', '10.3', '10.4', '10.5']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '8.10', '8.11', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '10.1', '10.2', '10.3', '10.4', '10.5']) {
   if (['2.1', '4.1', '6.1', '8.1', '9.4'].includes(id)) {
     await page.close();
     page = watch(await context.newPage());

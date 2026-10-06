@@ -10,7 +10,7 @@
 
 ## Status (6 October 2026)
 
-**All eleven modules (0 to 10) are built: 65 lessons, in French and English.** Code is on
+**All eleven modules (0 to 10) are built: 67 lessons, in French and English.** Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -70,6 +70,8 @@ tests are in [documentation.md](documentation.md).
 | 8.7 Inter-area oscillations | ✅ Done | `fe3f5c5`, reworked in `bd0d003` |
 | 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
 | 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
+| 8.10 Tuning PSSs on Kundur’s two-area system (G2ELin) | ✅ Done | G2ELin depth |
+| 8.11 Reducing a converter model, GFM/GFL (G2ELin) | ✅ Done | G2ELin depth |
 | 9.1 Voltage levels and orders of magnitude | ✅ Done | Module 9 |
 | 9.2 Balancing and frequency control (FCR, aFRR, mFRR) | ✅ Done | Module 9 |
 | 9.3 N-1 security and remedial actions | ✅ Done | Module 9 |
@@ -82,8 +84,8 @@ tests are in [documentation.md](documentation.md).
 | 10.4 The MV protection plan | ✅ Done | Module 10 |
 | 10.5 Flexibility and planning | ✅ Done | Module 10 |
 
-**Verification:** 518 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
-all 65 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 529 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+all 67 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -159,7 +161,7 @@ no console errors).
    for 2035"), and the split view (two cases side by side).
 5. ✅ **Atelier ↔ Module 10:** MV-neutral transformer and protection-relay elements, benches for the MV loop, neutral earthing and feeder protection, two challenges (Petersen coil, grading).
 6. ✅ **Deployment:** GitHub Actions workflow (check, test, build with the Pages base path, publish on GitHub Pages); the smoke test passes on the production build. Pages must be enabled once in the repository settings (a private repository needs a paid plan).
-7. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
+7. ✅ **G2ELin depth:** 8.10 PSS placement and gain on the full two-area model; 8.11 GFM/GFL reduction levels (baked by `web/scripts/bake-g2elin-b.mjs`).
 
 Done: the Atelier, A0 to A6 (§10; no predict-then-run exercise there, by choice).
 

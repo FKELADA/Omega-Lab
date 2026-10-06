@@ -10,6 +10,7 @@ import { module5Note, module5Notes } from './notes5';
 import { module6Note, module6Notes } from './notes6';
 import { module7Note, module7Notes } from './notes7';
 import { module8Note, module8Notes } from './notes8';
+import { module8bNotes } from './notes8b';
 import { module9Note, module9Notes } from './notes9';
 import { module10Note, module10Notes } from './notes10';
 
@@ -626,6 +627,7 @@ export const lessonNotes: Record<string, LessonNote> = {
   ...module6Notes,
   ...module7Notes,
   ...module8Notes,
+  ...module8bNotes,
   ...module9Notes,
   ...module10Notes,
 };

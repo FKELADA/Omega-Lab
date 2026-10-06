@@ -62,6 +62,8 @@ import { n1Lesson } from './n1/experiment';
 import { vplanLesson } from './vplan/experiment';
 import { defenceLesson } from './defence/experiment';
 import { connectLesson } from './connect/experiment';
+import { pssG2Lesson } from './pssg2/experiment';
+import { ibrRedLesson } from './ibrred/experiment';
 import { htaLesson } from './hta/experiment';
 import { dvplanLesson } from './dvplan/experiment';
 import { neutralLesson } from './neutral/experiment';
@@ -189,6 +191,8 @@ export const curriculum: ModuleEntry[] = [
       { id: '8.7', title: { fr: 'Oscillations inter-zones', en: 'Inter-area oscillations' }, experiment: g2Lesson },
       { id: '8.8', title: { fr: 'Modes et participations', en: 'Modes and participation' }, experiment: modesLesson },
       { id: '8.9', title: { fr: 'Réduction de modèles', en: 'Model reduction' }, experiment: reductionLesson },
+      { id: '8.10', title: { fr: 'Régler des PSS (G2ELin)', en: 'Tuning PSSs (G2ELin)' }, experiment: pssG2Lesson },
+      { id: '8.11', title: { fr: 'Réduire un convertisseur (G2ELin)', en: 'Reducing a converter (G2ELin)' }, experiment: ibrRedLesson },
     ],
   },
   {

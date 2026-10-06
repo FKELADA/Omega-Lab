@@ -15,9 +15,9 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 518 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
+| `npm test` | 529 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 65 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 67 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` (set `BASE=/Omega-Lab/` to serve it from a sub-path) |
 
@@ -47,7 +47,7 @@ The last full check on the production build passed all 264 smoke-test checks.
 
 ## Status
 
-The app opens on a **home page** (where to start by profile, the course map with your progress, a resume link). Sixty-five lessons are complete (Modules 0–10), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
+The app opens on a **home page** (where to start by profile, the course map with your progress, a resume link). Sixty-seven lessons are complete (Modules 0–10), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
 baked into the app (`web/scripts/bake-g2elin.mjs` and `bake-shapes.py` regenerate them from a local G2ELin). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
@@ -96,6 +96,8 @@ e.g. `http://localhost:5173/#1.4`.
 | **8.7 Inter-area oscillations** | Predicts a distant machine's swing, reads inter-area and local mode shapes, weakens and loads the tie, damps the mode | Two-area mode-shape bars, s-plane, inter-area frequency versus tie |
 | **8.8 Modes and participation** | Finds inter-area, local and control modes on G2ELin's Kundur, WSCC 9-bus (with inverters) and IEEE 39-bus models, sees the classical model go unstable | Mode table, participation factors, mode shape on the network map |
 | **8.9 Model reduction** | Steps down from full EMT to RMS and 6th/4th/3rd-order and classical machines, compares with EMT and the linearised response | Model ladder, eigenvalues on log scales, damping and size versus level |
+| **8.10 Tuning PSSs (G2ELin)** | Predicts the growing inter-area oscillation, places a PSS on G1 then G3, damps the inter-area mode with one PSS per area, then with four | Two-area diagram with PSS badges, modes in the s-plane with damping lines, inter-area damping versus gain |
+| **8.11 Reducing a converter (G2ELin)** | Reduces a grid-former to its droop and a grid-follower to its PLL, sees the fast eigenvalues go, weighs the cost of the full EMT model | Converter blocks greyed as they become algebraic, eigenvalues on log scales, states and computing time per level |
 | **9.1 Voltage levels** | Finds the level and circuits for 1,000 MW over 200 km, measures losses as 1/U², sees P drive the drop in MV, finds the reach of an LV feeder | Chain of levels from 400 kV to the meter, losses versus level, share of the drop due to P versus R/X |
 | **9.2 Balancing** | Predicts the frequency after a 1,000 MW trip, turns off secondary control, moves the incident abroad (non-intervention), takes the 3,000 MW reference incident, frees the aFRR with mFRR | Two control areas with the interchange and France's reserves, activation times of the three products |
 | **9.3 N-1 security** | Finds the evening N-1 constraint, removes it by redispatch, by the phase shifter, by switching, then combines them in a cold spell | Meshed 400 kV grid at the cursor hour, N and N-1 loading of every line |

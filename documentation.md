@@ -229,9 +229,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 518 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module10.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 529 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module10.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 65 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
+| Browser test | `npm run smoke` (dev server running) | Drives all 67 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -3780,6 +3780,117 @@ Run times are indicative: they also depend on the solver's step.
 - Order 4 keeps the inter-area damping within 2 points; the classical model drops it below 2 %.
 
 ---
+
+### 8.10 Tuning PSSs on Kundur's two-area system (G2ELin) · `#8.10` · `lessons/pssg2`
+
+**Objectives.** After this lesson the learner can:
+- read the damping of inter-area and local modes;
+- choose where to place PSSs using participation;
+- reach a damping target with a few PSSs or with one on every machine.
+
+**Data** (`scripts/bake-g2elin-b.mjs` → `src/data/g2elin/pss.json`). G2ELin's
+`kundur_two_area` preset:
+- 6th-order machines, Kundur's static exciter and PSS (Fig. E12.9), RMS network;
+- placements: none, G1, G2, G3, G4, G1 + G3, all four;
+- gains: $K_{STAB}$ = 0, 2.5, 5, 10, 15, 20, 30, 40, 50, 75, 100.
+
+For each placement and gain, the bake records:
+- the electromechanical and control modes between 0.1 and 3 Hz (frequency, damping, dominant
+  state);
+- the free response of the four rotor speeds after a 1 mpu speed kick on G1, over 15 s, from
+  G2ELin's linearised model.
+
+The inter-area mode is the least damped electromechanical mode between 0.15 and 0.95 Hz. With
+strong PSSs, heavily damped slow modes appear, so the slowest mode alone would not do. The local
+modes are the two least damped above 0.95 Hz. The lesson snaps $K$ to the nearest baked gain.
+
+**Key results.** The inter-area mode (about 0.61 Hz):
+
+| PSS | Damping of the inter-area mode |
+|---|---|
+| None | −0.7 % (unstable) |
+| G1 alone, $K = 20$ | 2.0 % |
+| G3 alone, $K = 20$ | 4.3 % |
+| G1 + G3, $K = 20$ | 7.1 % |
+| All four, $K = 20$ | 18 % (local modes 25 %) |
+
+From $K = 50$ on all four machines, the least damped modes become control modes, still around
+35 % damped on this grid.
+
+**Parameters.** PSS placement (7 choices, default none); gain (0–100, default 20).
+
+**Panels.**
+- The two areas with a PSS badge on each equipped machine and each machine's speed at the
+  cursor.
+- The modes in the (σ, f) plane with the 5 % and 15 % damping lines, against the no-PSS case.
+- The inter-area damping against gain for every placement.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the inter-area oscillation | Prediction revealed |
+| 2 | One PSS on G1 | G1, K ≥ 15, inter-area damping > 0 |
+| 3 | The right place | G3, K ≥ 15, better than G1 at the same gain |
+| 4 | Two PSSs, one per area | G1 + G3, inter-area ≥ 5 % |
+| 5 | Every machine | All four, inter-area ≥ 15 %, local ≥ 20 % |
+
+**Misconception detected** (y-range ±60 mHz): the oscillation dies out. Triggers when the sketch's
+late amplitude is under half its early amplitude while the true one stays above 0.5 mHz.
+
+**Tests** (`g2data-b.test.ts`):
+- Every placement and gain has modes, an inter-area mode and a free response.
+- Without PSS, the inter-area mode near 0.6 Hz is unstable and its oscillation grows.
+- Each step has a solution in the data.
+- $K$ snaps to the nearest baked gain.
+
+### 8.11 Reducing a converter model (G2ELin) · `#8.11` · `lessons/ibrred`
+
+**Objectives.** After this lesson the learner can:
+- describe the levels of a GFM and a GFL model, from full EMT to RMS;
+- explain singular perturbation;
+- explain why RMS models keep only the droop or the PLL, and what that costs in fidelity and
+  computing time.
+
+**Data** (`scripts/bake-g2elin-b.mjs` → `src/data/g2elin/ibr.json`). G2ELin's `gfm_smib` and
+`gfl_smib` presets, at each of the six levels of G2ELin's reduction table:
+
+| Converter | Levels |
+|---|---|
+| GFM | full, no transformer current, no LC filter, no inner loop, no voltage loop, droop |
+| GFL | full, no transformer current, no LCL filter, no inner loop, no DC link, PLL |
+
+At each level, the bake records:
+- all eigenvalues and the state count;
+- a nonlinear EMT run of 0.5 s after a phase jump at the infinite bus (10° for the GFM, 3° for
+  the GFL), with G2ELin's linear overlay and the computing time. A level whose nonlinear solve
+  does not converge is stored as such: in this bake, "no transformer current" for both
+  converters and "no LCL filter" and "no inner loop" for the GFL. The lesson shows these as
+  "simulation did not converge".
+
+The full level uses the dynamic network; the others use the quasi-stationary (RMS) network.
+
+**Parameters.** Converter (GFM/GFL); level (6 choices).
+
+**Panels.**
+- The converter as a chain of blocks, with those made algebraic greyed out.
+- Eigenvalues on log scales against the full model.
+- State count and simulation time per level.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | The grid-former reduced to its droop | GFM, droop |
+| 2 | What disappears | GFM, no LC filter |
+| 3 | The grid-follower reduced to its PLL | GFL, PLL only |
+| 4 | The price of detail | GFL, full model |
+
+**Tests** (`g2data-b.test.ts`):
+- Each level keeps fewer states, and only the full model has lightly damped (< 5 %) modes above
+  100 Hz.
+- The full models ran.
+- The grid-former reduced to droop stays within a quarter of the full response's span.
 
 ## 14. Module 9 — The transmission system operator
 
