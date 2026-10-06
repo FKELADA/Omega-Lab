@@ -9,6 +9,8 @@
   import { getContext } from 'svelte';
 
   let { lab, index }: { lab: Lab; index: number } = $props();
+  // Unique per instance: the enlarged copy of a chart must not borrow the small one’s clip region.
+  const clipId = `xy-clip-${Math.random().toString(36).slice(2, 10)}`;
 
   // A larger drawing area in the enlarged window keeps text at a readable size.
   const big = getContext<boolean>('zoomed') ?? false;
@@ -146,7 +148,7 @@
       ondblclick={reset}
     >
       <defs>
-        <clipPath id="xy-clip-{index}"><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} /></clipPath>
+        <clipPath id={clipId}><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.t - M.b} /></clipPath>
       </defs>
       {#each bands as b, j (j)}
         <rect x={M.l} width={W - M.l - M.r} y={Y(Math.min(yr[1], b.y1))} height={Math.max(0, Y(Math.max(yr[0], b.y0)) - Y(Math.min(yr[1], b.y1)))} class="band" />
@@ -161,7 +163,7 @@
       {/each}
       <text x={W - M.r} y={H - 4} class="axl" text-anchor="end">{label(spec.x)}</text>
       <text x={M.l + 2} y={M.t - 2} class="axl" text-anchor="start">{label(spec.y)}</text>
-      <g clip-path="url(#xy-clip-{index})">
+      <g clip-path="url(#{clipId})">
         {#each vlines as v, j (j)}
           <line x1={X(v.x)} x2={X(v.x)} y1={M.t} y2={H - M.b} class="vline" />
         {/each}

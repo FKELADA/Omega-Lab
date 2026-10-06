@@ -10,7 +10,7 @@
 
 ## Status (5 October 2026)
 
-**All nine modules (0 to 8) are built: 49 lessons, in French and English.** Code is on
+**Modules 0 to 9 are built: 60 lessons, in French and English.** Module 10 (the distribution operator) is in progress. Code is on
 [GitHub](https://github.com/FKELADA/Omega-Lab). Each lesson's objectives, formulas, models and
 tests are in [documentation.md](documentation.md).
 
@@ -70,9 +70,16 @@ tests are in [documentation.md](documentation.md).
 | 8.7 Inter-area oscillations | ✅ Done | `fe3f5c5`, reworked in `bd0d003` |
 | 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
 | 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
+| 9.1 Voltage levels and orders of magnitude | ✅ Done | Module 9 |
+| 9.2 Balancing and frequency control (FCR, aFRR, mFRR) | ✅ Done | Module 9 |
+| 9.3 N-1 security and remedial actions | ✅ Done | Module 9 |
+| 9.4 The transmission voltage plan | ✅ Done | Module 9 |
+| 9.5 Stability and the defence plan | ✅ Done | Module 9 |
+| 9.6 Connection studies | ✅ Done | Module 9 |
+| 10.1–10.5 The distribution system operator | 🚧 In progress | |
 
-**Verification:** 435 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
-all 54 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 471 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+all 60 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -447,6 +454,41 @@ Each tool is introduced on a circuit the learner already knows from Modules 1–
   - "Design a PSS for Kundur's two-area system."
   - "Find the minimum SCR for this GFL plant."
   - "Replay the blackout from Module 0, now that you understand it."
+
+### Module 9: The transmission system operator (the RTE view)
+
+✅ Built as six lessons. The angle is the TSO engineer's: what sets transmission apart from
+distribution, and which studies the TSO runs. Figures are orders of magnitude, flagged in the
+lessons as to be checked against RTE and ENTSO-E publications.
+
+- **9.1 Voltage levels:** 400/225/90/63 kV against 20 kV and 400 V; losses as $1/U^2$; R/X and
+  why transmission voltage is a reactive-power matter; network sizes and who runs what.
+- **9.2 Balancing:** FCR, aFRR and mFRR after a plant trips, in two areas sharing one frequency;
+  area control error, non-intervention, the 3,000 MW reference incident.
+- **9.3 N-1 security:** a day-ahead DC N-1 analysis on a meshed 400 kV system; redispatch,
+  phase shifter and topology as remedies, and their costs.
+- **9.4 The voltage plan:** primary, secondary (pilot node, alignment level) and tertiary
+  control; capacitors and reactors; the reactive reserve.
+- **9.5 The defence plan:** under-frequency load shedding, the 47.5–51.5 Hz range,
+  over-shedding, low inertia.
+- **9.6 Connection studies:** N-1 hosting capacity, SCR for inverters, breaking capacity for
+  synchronous plants.
+
+### Module 10: The distribution system operator (the Enedis view)
+
+🚧 Five lessons:
+- **10.1 Distribution architecture:** primary substations (HV/MV), radial-but-loopable MV
+  feeders, MV/LV substations, LV networks; the voltage profile of a feeder and the open point.
+- **10.2 The voltage plan:** the primary substation's tap changer with line-drop compensation,
+  the MV and LV drop budgets, PV voltage rise, reactive control of producers.
+- **10.3 Neutral earthing and 3I0:** isolated, resistance-earthed and compensated (Petersen)
+  neutral; the capacitive current of cables; what residual relays see on faulty and healthy
+  feeders.
+- **10.4 The MV protection plan:** phase and residual overcurrent settings between load and
+  minimum fault current, time grading, auto-reclosing cycles, the effect of distributed
+  generation.
+- **10.5 Flexibility and planning:** N-1 at the primary substation, MV back-up, hosting
+  capacity, flexible connection and local flexibility to defer reinforcement.
 
 ---
 

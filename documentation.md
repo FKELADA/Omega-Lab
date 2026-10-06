@@ -23,7 +23,9 @@ contributors who extend them or check the physics.
 11. [Module 6 — Power electronics](#11-module-6--power-electronics)
 12. [Module 7 — Inverter-based resources and HVDC](#12-module-7--inverter-based-resources-and-hvdc)
 13. [Module 8 — Power-system stability](#13-module-8--power-system-stability)
-14. [Standards and figures quoted in the lessons](#14-standards-and-figures-quoted-in-the-lessons)
+14. [Module 9 — The transmission system operator](#14-module-9--the-transmission-system-operator)
+15. [Standards and figures quoted in the lessons](#15-standards-and-figures-quoted-in-the-lessons)
+16. [The Atelier (free-style mode)](#16-the-atelier-free-style-mode--atelier--atelier)
 
 ---
 
@@ -212,9 +214,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 435 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 471 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module9.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 54 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
+| Browser test | `npm run smoke` (dev server running) | Drives all 60 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -3764,7 +3766,302 @@ Run times are indicative: they also depend on the solver's step.
 
 ---
 
-## 14. Standards and figures quoted in the lessons
+## 14. Module 9 — The transmission system operator
+
+Module 9 looks at the grid from the transmission system operator's (TSO's) side, applied to RTE,
+the French TSO:
+- a meshed 63–400 kV grid, interconnected with Europe;
+- balanced every second, kept N-1 secure and held in voltage;
+- defended against major incidents and opened to new generators.
+
+Each lesson is a small, purpose-built model, in `lib/models/module9.ts`, tested in
+`module9.test.ts`.
+
+**Figures.** They are teaching orders of magnitude. The lessons say so ("ordre de grandeur, à
+vérifier") wherever a figure comes from operators' or ENTSO-E publications rather than from
+physics. They include:
+- line lengths and ratings;
+- RTE and Enedis network sizes;
+- FCR, aFRR and mFRR volumes and activation times;
+- the NC ER shedding plan;
+- the 2006 split;
+- breaking capacities.
+
+Lessons 9.2 and 9.5 have predictions. The others are exploration lessons, without a prediction
+step.
+
+### 9.1 Voltage levels and orders of magnitude · `#9.1` · `lessons/levels`
+
+**Objectives.** After this lesson the learner can:
+- explain why bulk power is transmitted at 400 kV (losses as $1/U^2$);
+- size a transfer: voltage level and number of circuits;
+- tell transmission ($X \gg R$, voltage set by reactive power) from distribution ($R \gtrsim X$,
+  voltage also set by active power);
+- quote the orders of magnitude of each level and who runs it (TSO from 63 kV up, DSO below).
+
+**Model** (`levelInfo`). Closed forms per circuit, at $\cos\varphi = 0.95$.
+- Six levels: 400, 225, 90, 63, 20 kV and 400 V.
+- Each level has an $r$ and an $x$ per km, a thermal rating per circuit and typical lengths.
+- With $n$ circuits in parallel: $I = P/(n\sqrt3\,U\cos\varphi)$,
+  $p_J/P = RP/(U^2\cos^2\varphi)$ and $\Delta V/V = (RP + XQ)/U^2$, split into its $P$ and $Q$
+  terms.
+- The x-axis is the distance along the line; drop and losses grow linearly with it.
+
+**Parameters.** Level (six choices, default 225 kV); P (0.05–3,000 MW, log, default 1,000 MW);
+L (0.1–400 km, log, default 200 km); circuits n (1–4, default 1).
+
+**Panels.**
+- The chain of levels with the TSO/DSO boundary and the live current, losses, drop and loading.
+- Losses against voltage level (log-log) for the same transfer.
+- The share of the drop due to P against R/X, with every level placed on it.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Carrying 1,000 MW over 200 km | 400 kV, 2 circuits, losses < 3 %, drop < 10 %, within rating |
+| 2 | Losses as 1/U² | 225 kV, 2 circuits, same P and L |
+| 3 | An MV feeder | 20 kV, 4–6 MW, 15–25 km, P term larger than Q term |
+| 4 | Low voltage does not go far | 400 V, 100 kW, drop 7–9 % |
+
+**Tests.** 1,000 MW over 200 km: two 400 kV circuits work, one does not, 225 kV never does; the
+loss ratio is $(400/225)^2\,r_{225}/r_{400}$ and $p_J = 3RI^2$; the P term dominates at 20 kV and
+the Q term at 400 kV; 100 kW at 400 V reach 8 % at about 540 m.
+
+### 9.2 Balancing and frequency control · `#9.2` · `lessons/balancing`
+
+**Objectives.** After this lesson the learner can:
+- order the three controls (FCR, aFRR, mFRR) and their time scales;
+- compute the quasi-steady deviation $-\Delta P/\lambda$;
+- explain the area control error and the non-intervention principle;
+- explain why mFRR must free the aFRR.
+
+**Model** (`balRun`). Two areas sharing one frequency: France (60 GW of load) and the rest of
+continental Europe (300 GW).
+- Swing: $M\,\dot{\Delta f} = \sum(\text{FCR} + \text{aFRR} + \text{mFRR}) - \Delta P - D\,P_L\,\Delta f$,
+  with $M = 2H\,P_L/f_0$, $H = 5$ s and $D = 1\,\%$/Hz.
+- France's interchange deviation is its own balance minus its share of the acceleration.
+- FCR: 600 and 2,400 MW, fully deployed at 200 mHz, through a lag of 8 s.
+- aFRR: $\text{aFRR} = -\frac{1}{T_r}\int \text{ACE}$, with
+  $\text{ACE} = \Delta P_{ech} + \lambda_{zone}\,\Delta f$ and limits of 1,000 and 4,000 MW.
+- mFRR: the area in deficit calls it $t_m$ after the incident, ramping with a 180 s time
+  constant towards the lost power.
+- Explicit Euler, 0.1 s step, over 20 min; the incident is at $t = 10$ s.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Generation lost | 200–3,000 MW | 1,000 MW |
+| Where | France / a neighbour | France |
+| Secondary control | on / off | on |
+| aFRR integral time $T_r$ | 50–400 s (log) | 150 s |
+| mFRR delay $t_m$ | 60–900 s | 300 s |
+
+**Panels.** The two areas with the interchange and France's three reserves; a chart of the
+three products' activation times (log time axis).
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency | Prediction revealed |
+| 2 | Without secondary control | aFRR off, incident in France |
+| 3 | The incident is abroad | aFRR on, incident abroad, France's aFRR < 20 MW |
+| 4 | The reference incident | France, ≥ 2,950 MW, frequency 30 s after > 49.8 Hz |
+| 5 | Freeing the secondary reserve | France, ≤ 1,100 MW, $t_m \le 125$ s, final aFRR < 15 MW |
+
+**Misconceptions detected** (y-range 49.85–50.05 Hz):
+- the frequency comes straight back to 50 Hz: the sketch is above 49.995 Hz between 60 and 120 s;
+- the frequency stays low: the sketch ends more than 20 mHz below the truth.
+
+**Tests.** Without aFRR the deviation is $-\Delta P/\lambda$; France imports more than 700 MW,
+then returns to 50 Hz within 5 mHz; non-intervention (France's aFRR < 20 MW for an incident
+abroad); the reference incident stays above 49.8 Hz quasi-steady; an early mFRR frees the aFRR,
+a late one does not.
+
+### 9.3 N-1 security and remedial actions · `#9.3` · `lessons/n1`
+
+**Objectives.** After this lesson the learner can:
+- state the N-1 rule;
+- run a day-ahead N-1 analysis with a DC power flow;
+- compare remedies (topology, phase shifter, redispatch) by effect and by cost.
+
+**Model** (`n1At`, `dcFlows`). A five-node meshed 400 kV system.
+- Nodes:
+  - the interconnection (the slack);
+  - a 3,000 MW nuclear plant;
+  - two cities (peaks of 2,600 and 2,200 MW);
+  - an industrial site (1,100 MW) with a plant that can be started for redispatch.
+- Eight lines. L8, a second Interco–Ville B circuit, is normally open.
+- The phase shifter sits on L4 and shifts 60 MW per degree.
+- The daily load shape has a night trough, a midday shoulder and an evening peak.
+- Every 15 minutes, the flows are recomputed for N and for each single line outage.
+- The run's signals are the worst N-1 loading, the highest N loading and the demand.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Redispatch (plant at Industrie) | 0–600 MW | 0 |
+| Phase shifter on L4 | −15° to 15° | 0° |
+| Topology | normal (L8 open) / close L8 / open L5 | normal |
+| Demand growth (cold spell) | 0–15 % | 0 |
+
+**Panels.**
+- The network at the cursor hour, with N flows and lines in red when overloaded in N-1.
+- Each line's N and worst N-1 loading at the cursor hour.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Finding the constraint | No remedy, cursor where worst N-1 > 100 % |
+| 2 | Remedy 1: redispatch | Only redispatch, all-day worst N-1 ≤ 100 % |
+| 3 | Remedy 2: the phase shifter | Only the phase shifter, ≤ 100 % |
+| 4 | Remedy 3: topology | Only a topology change, ≤ 100 % |
+| 5 | Cold spell: combining | Growth ≥ 10 %, ≤ 100 % |
+
+**Tests.**
+- DC flows balance at every node.
+- The grid is secure in N, and over 105 % in N-1 at the evening peak (L4 if L3 trips).
+- 300 MW of redispatch, −12° or closing L8 each fix it; opening L5 makes it worse.
+- At +10 %, no single remedy works but the combination does.
+
+### 9.4 The transmission voltage plan · `#9.4` · `lessons/vplan`
+
+**Objectives.** After this lesson the learner can:
+- describe primary, secondary (pilot node, alignment level N) and tertiary voltage control;
+- explain the role of static compensation and why the reactive reserve matters;
+- weigh a higher voltage setpoint (losses) against the reserve.
+
+**Model** (`vplanRun`). A linearised 400 kV zone.
+- Voltage deviations follow the reactive injections through a 3×3 sensitivity matrix (about
+  $V/S_{cc}$) for G1, G2 and the pilot node.
+- The zone's net reactive demand follows the daily load shape: 1,400 Mvar at the peak, minus
+  900 Mvar of line charging.
+- Capacitors are switched in from 5 to 10 pm, reactors from 11 pm to 7 am.
+- Without secondary control, each generator holds its own bus at 405 kV, within ±600 and
+  ±400 Mvar.
+- With it, the level $N$ integrates the pilot error ($\sim$3 min) and $Q_i = N\,Q_{r,i}$.
+- Five-minute samples over 24 h.
+- The voltage range in the info leaves out the quarter hour after each switching.
+
+**Parameters.** Secondary control (off/on, default off); setpoint $V_c$ (395–415 kV, default
+405); capacitors (0–600 Mvar, default 0); reactors (0–600 Mvar, default 0).
+
+**Panels.**
+- The zone with the generators' levels, the pilot node, the banks and the secondary controller.
+- A pilot-voltage gauge with the 380–420 kV band.
+- The generators' levels plotted against each other (alignment).
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Primary control alone | Off, cursor 5–9 pm, pilot < 397 kV |
+| 2 | Secondary control | On, capacitors < 50 Mvar, a level reaches ±1 |
+| 3 | Capacitors for the peak | On, not saturated, $N_{max} \le 0.6$ |
+| 4 | Too many capacitors | On, ≥ 550 Mvar, $N_{min} \le -0.95$ |
+| 5 | Tertiary raises the setpoint | On, $V_c \ge 409.5$ kV, ≤ 450 Mvar, not saturated, ≤ 420 kV |
+
+**Tests.**
+- Primary control alone: below 397 kV at 7 pm and a swing of more than 10 kV.
+- Secondary control: the generators are aligned and saturate at the peak.
+- 300 Mvar keeps $N \le 0.6$ and the swing under 3 kV; 600 Mvar drives $N$ to −1.
+- 410 kV is held with 300 Mvar.
+
+### 9.5 Stability and the defence plan · `#9.5` · `lessons/defence`
+
+**Objectives.** After this lesson the learner can:
+- compute the initial RoCoF;
+- explain under-frequency load shedding and the generators' 47.5–51.5 Hz range;
+- recognise over-shedding;
+- explain why low inertia complicates the defence plan.
+
+**Model** (`defRun`). An islanded area, in per unit of its load.
+- Swing: $2H\,\dot{\Delta f} = 1 - \Delta P + \Delta P_m - (1 - P_{del})(1 + D\,\Delta f)$, with
+  $D = 1$.
+- Primary reserve: 5 %, 5 % droop, 6 s lag.
+- Six shedding stages, 0.2 Hz apart from $f_1$, each with a 0.2 s relay delay.
+- The generators trip below 47.5 Hz or above 51.5 Hz: a blackout.
+- Explicit Euler, 2 ms step, over 30 s; the loss is at $t = 1$ s.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Deficit | 2–40 % | 15 % |
+| Inertia $H$ | 1–6 s | 4 s |
+| First threshold $f_1$ | 48.6–49.6 Hz | 49 Hz |
+| Load shed per stage | 0–15 % | 7.5 % |
+
+**Panels.**
+- Six feeders opening in turn, a frequency gauge with the 47.5–51.5 Hz band, and the RoCoF.
+- The shedding plan (cumulative shedding against frequency) with the live point.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency | Prediction revealed |
+| 2 | No shedding | Stages at 0 %, blackout |
+| 3 | Shedding too much | Deficit ≤ 12 %, frequency > 51 Hz |
+| 4 | A very large deficit | Deficit ≥ 30 %, stages 5–10 %, saved, no over-frequency |
+| 5 | Low inertia | Deficit ≥ 20 %, $H \le 1.6$ s, saved, no over-frequency |
+
+**Misconceptions detected** (y-range 47.5–50.5 Hz):
+- the frequency stays low after shedding: the sketch ends below 49.5 Hz without going under 48 Hz;
+- the reserve is enough: the sketch never goes below 49.3 Hz.
+
+**Tests.**
+- The default plan saves the system; no shedding is a blackout.
+- The RoCoF formula holds.
+- 15 % stages for 10 % over-shed.
+- 30 % is saved by 7.5 % stages.
+- At $H = 1.5$ s, 7.5 % stages over-shed and 5 % stages save the system.
+
+### 9.6 Connection studies · `#9.6` · `lessons/connect`
+
+**Objectives.** After this lesson the learner can:
+- list the criteria of a connection study: N-1 hosting capacity, SCR, breaking capacity;
+- explain why the binding criterion depends on the technology (inverters or synchronous).
+
+**Model** (`studyAt`). Three substations.
+
+| Substation | $S_{cc}$ | $I_{cc}$ now | Breakers | N-1 capacity |
+|---|---|---|---|---|
+| A, 400 kV | 30 GVA | 59.5 kA | 63 kA | 1,500 MW |
+| B, 225 kV | 8 GVA | 20.5 kA | 40 kA | 400 MW |
+| C, 63 kV | 0.6 GVA | 5.5 kA | 20 kA | 250 MW |
+
+- Inverters must have $\text{SCR} = S_{cc}/P \ge 3$ and add $1.1\,S/(\sqrt3 U)$.
+- A synchronous plant adds $S/(\sqrt3\,U\,(X''_d + X_t))$ with $X''_d + X_t = 0.35$ pu.
+- The x-axis is the plant size (1–1,500 MW).
+- The info finds the largest acceptable size and the binding criterion.
+
+**Parameters.** Substation (A, B, C; default C); technology (inverters/synchronous, default
+inverters); size (10–1,500 MW, log, default 300 MW).
+
+**Panels.**
+- The three substations with the project and a checklist of the three criteria.
+- The largest connectable power for each substation and technology.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | A wind farm on a 63 kV substation | C, inverters, accepted, ≥ 95 % of the maximum |
+| 2 | Higher voltage, stronger grid | Inverters, ≥ 390 MW, accepted |
+| 3 | A 1,000 MW synchronous plant | A, synchronous, ≥ 990 MW, refused for short-circuit current |
+| 4 | Same substation, inverters | A, inverters, ≥ 990 MW, accepted |
+
+**Tests.**
+- C takes 200 MW of wind, limited by the SCR.
+- B takes 400 MW, limited by capacity.
+- At A, 1,000 MW synchronous exceed 63 kA, 1,000 MW of inverters do not.
+
+## 15. Standards and figures quoted in the lessons
 
 These figures appear in the Engineer and Researcher cards. Check them against the current edition
 before using them in a formal context.
@@ -3799,7 +4096,7 @@ before using them in a formal context.
 
 ---
 
-## 15. The Atelier (free-style mode) · `#atelier` · `atelier/`
+## 16. The Atelier (free-style mode) · `#atelier` · `atelier/`
 
 The top bar switches between *Leçons* and *Atelier*. The Atelier is an empty bench: the learner
 places elements from the library, wires them, and simulates. The full plan (phases A0–A6) is in
@@ -3807,7 +4104,7 @@ places elements from the library, wires them, and simulates. The full plan (phas
 
 **Screen.**
 - Centre: the canvas, with a toolbar (undo, redo, fit, time cursor, play, freeze and compare).
-- Below the canvas: the instrument dock (oscilloscope, Bode, impedance, phasors, poles, harmonics; §15.1) and the equation cards.
+- Below the canvas: the instrument dock (oscilloscope, Bode, impedance, phasors, poles, harmonics; §16.1) and the equation cards.
 - Right: the library and the inspector.
 
 **Using it.**
@@ -3890,7 +4187,7 @@ with switch and meters.
 - `atelier/bench.test.ts`: the selection logic (box, Shift+click, group move, delete with wires,
   clear all, undo).
 
-### 15.1 Analyses (phase A2)
+### 16.1 Analyses (phase A2)
 
 The dock under the bench has six tabs, each enlargeable (⤢):
 
@@ -3949,7 +4246,7 @@ owned by L1 and C1).
   and the LC filter's THD.
 - The smoke test opens every tab, clicks a pole, and reads the THD and the measurements.
 
-### 15.2 Power electronics and three-phase (phase A3)
+### 16.2 Power electronics and three-phase (phase A3)
 
 **Solver extensions** (`engine/emt.ts`).
 - **State-driven switching.** After each solve, elements may report that the solution changes
@@ -4003,7 +4300,7 @@ owned by L1 and C1).
     under 10 % of it when closing at the voltage peak without residual flux.
 - Every signal symbol of every template renders in KaTeX.
 
-### 15.3 Three-phase grids and machines (phase A4)
+### 16.3 Three-phase grids and machines (phase A4)
 
 **Elements** (`lib-grid.ts`, engines in `engine/grid.ts` and `engine/machines.ts`).
 
@@ -4064,7 +4361,7 @@ sinusoidal steady state, where loads are constant-impedance, to show the effect 
   - 6.4: grid current THD under 8 % against more than 50 % for the inverter voltage.
 - No singular AC system in any template.
 
-### 15.4 Control blocks and inverter-based resources (phase A5)
+### 16.4 Control blocks and inverter-based resources (phase A5)
 
 **Signal domain.**
 - Ports can be control signals (`signal: 'in' | 'out'`), drawn as green squares and joined by
@@ -4128,7 +4425,7 @@ The three-phase source gains a **phase jump** (time and angle) to test the conve
   triggers a ResizeObserver loop.
 - The Atelier is loaded on demand: lesson pages do not load its solver and library.
 
-### 15.5 Lessons ↔ Atelier and challenges (phase A6)
+### 16.5 Lessons ↔ Atelier and challenges (phase A6)
 
 **From a lesson to its bench** (`atelier/links.ts`). The 21 lessons below have an equivalent bench.
 Their panel shows a 🛠 Atelier button that opens it with the lesson's current settings:

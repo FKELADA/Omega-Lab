@@ -855,6 +855,105 @@ await page.screenshot({ path: `${out}/smoke-zoom.png` });
 await page.keyboard.press('Escape');
 check('zoom window closes with Escape', (await page.locator('.zoom-modal').count()) === 0);
 
+// ── Module 9 ──────────────────────────────────────────────────────────────────
+const radio = (name) => page.getByRole('radio', { name, exact: true }).click();
+
+// 9.1 Voltage levels
+await open('9.1');
+await radio('400 kV');
+await setParam(2, 2, 1, 4); // two circuits
+await radio('225 kV');
+await radio('20 kV');
+await setParam(2, 1, 1, 4); // one feeder
+await setParam(0, 5, 0.05, 3000, true);
+await setParam(1, 20, 0.1, 400, true);
+await radio('400 V');
+await setParam(0, 0.1, 0.05, 3000, true);
+await setParam(1, 0.54, 0.1, 400, true);
+check('9.1 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
+// 9.2 Balancing
+await open('9.2');
+await predict((f) => (f < 0.02 ? 0.2 : 0.5 - 0.3 * Math.min(1, f * 3)));
+await scored('9.2');
+await radio('Hors service');
+await radio('Chez un voisin');
+await radio('En service');
+await radio('En France');
+await setParam(0, 3000, 200, 3000); // the reference incident
+await setParam(0, 1000, 200, 3000);
+await setParam(2, 120, 60, 900); // mFRR called early
+check('9.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 9.3 N-1 security
+await open('9.3');
+await setCursor(19 / 24);
+check('9.3 N-1 constraint flagged', /contrainte N-1/.test(await panelText()));
+await setParam(0, 300, 0, 600); // redispatch
+await setParam(0, 0, 0, 600);
+await setParam(1, -12, -15, 15); // phase shifter
+await setParam(1, 0, -15, 15);
+await radio('Ouvrir L5');
+await radio('Fermer L8');
+await setParam(2, 10, 0, 15); // cold spell: combine
+await setParam(1, -12, -15, 15);
+await setParam(0, 300, 0, 600);
+check('9.3 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 9.4 Voltage plan
+await open('9.4');
+await setCursor(19 / 24);
+await radio('En service');
+check('9.4 generators at their limit', /butée/.test(await panelText()));
+await setParam(1, 300, 0, 600);
+await setParam(1, 600, 0, 600);
+await setParam(1, 300, 0, 600);
+await setParam(0, 410, 395, 415);
+check('9.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 9.5 Defence plan
+await open('9.5');
+await predict((f) => (f < 0.05 ? 0.1 : 0.3));
+await scored('9.5');
+await setParam(3, 0, 0, 15);
+check('9.5 blackout without shedding', /panne généralisée/.test(await panelText()));
+await setParam(0, 10, 2, 40);
+await setParam(3, 15, 0, 15);
+await setParam(0, 30, 2, 40);
+await setParam(3, 7.5, 0, 15);
+await setParam(0, 20, 2, 40);
+await setParam(1, 1.5, 1, 6);
+await setParam(3, 5, 0, 15);
+check('9.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// 9.6 Connection study
+await open('9.6');
+await setParam(0, 198, 10, 1500, true);
+await radio('Poste B 225 kV');
+await setParam(0, 400, 10, 1500, true);
+await radio('Poste A 400 kV');
+await radio('Centrale synchrone');
+await setParam(0, 1000, 10, 1500, true);
+check('9.6 synchronous plant refused', /refusé/.test(await panelText()));
+await radio('Éolien / PV (onduleurs)');
+check('9.6 all steps completed', (await doneSteps()) === 4, `${await doneSteps()}/4`);
+
+// The lesson list opens on the current lesson, not at the top.
+await page.locator('button.crumbs').click();
+await page.waitForTimeout(300);
+const cur = await page.locator('.drawer .lesson.cur').boundingBox();
+check('lesson list opens on the current lesson', cur !== null && cur.y > 0 && cur.y < (page.viewportSize()?.height ?? 1000), `y ${cur?.y}`);
+await page.keyboard.press('Escape');
+await page.locator('.scrim').click({ force: true }).catch(() => {});
+
+// Enlarged charts draw their curves (each copy has its own clip region).
+await open('4.9');
+await page.locator('.zoomable button.grow').nth(2).click();
+await page.waitForSelector('.zoom-modal svg');
+const clipIds = await page.evaluate(() => [...document.querySelectorAll('clipPath')].map((c) => c.id));
+check('enlarged chart has its own clip region', new Set(clipIds).size === clipIds.length, clipIds.join(','));
+await page.keyboard.press('Escape');
+
 // ── Documentation page and teaching notes ─────────────────────────────────────
 await page.goto(`${URL}#1.2`);
 await page.reload();
@@ -982,8 +1081,8 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9']) {
-  if (['2.1', '4.1', '6.1', '8.1'].includes(id)) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6']) {
+  if (['2.1', '4.1', '6.1', '8.1', '9.4'].includes(id)) {
     await page.close();
     page = watch(await context.newPage());
   }

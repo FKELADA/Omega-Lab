@@ -15,15 +15,15 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 435 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
+| `npm test` | 471 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 54 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 60 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
 ## Status
 
-Fifty-one lessons are complete (Modules 0–8), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
+Sixty lessons are complete (Modules 0–9), in French and English, plus the **Atelier**, a free-style bench (`#atelier`): drag components, wire them, simulate with a nodal EMT solver, and analyse: oscilloscope, Bode, impedance scan, phasors, clickable poles that light up the elements making them, harmonic analyser and power measurements. Lessons 8.8 and 8.9 show G2ELin results
 baked into the app (`web/scripts/bake-g2elin.mjs` and `bake-shapes.py` regenerate them from a local G2ELin). Open one directly with its number in the URL,
 e.g. `http://localhost:5173/#1.4`.
 
@@ -72,6 +72,12 @@ e.g. `http://localhost:5173/#1.4`.
 | **8.7 Inter-area oscillations** | Predicts a distant machine's swing, reads inter-area and local mode shapes, weakens and loads the tie, damps the mode | Two-area mode-shape bars, s-plane, inter-area frequency versus tie |
 | **8.8 Modes and participation** | Finds inter-area, local and control modes on G2ELin's Kundur, WSCC 9-bus (with inverters) and IEEE 39-bus models, sees the classical model go unstable | Mode table, participation factors, mode shape on the network map |
 | **8.9 Model reduction** | Steps down from full EMT to RMS and 6th/4th/3rd-order and classical machines, compares with EMT and the linearised response | Model ladder, eigenvalues on log scales, damping and size versus level |
+| **9.1 Voltage levels** | Finds the level and circuits for 1,000 MW over 200 km, measures losses as 1/U², sees P drive the drop in MV, finds the reach of an LV feeder | Chain of levels from 400 kV to the meter, losses versus level, share of the drop due to P versus R/X |
+| **9.2 Balancing** | Predicts the frequency after a 1,000 MW trip, turns off secondary control, moves the incident abroad (non-intervention), takes the 3,000 MW reference incident, frees the aFRR with mFRR | Two control areas with the interchange and France's reserves, activation times of the three products |
+| **9.3 N-1 security** | Finds the evening N-1 constraint, removes it by redispatch, by the phase shifter, by switching, then combines them in a cold spell | Meshed 400 kV grid at the cursor hour, N and N-1 loading of every line |
+| **9.4 The voltage plan** | Sees the pilot node sag without secondary control, saturates the generators, adds capacitors, overdoes them, raises the setpoint | Control zone with pilot node and level N, pilot-voltage gauge, alignment chart |
+| **9.5 The defence plan** | Predicts the frequency after a 15 % deficit, blacks out without shedding, over-sheds, saves a 30 % deficit, adapts stages to low inertia | Shedding stages opening in turn, frequency gauge, the shedding plan |
+| **9.6 Connection studies** | Finds the largest wind farm on a 63 kV substation, places 400 MW, sees a synchronous plant refused for short-circuit current, accepts the same power in inverters | Three candidate substations with a criteria checklist, largest connectable power |
 
 Shared by every lesson:
 

@@ -2,6 +2,7 @@
   // Poles of the learner's own circuit (inverse Tustin of the EMT step), on the
   // s-plane and in a table. Clicking a pole lights up, on the bench, the
   // inductors and capacitors that make it (participation factors).
+  import { getContext } from 'svelte';
   import type { Lab } from '../../lib/lab/lab.svelte';
   import type { Modal } from '../engine/modal';
   import { useBench } from './context';
@@ -30,7 +31,9 @@
   $effect(() => () => (bench.highlight = null));
 
   // s-plane, symmetric log-like scale so fast and slow poles both show.
-  const W = 300, H = 200;
+  // A larger s-plane in the enlarged window.
+  const big = getContext<boolean>('zoomed') ?? false;
+  const W = big ? 600 : 300, H = big ? 420 : 200;
   const sc = $derived(Math.max(1, ...md.poles.map((p) => Math.max(Math.abs(p.s.re), Math.abs(p.s.im)))) * 1.15);
   const g = (v: number) => (Math.sign(v) * Math.log10(1 + Math.abs(v))) / Math.log10(1 + sc);
   // Left half-plane over most of the width; unstable poles in a narrow strip on the right.

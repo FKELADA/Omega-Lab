@@ -1,6 +1,7 @@
 <script lang="ts">
   // Harmonic analyser: spectrum of a signal over the last whole periods of the
   // fundamental, its THD, and the EN 50160 limits for voltages.
+  import { getContext } from 'svelte';
   import type { Lab } from '../../lib/lab/lab.svelte';
   import { fundamental } from '../analyses';
   import { lastPeriods, spectrum, stats } from '../engine/harmonics';
@@ -25,7 +26,9 @@
   /** EN 50160 limits for harmonic voltages (% of the fundamental), odd orders up to 25. */
   const EN50160: Record<number, number> = { 2: 2, 3: 5, 4: 1, 5: 6, 6: 0.5, 7: 5, 9: 1.5, 11: 3.5, 13: 3, 15: 0.5, 17: 2, 19: 1.5, 21: 0.5, 23: 1.5, 25: 1.5 };
   const NMAX = 25;
-  const W = 420, H = 150, M = { l: 34, b: 18, t: 8 };
+  // A larger drawing area in the enlarged window, so text keeps its size.
+  const big = getContext<boolean>('zoomed') ?? false;
+  const W = big ? 1000 : 420, H = big ? 420 : 150, M = { l: 34, b: 18, t: 8 };
   const bars = $derived(sp ? Array.from({ length: NMAX }, (_, k) => ({ n: k + 1, pct: (100 * sp.amp[k + 1]) / (sp.amp[1] || 1) })) : []);
   const ymax = $derived(Math.max(10, ...bars.slice(1).map((b) => b.pct)) * 1.15);
   const bx = (n: number) => M.l + ((W - M.l - 6) * (n - 0.5)) / NMAX;

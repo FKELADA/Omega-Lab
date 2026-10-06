@@ -13,6 +13,7 @@ import { answers5 } from './m5';
 import { answers6 } from './m6';
 import { answers7 } from './m7';
 import { answers8 } from './m8';
+import { answers9 } from './m9';
 
 export interface StepHelp {
   hint: L;
@@ -20,4 +21,4 @@ export interface StepHelp {
 }
 export type Answers = Record<string, Record<string, StepHelp>>;
 
-export const answers: Answers = { ...answers0, ...answers1, ...answers2, ...answers3, ...answers4, ...answers4b, ...answers5, ...answers6, ...answers7, ...answers8 };
+export const answers: Answers = { ...answers0, ...answers1, ...answers2, ...answers3, ...answers4, ...answers4b, ...answers5, ...answers6, ...answers7, ...answers8, ...answers9 };

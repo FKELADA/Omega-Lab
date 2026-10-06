@@ -63,7 +63,8 @@
     }
 
     const units = [...new Set(shown.map((s) => s.unit))];
-    const predictRange = lab.prediction.active && lab.exp.predict ? lab.exp.predict.yRange(lab.params) : null;
+    // While sketching, and while the answer is hidden, the predicted signal's axis keeps the sketch range.
+    const predictRange = (lab.prediction.active || hiddenId) && lab.exp.predict ? lab.exp.predict.yRange(lab.params) : null;
     const predictUnit = lab.exp.signals.find((s) => s.id === lab.exp.predict?.signal)?.unit;
     const scales: uPlot.Scales = { x: { time: false, range: () => [0, lab.tEnd] } };
     for (const u of units) {

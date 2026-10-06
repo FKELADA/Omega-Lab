@@ -11,10 +11,16 @@
   }: { current: string; onpick: (e: Experiment) => void; onclose: () => void; onnote: (module: number, lesson?: string) => void } =
     $props();
   const NOTE = { fr: 'Note pédagogique', en: 'Teaching note' };
+
+  // Open on the current lesson rather than at the top of a long list.
+  let drawer = $state<HTMLElement>();
+  $effect(() => {
+    drawer?.querySelector('.lesson.cur')?.scrollIntoView({ block: 'center' });
+  });
 </script>
 
 <div class="scrim" role="presentation" onclick={onclose}></div>
-<aside class="drawer" aria-label={tr(S.modules)}>
+<aside class="drawer" aria-label={tr(S.modules)} bind:this={drawer}>
   <header>
     <h2>{tr(S.modules)}</h2>
     <button class="btn" onclick={onclose} aria-label="Close">✕</button>

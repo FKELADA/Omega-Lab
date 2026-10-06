@@ -56,6 +56,12 @@ import { powerLesson } from './power/experiment';
 import { threePhaseLesson } from './three-phase/experiment';
 import { resonance } from './resonance/experiment';
 import { rlcStep } from './rlc-step/experiment';
+import { levelsLesson } from './levels/experiment';
+import { balancingLesson } from './balancing/experiment';
+import { n1Lesson } from './n1/experiment';
+import { vplanLesson } from './vplan/experiment';
+import { defenceLesson } from './defence/experiment';
+import { connectLesson } from './connect/experiment';
 
 export interface LessonEntry {
   id: string;
@@ -178,6 +184,18 @@ export const curriculum: ModuleEntry[] = [
       { id: '8.7', title: { fr: 'Oscillations inter-zones', en: 'Inter-area oscillations' }, experiment: g2Lesson },
       { id: '8.8', title: { fr: 'Modes et participations', en: 'Modes and participation' }, experiment: modesLesson },
       { id: '8.9', title: { fr: 'Réduction de modèles', en: 'Model reduction' }, experiment: reductionLesson },
+    ],
+  },
+  {
+    n: 9,
+    title: { fr: 'Le gestionnaire du réseau de transport (GRT)', en: 'The transmission system operator (TSO)' },
+    lessons: [
+      { id: '9.1', title: { fr: 'Niveaux de tension et ordres de grandeur', en: 'Voltage levels and orders of magnitude' }, experiment: levelsLesson },
+      { id: '9.2', title: { fr: 'Équilibre et réglages de fréquence', en: 'Balancing and frequency control' }, experiment: balancingLesson },
+      { id: '9.3', title: { fr: 'Sécurité N-1 et parades', en: 'N-1 security and remedial actions' }, experiment: n1Lesson },
+      { id: '9.4', title: { fr: 'Le plan de tension du transport', en: 'The transmission voltage plan' }, experiment: vplanLesson },
+      { id: '9.5', title: { fr: 'Stabilité et plan de défense', en: 'Stability and the defence plan' }, experiment: defenceLesson },
+      { id: '9.6', title: { fr: 'Études de raccordement', en: 'Connection studies' }, experiment: connectLesson },
     ],
   },
 ];
