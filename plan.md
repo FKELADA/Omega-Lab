@@ -151,9 +151,20 @@ no console errors).
 
 ### Next
 
-1. **Free-style mode, the Atelier** (§10): A0 to A6 done (the Atelier has no predict-then-run exercise, by choice).
-2. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
-3. **Capstone labs** from §5 Module 8, and the split view (two cases side by side).
+1. **Home page** (`#home`, the default route): what Omega Lab is, the 11 modules as a map with
+   progress, entry points by profile (learner, researcher, engineer), "continue where I left off",
+   a link to the Atelier and its challenges, and a short demo animation. Bilingual, phone-friendly.
+2. **Expert review of Modules 9–10:** check every figure flagged "à vérifier" against RTE,
+   Enedis, CRE and ENTSO-E publications, and adjust the sources table.
+3. **Progress and assessment:** per-lesson progress saved in the browser, a short quiz at the end
+   of each module, and an export of results for teachers.
+4. **Capstone labs** from §5 Module 8 and Modules 9–10 (for example "plan a primary substation
+   for 2035"), and the split view (two cases side by side).
+5. **Atelier ↔ Modules 9–10:** benches for the MV loop, neutral earthing and protection grading.
+6. **Deployment:** a static build on a public URL, with a production check of the smoke test.
+7. **G2ELin depth:** PSS design on G2ELin's full two-area model, GFM/GFL reduction levels.
+
+Done: the Atelier, A0 to A6 (§10; no predict-then-run exercise there, by choice).
 
 ---
 
