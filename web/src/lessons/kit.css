@@ -1,0 +1,135 @@
+/* Shared drawing styles for the schematic canvases of Modules 4 (second part), 9 and 10.
+   A canvas opts in with <svg class="kit">. */
+
+svg.kit {
+  width: 100%;
+  height: auto;
+  max-height: 250px;
+  display: block;
+}
+svg.kit text {
+  text-anchor: middle;
+}
+svg.kit .w {
+  stroke: var(--muted);
+  stroke-width: 2;
+  fill: none;
+}
+svg.kit .thin {
+  stroke: var(--line);
+  stroke-width: 1.2;
+  fill: none;
+}
+svg.kit .bus {
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+svg.kit .src {
+  fill: var(--panel);
+  stroke: var(--c-S);
+  stroke-width: 2.4;
+}
+svg.kit .sym {
+  fill: none;
+  stroke: var(--c-S);
+  stroke-width: 2;
+}
+svg.kit .coil {
+  fill: none;
+  stroke: var(--c-a);
+  stroke-width: 2.4;
+}
+svg.kit .coil2 {
+  fill: none;
+  stroke: var(--c-C);
+  stroke-width: 2.4;
+}
+svg.kit .box {
+  fill: var(--panel-2);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+svg.kit .x {
+  fill: var(--panel-2);
+  stroke: var(--c-L);
+  stroke-width: 2;
+}
+svg.kit .load {
+  fill: none;
+  stroke: var(--c-R);
+  stroke-width: 2.4;
+}
+svg.kit .cap {
+  stroke: var(--c-C);
+  stroke-width: 3;
+}
+svg.kit .gnd {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+svg.kit .flow {
+  stroke: var(--c-p);
+  stroke-width: 3;
+  fill: none;
+}
+svg.kit .arrow {
+  fill: var(--c-p);
+}
+svg.kit .track {
+  fill: var(--panel-2);
+  stroke: var(--line);
+}
+svg.kit .bar {
+  fill: var(--c-C);
+}
+svg.kit .bar.bad {
+  fill: var(--warn);
+}
+svg.kit .band {
+  fill: var(--good-soft, rgba(46, 160, 67, 0.15));
+}
+svg.kit .lbl {
+  fill: var(--muted);
+  font-size: 11px;
+}
+svg.kit .v {
+  fill: var(--ink);
+  font-size: 11.5px;
+  font-family: var(--mono);
+}
+svg.kit .big {
+  fill: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+svg.kit .bad {
+  fill: var(--warn);
+}
+svg.kit .ok {
+  fill: var(--good);
+}
+svg.kit .small {
+  fill: var(--muted);
+  font-size: 10.5px;
+}
+svg.kit .hot {
+  stroke: var(--warn);
+}
+svg.kit .dim {
+  opacity: 0.35;
+}
+svg.kit .open {
+  stroke: var(--warn);
+  stroke-width: 2.4;
+}
+svg.kit .closed {
+  stroke: var(--good);
+  stroke-width: 2.4;
+}
+.kit-warn {
+  color: var(--warn);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}

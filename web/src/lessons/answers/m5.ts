@@ -51,7 +51,7 @@ export const answers5: Answers = {
 
   pv: {
     predict: {
-      hint: { fr: r`Au début la tension baisse lentement. Jusqu’où ? Pensez à la courbe du nez de la leçon 4.6.`, en: r`At first voltage falls slowly. How far? Think of the nose curve of lesson 4.6.` },
+      hint: { fr: r`Au début la tension baisse lentement. Jusqu’où ? Pensez à la courbe du nez de la leçon 4.9.`, en: r`At first voltage falls slowly. How far? Think of the nose curve of lesson 4.9.` },
       answer: {
         fr: r`La tension baisse d’abord doucement, puis **de plus en plus vite**, jusqu’au **nez** où la courbe s’arrête : au-delà, aucune solution. $$\left.\frac{dV}{d\lambda}\right|_{\text{nez}} \to -\infty$$ La dernière portion est trompeuse : la tension paraît encore acceptable (0,85–0,9 pu) alors que la marge est presque nulle.`,
         en: r`Voltage first falls gently, then **faster and faster**, up to the **nose** where the curve stops: beyond it, no solution. $$\left.\frac{dV}{d\lambda}\right|_{\text{nose}} \to -\infty$$ The last stretch is misleading: voltage still looks acceptable (0.85–0.9 pu) while the margin is almost nil.`,
@@ -96,7 +96,7 @@ export const answers5: Answers = {
 
   faults: {
     predict: {
-      hint: { fr: r`Le courant de défaut est limité par les impédances directe, inverse et homopolaire en série. Pensez aussi à la composante continue de la leçon 4.3.`, en: r`Fault current is limited by the positive, negative and zero-sequence impedances in series. Remember the DC offset of lesson 4.3 too.` },
+      hint: { fr: r`Le courant de défaut est limité par les impédances directe, inverse et homopolaire en série. Pensez aussi à la composante continue de la leçon 4.4.`, en: r`Fault current is limited by the positive, negative and zero-sequence impedances in series. Remember the DC offset of lesson 4.4 too.` },
       answer: {
         fr: r`Au défaut, le courant de la phase a passe brusquement de 0,5 pu à **plusieurs pu**, avec une composante continue qui s’amortit. Pour un défaut phase–terre franc : $$\underline I_a = 3\underline I_0 = \frac{3\underline E}{\underline Z_1 + \underline Z_2 + \underline Z_0}$$ Les trois réseaux de séquence sont en série ; les phases saines gardent à peu près leur courant de charge.`,
         en: r`At the fault, phase a current jumps from 0.5 pu to **several pu**, with a decaying DC offset. For a solid single-line-to-ground fault: $$\underline I_a = 3\underline I_0 = \frac{3\underline E}{\underline Z_1 + \underline Z_2 + \underline Z_0}$$ The three sequence networks are in series; the healthy phases keep roughly their load current.`,

@@ -1,4 +1,4 @@
-// Module 4.6 — Shunt and series compensation, nose curves, voltage collapse.
+// Module 4.9 — Shunt and series compensation, nose curves, voltage collapse.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
@@ -10,7 +10,7 @@ export const compLesson: Experiment = {
   id: 'comp',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.6 Compensation', en: '4.6 Compensation' },
+    { fr: '4.9 Compensation', en: '4.9 Compensation' },
   ],
   title: { fr: 'Compenser une ligne : condensateurs, inductances et courbe du nez', en: 'Compensating a line: capacitors, reactors and the nose curve' },
   model: compensation,

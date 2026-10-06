@@ -239,8 +239,8 @@ export const pflowLesson: Experiment = {
       id: 'diverge',
       title: { fr: 'Plus de solution', en: 'No solution' },
       body: {
-        fr: `Continuez jusqu’à ce que le calcul **ne converge plus**. Ce n’est pas un problème numérique : au-delà du « nez », il n’existe aucun état d’équilibre (leçons 4.6 et 5.2).`,
-        en: `Keep going until the calculation **no longer converges**. This is not a numerical issue: beyond the “nose”, no equilibrium exists (lessons 4.6 and 5.2).`,
+        fr: `Continuez jusqu’à ce que le calcul **ne converge plus**. Ce n’est pas un problème numérique : au-delà du « nez », il n’existe aucun état d’équilibre (leçons 4.9 et 5.2).`,
+        en: `Keep going until the calculation **no longer converges**. This is not a numerical issue: beyond the “nose”, no equilibrium exists (lessons 4.9 and 5.2).`,
       },
       check: (lab) => !(lab.info as PflowInfo).nr.converged,
     },

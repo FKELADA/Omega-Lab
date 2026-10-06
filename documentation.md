@@ -107,9 +107,9 @@ fourth-order Runge–Kutta (`lib/core/ode.ts`): each output interval is split in
 For the PLL at 100 Hz bandwidth, that gives $omega_n h approx 0.03$, well inside RK4's
 accuracy range. Linear models keep the exact step of §2.1.
 
-Module 4 uses the same RK4 for the transformer flux (4.2), the recovering load (4.4), the motor
-mechanics (4.5) and the FACTS controllers (4.7). The line (4.1), the generator (4.3) and the
-compensation (4.6) are solved as phasors or closed forms.
+Module 4 uses the same RK4 for the transformer flux (4.2), the generator and its controls (4.5),
+the recovering load (4.6), the motor mechanics (4.8) and the FACTS controllers (4.10). The line (4.1), the generator (4.4) and the
+compensation (4.9) are solved as phasors or closed forms.
 
 The blackout replay (0.2) uses explicit Euler with a 2 ms step instead, because its protection
 events (RoCoF trip, load shedding) must be checked at every step.
@@ -212,9 +212,9 @@ A lesson is a typed data file, `lessons/<id>/experiment.ts`, exporting an `Exper
 
 | Suite | Command | What it checks |
 |---|---|---|
-| Unit tests | `npm test` | 415 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts`, `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
+| Unit tests | `npm test` | 435 tests in `lib/core/solver.test.ts`, `lib/models/models.test.ts`, `lib/models/module3.test.ts`, `lib/models/module01.test.ts`, `lib/models/module4.test.ts` to `module8.test.ts` (with `module4b.test.ts`), `lib/models/g2data.test.ts`, `lessons/notes.test.ts` (note completeness) `lessons/answers/answers.test.ts` (hints and explanations) and `atelier/**/*.test.ts` (the Atelier's solver and compiler): the numerical core against closed-form results, and every lesson model against its physics (listed lesson by lesson below). |
 | Type check | `npm run check` | Svelte + TypeScript, including every lesson file. |
-| Browser test | `npm run smoke` (dev server running) | Drives all 51 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
+| Browser test | `npm run smoke` (dev server running) | Drives all 54 lessons in Chrome: draws predictions and checks the misconception feedback, completes every guided step through the real controls, and checks English, dark mode, no horizontal scroll at 390 px, and no console errors, plus the documentation page and teaching notes. It also checks the enlarge-and-zoom window and the Atelier. The phone-width loop renews its tab every few lessons: hundreds of reloads of one tab in dev mode exhaust Chrome (ERR_INSUFFICIENT_RESOURCES). |
 | Screenshots | `node tests/shots.mjs <dir> [ids…]` | Captures each lesson for visual review. |
 
 ---
@@ -1539,8 +1539,12 @@ Module 4 builds the components of the grid one at a time: the line, the transfor
 generator, the loads, the motor, and the devices that compensate them. Each lesson combines the
 time-domain oscilloscope with one or two **characteristic charts** (profile, magnetising curve,
 capability, P–V, torque–speed…). These charts are declared as data (`charts` in the lesson's
-`Experiment`) and drawn by the shared `XYChart` instrument. All models are in
-`lib/models/module4.ts` and tested in `lib/models/module4.test.ts`.
+`Experiment`) and drawn by the shared `XYChart` instrument. The models are in
+`lib/models/module4.ts` (4.1, 4.2, 4.4, 4.6, 4.8–4.10) and `lib/models/module4b.ts` (4.3, 4.5,
+4.7), each tested in its `.test.ts`. Each element comes in two lessons where there is a lot to
+say: the transformer (4.2 inrush and efficiency, 4.3 regulation), the generator (4.4 short
+circuit and capability, 4.5 models and controls) and the loads (4.6 ZIP and recovery, 4.7
+exponential and frequency).
 
 All quantities are per unit on the element's own rating, except in 4.1, which uses kV, MW and
 km.
@@ -1614,7 +1618,7 @@ amplitude.
 - At SIL the profile is nearly flat.
 - The nominal π matches the exact model at short length, not at 1000 km.
 
-### 4.2 Transformers · `#4.2` · `lessons/trafo`
+### 4.2 Transformer: inrush and efficiency · `#4.2` · `lessons/trafo`
 
 **Objectives.** After this lesson the learner can:
 - state the ideal transformer relations;
@@ -1677,7 +1681,70 @@ the true peak exceeds 2 pu and the sketch's peak is under 40 % of it.
 - The inrush decays.
 - Efficiency peaks where copper losses equal iron losses.
 
-### 4.3 Synchronous machine · `#4.3` · `lessons/sm`
+### 4.3 Transformer: tap changer, phase shifter, vector groups · `#4.3` · `lessons/oltc`
+
+**Objectives.** After this lesson the learner can:
+- explain how an on-load tap changer (OLTC) regulates voltage, step by step, with a dead band
+  and time delays;
+- find the limit of its range, and explain hunting and the grading of cascaded regulators;
+- compute the flow shifted by a phase-shifting transformer between two parallel lines;
+- read a vector group (Dyn11, YNd11…): clock number, and where zero-sequence current can flow.
+
+**Model** (`lib/models/module4b.ts`, `oltcRun`). Quasi-static, one sample every 0.1 s over 180 s.
+- The upstream voltage steps from 1 pu to $V_{HT}$ at $t = 10$ s.
+- Regulated voltage $V_{BT} = V_{HT}(1 + n\Delta) - \varepsilon$, with $\Delta = 1.25\,\%$,
+  $|n| \le 12$ and a 3 % drop $\varepsilon$. The starting tap (+2) puts $V_{BT}$ at 1.005 pu.
+- Regulator: while $|V_{BT} - 1| > DB/2$, a timer runs. The first change waits $T_1$; the next
+  ones, while the voltage stays out of the band, wait $T_2 = 10$ s. Back in the band, the timer
+  resets.
+- Hunting is flagged after three changes of direction.
+- Phase shifter (DC approximation): two parallel lines, $X_1 = 0.25$ and $X_2 = 0.35$ pu,
+  carrying $P = 1$ pu; $P_1 = (P X_2 + \alpha)/(X_1 + X_2)$. Line 1 is rated 0.45 pu.
+- Vector groups: Yy0, Dyn11, YNd11, Dyn5, Yd1, each with its clock number and zero-sequence
+  paths.
+
+**Formulas.** The variable ratio with the final tap and voltage (live); the band and delay rule
+$DB > \Delta$; the phase-shifter flows (live); the vector group with its phase shift and a note
+on zero-sequence paths for the chosen group.
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Upstream voltage after the dip $V_{HT}$ | 0.85–1.08 pu | 0.92 pu |
+| Dead band $DB$ (full width) | 0.5–4 % | 2 % |
+| First delay $T_1$ | 5–60 s | 30 s |
+| Phase-shifter angle $\alpha$ | −15° to 15° | 0° |
+| Vector group | Yy0, Dyn11, YNd11, Dyn5, Yd1 | Yy0 |
+
+**Panels.**
+- The circuit: source, transformer with the tap position, downstream voltage gauge with its band,
+  the two parallel lines with the phase shifter and their flows, and the vector-group clock.
+- Flows on the two lines against $\alpha$, with line 1's rating.
+- Phasor diagram: the three HV phase voltages and the LV phase-a voltage.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the regulated voltage | Prediction revealed |
+| 2 | The tap changer's end stop | At tap ±12 and out of the band |
+| 3 | Hunting | Hunting detected |
+| 4 | Regulating faster, without hunting | $T_1 \le 10$ s, $DB \ge 1.5\,\%$, in the band, no hunting |
+| 5 | Relieving a line with the phase shifter | $P_1 \le 0.45$ pu |
+| 6 | The vector group of an MV/LV substation | Dyn11 or Dyn5 |
+
+**Misconceptions detected** (y-range 0.85–1.08 pu):
+- the voltage stays low: the sketch ends more than 0.03 pu below the truth;
+- the regulator is instantaneous: the sketch is above 0.98 pu between 12 and 30 s.
+
+**Tests.**
+- A dip to 0.92 pu is corrected in 7 taps; the first change comes $T_1$ after the dip.
+- Below about 0.887 pu, the tap changer stays at its end stop; a 0.8 % band hunts, 1.5 % does not.
+- The phase-shifter flows add up to $P$, and −4.6° brings line 1 under its rating.
+- Dyn11 puts LV at +30°, Dyn5 at −150°; YNd11 earths the HV side only.
+
+### 4.4 Synchronous machine: short circuit and capability · `#4.4` · `lessons/sm`
 
 **Objectives.** After this lesson the learner can:
 - describe the three periods of a terminal short circuit and the reactances that govern them;
@@ -1749,7 +1816,79 @@ Triggers when the sketch's largest value before 150 ms is under 1.5 × its large
 - The short-circuit current starts at zero whatever θ, peaks above $1.8\sqrt2/X''_d$, and is
   within 15 % of $\sqrt2/X_d$ after 3 s.
 
-### 4.4 Loads · `#4.4` · `lessons/loads`
+### 4.5 Synchronous machine: models and controls · `#4.5` · `lessons/smdyn`
+
+**Objectives.** After this lesson the learner can:
+- explain droop and why primary control leaves a frequency error;
+- choose a droop for a frequency criterion;
+- place the classical and one-axis models in the model hierarchy (2, 3, 4, 6 states);
+- describe what the AVR does after a disturbance, and how a fast AVR can remove damping.
+
+**Model** (`lib/models/module4b.ts`, `smDynRun`). Two tests.
+- *Load step (islanded):* one machine with its load, $H = 3.5$ s:
+  - $2H\,\dot{\Delta\omega} = P_m - P_L(1 + D_{ch}\Delta\omega)$, with $D_{ch} = 1$;
+  - governor $T_g\,\dot P_m = P_0 - \Delta\omega/s - P_m$, with $T_g = 0.5$ s;
+  - load step $\Delta P$ at $t = 1$ s, over 20 s.
+- *Fault then line trip:* single machine on an infinite bus (Kundur's machine data: $X_d = 1.81$,
+  $X_q = 1.76$, $X'_d = 0.3$, $T'_{d0} = 8$ s), $P_0 = 0.8$ pu, $V_t = 1$ pu:
+  - the infinite-bus voltage dips to 0.2 pu for 100 ms at $t = 1$ s;
+  - a line then trips, so $X_e$ grows by 0.15 pu;
+  - classical model: $E'$ constant behind $X'_d$ (with $X_q = X'_d$);
+  - one-axis model: $T'_{d0}\,\dot E'_q = E_{fd} - E'_q - (X_d - X'_d)\,i_d$;
+  - static exciter $T_A\,\dot E_{fd} = K_A(V_{ref} - V_t) - E_{fd}$, with $T_A = 50$ ms, limited
+    to −4…5 pu, and $V_{ref}$ chosen for equilibrium;
+  - $D = 2$ stands in for the damper windings;
+  - RK4 over 10 s, 2001 samples × 4 substeps.
+- Initialisation solves the steady state from $P_0$, $V_t$ and $X_e$, so nothing moves before
+  the disturbance.
+
+**Formulas.** The swing equation; the model hierarchy (classical $P_e$ or the one-axis
+equations, according to the chosen model); the AVR with its limits and gain; the governor and the
+standing frequency error $\Delta f_\infty = -\Delta P f_0/(1/s + D_{ch})$ (live).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Test | Load step (islanded) / fault then line trip | Load step |
+| Load step $\Delta P$ | 0.02–0.3 pu | 0.1 pu |
+| Droop $s$ | 2–10 % | 5 % |
+| Machine model | Classical (2 states) / one-axis (3 states + AVR) | Classical |
+| AVR gain $K_A$ | 0–400 (0: fixed field) | 0 |
+| Reactance to the grid $X_e$ | 0.2–0.6 pu | 0.3 pu |
+
+**Panels.**
+- The machine with its turbine, governor and AVR, the rotor turning with $\delta$, the two lines
+  (one trips) or the islanded load.
+- Droop characteristic (f against P) with the 49.8–50.2 Hz band.
+- P–δ curves before and after the trip, at the initial $E'_q$, with the operating point.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Predict the frequency after a load step | Prediction revealed |
+| 2 | Choosing the droop | Islanded, $\Delta P \approx 0.1$, $f_\infty \ge 49.8$ Hz |
+| 3 | The classical model | Fault test, classical model |
+| 4 | Adding the field flux | One-axis, $K_A = 0$, final $V_t < 0.98$ pu |
+| 5 | The voltage regulator | $K_A \ge 20$, final $V_t > 0.99$ pu, swing not growing |
+| 6 | High gain, weak grid | $K_A \ge 100$, $X_e \ge 0.5$ pu, swing growing |
+
+A swing is "growing" when the rotor-angle amplitude over the last two seconds exceeds 1.05 times
+its amplitude in the two seconds after the fault.
+
+**Misconception detected** (y-range 49.4–50.2 Hz): the frequency returns to 50 Hz. Triggers when
+the sketch averages above 49.95 Hz after 15 s.
+
+**Tests.**
+- Both models initialise at $P_e = P_0$ and $V_t = 1$; nothing moves before the fault.
+- The islanded frequency settles at $50 - \Delta P f_0/(1/s + D_{ch}(P_0 + \Delta P))$; 4 %
+  droop holds 49.8 Hz, 5 % does not.
+- Without AVR the final voltage stays below 0.98 pu; with $K_A$ = 20 or 50 it exceeds 0.99 pu
+  and the swing dies out.
+- $K_A = 100$ with $X_e = 0.5$ pu makes the swing grow; $K_A = 0$ does not.
+
+### 4.6 Loads: ZIP and recovery · `#4.6` · `lessons/loads`
 
 **Objectives.** After this lesson the learner can:
 - describe the ZIP and exponential load models;
@@ -1806,7 +1945,56 @@ sketched point after 7 s is above 0.985 while the true final power is under 0.97
 - The weights are normalised, and the CVR factor is $2a_Z + a_I$.
 - A recovering load dips to $V^2$, then returns to its constant power.
 
-### 4.5 Induction motor · `#4.5` · `lessons/motor`
+### 4.7 Loads: exponential model and frequency · `#4.7` · `lessons/loadexp`
+
+**Objectives.** After this lesson the learner can:
+- write the exponential load model and recover constant P, I and Z from it;
+- convert a ZIP mix into an equivalent exponent around 1 pu;
+- explain why reactive power is more voltage-sensitive than active power;
+- quantify load self-regulation with frequency.
+
+**Model** (`lib/models/module4b.ts`, `expLoadModel`). Static, over 12 s.
+- The voltage steps to $V_2$ at $t = 2$ s; the frequency steps by $\Delta f$ at $t = 7$ s.
+- $P = V^\alpha(1 + K_{pf}\Delta f/f_0)$ and $Q = 0.4\,V^\beta(1 + K_{qf}\Delta f/f_0)$, with
+  $K_{qf} = -2$.
+- Self-regulation chart: steady frequency drop after losing 3 % of generation, without governors
+  ($-\Delta P f_0/K_{pf}$) and with a 5 % droop ($-\Delta P f_0/(K_{pf} + 1/s)$).
+
+**Formulas.** The exponential model with live P and Q; the ZIP equivalent
+$\alpha \approx 2a_Z + a_I$; the self-regulation formula (live).
+
+**Parameters.**
+
+| Parameter | Range | Default |
+|---|---|---|
+| Active exponent $\alpha$ | 0–2.5 | 1 |
+| Reactive exponent $\beta$ | 0–5 | 2 |
+| Frequency sensitivity $K_{pf}$ | 0–3 | 1 |
+| Voltage after the step $V_2$ | 0.85–1.05 pu | 0.95 pu |
+| Frequency deviation $\Delta f$ | −1 to 0.5 Hz | −0.2 Hz |
+
+**Panels.**
+- A feeder bus with motors, heating and electronics, and P and Q bars against their values at
+  1 pu and 50 Hz.
+- P against V for α = 0, 1, 2, the ZIP mix of lesson 4.6 and the chosen exponent.
+- Self-regulation: frequency drop against $K_{pf}$, with and without governors.
+
+**Guided steps.**
+
+| # | Step | Done when |
+|---|---|---|
+| 1 | Recovering constant impedance | $\alpha = 2$ |
+| 2 | Constant power | $\alpha \le 0.05$ |
+| 3 | The ZIP mix equivalent | $\alpha = 1.1 \pm 0.05$ |
+| 4 | Reactive power is more sensitive | $\beta \ge 3$ |
+| 5 | The load follows frequency | $K_{pf} \ge 1.95$ and $\Delta f \le -0.49$ Hz |
+
+**Tests.**
+- α = 0, 1, 2 give constant P, I, Z.
+- α = 1.1 matches the ZIP (0.4, 0.3, 0.3) within 0.1 % between 0.95 and 1.05 pu.
+- $K_{pf} = 2$ and −0.5 Hz give −2 %; the self-regulation formulas.
+
+### 4.8 Induction motor · `#4.8` · `lessons/motor`
 
 **Objectives.** After this lesson the learner can:
 - define slip and read the torque–speed curve (starting torque, breakdown torque);
@@ -1874,7 +2062,7 @@ the sketch's peak is under half the true peak.
   rides through it.
 - The same dip cleared in 0.3 s is ridden through.
 
-### 4.6 Compensation · `#4.6` · `lessons/comp`
+### 4.9 Compensation · `#4.9` · `lessons/comp`
 
 **Objectives.** After this lesson the learner can:
 - explain why voltage depends mainly on reactive power on a line where $X \gg R$;
@@ -1931,7 +2119,7 @@ No prediction in this lesson.
 - 50 % series compensation roughly doubles the transfer limit.
 - Beyond the nose (1.05 $P_{max}$) there is no solution.
 
-### 4.7 FACTS · `#4.7` · `lessons/facts`
+### 4.10 FACTS · `#4.10` · `lessons/facts`
 
 **Objectives.** After this lesson the learner can:
 - explain how injecting capacitive current raises the voltage behind a grid reactance;
@@ -3590,13 +3778,13 @@ before using them in a formal context.
 | Reactive energy billed beyond $\tan\varphi = 0.4$ (MV customers, France) | 2.3 | French network tariff (TURPE) |
 | 230/400 V low-voltage networks | 2.4 | IEC 60038 |
 | Capacitor-bank detuning near $h \approx 4.3$ | 1.4 | Common industry practice |
-| Typical pu values of transformers and generators | 2.6, 4.2, 4.3 | Standard textbook ranges |
+| Typical pu values of transformers and generators | 2.6, 4.2, 4.4 | Standard textbook ranges |
 | Line constants, SIL ≈ 530 MW at 400 kV | 4.1 | Typical overhead-line data (Kundur, *Power System Stability and Control*) |
 | Loadability ≈ 3 SIL at 80 km, 1 SIL at 500 km | 4.1 | St Clair curve (Dunlop et al., 1979) |
-| Inverter fault current 1.1–1.5 pu | 4.3 | Common inverter ratings |
-| ZIP and exponential load models, CVR factor | 4.4 | IEEE Task Force on load representation (1993, 1995) |
-| Starting current 5–7 × rated, FIDVR | 4.5 | NERC FIDVR technical reference |
-| Mohave subsynchronous-resonance failures (1970–71) | 4.6 | IEEE SSR working group |
+| Inverter fault current 1.1–1.5 pu | 4.4 | Common inverter ratings |
+| ZIP and exponential load models, CVR factor | 4.6 | IEEE Task Force on load representation (1993, 1995) |
+| Starting current 5–7 × rated, FIDVR | 4.8 | NERC FIDVR technical reference |
+| Mohave subsynchronous-resonance failures (1970–71) | 4.9 | IEEE SSR working group |
 | Real-power margin ≥ 5 % after N–1 | 5.2 | WECC voltage stability criteria |
 | Peak factor $kappa = 1.02 + 0.98e^{-3R/X}$ | 5.3 | IEC 60909 |
 | Nodal (locational marginal) pricing | 5.4 | PJM, ERCOT market design |
@@ -3855,7 +4043,7 @@ sinusoidal steady state, where loads are constant-impedance, to show the effect 
 
 **Templates.**
 - Generator, transformer, 225 kV line and grid with a three-phase fault (8.1).
-- Motor start (4.5).
+- Motor start (4.8).
 - Energising a 300 km open line, travelling-wave model (4.1).
 - Substation, feeder, load and capacitors for the power flow (5.1).
 - Three-phase inverter with an LCL filter on the grid (6.4).
@@ -3870,7 +4058,7 @@ sinusoidal steady state, where loads are constant-impedance, to show the effect 
 - Motor: inrush above 4× rated, then near synchronous speed.
 - Templates:
   - 8.1: rides through a 100 ms fault, loses synchronism at 400 ms;
-  - 4.5: motor start;
+  - 4.8: motor start;
   - 4.1: no voltage at the open end before τ, then overshoot;
   - 5.1: power flow converges and agrees with the steady state within 0.04 pu;
   - 6.4: grid current THD under 8 % against more than 50 % for the inverter voltage.
@@ -3947,7 +4135,7 @@ Their panel shows a 🛠 Atelier button that opens it with the lesson's current 
 - 1.2, 1.4: series RLC (R, L, C, V, f).
 - 2.7: filtered square wave.
 - 4.1: line (length), 4.2: transformer inrush (closing angle, residual and saturation flux, r),
-  4.5: motor (load torque and type, $R_r$, H).
+  4.8: motor (load torque and type, $R_r$, H).
 - 5.1: power flow.
 - 6.1: chopper (D, $f_s$, L, C, R), 6.2: bridge (α, $L_s$), 6.3: PWM (m, $m_f$), 6.4: LCL
   ($L_1$, $L_2$, $C_f$, $f_s$).

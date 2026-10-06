@@ -109,8 +109,8 @@ export const faultsLesson: Experiment = {
       const mine = Math.max(0, ...pred.filter(([t]) => t > tf).map(([, y]) => Math.abs(y)));
       if (mine < 0.45 * truth)
         return {
-          fr: 'Un court-circuit n’est limité que par les **réactances** du générateur, du transformateur et de la ligne, pas par la charge : le courant devient **plusieurs fois** le courant de charge. Le premier pic est encore plus haut à cause de la **composante continue** (leçon 4.3).',
-          en: 'A short circuit is limited only by the **reactances** of the generator, transformer and line, not by the load: the current becomes **several times** the load current. The first peak is higher still because of the **DC offset** (lesson 4.3).',
+          fr: 'Un court-circuit n’est limité que par les **réactances** du générateur, du transformateur et de la ligne, pas par la charge : le courant devient **plusieurs fois** le courant de charge. Le premier pic est encore plus haut à cause de la **composante continue** (leçon 4.4).',
+          en: 'A short circuit is limited only by the **reactances** of the generator, transformer and line, not by the load: the current becomes **several times** the load current. The first peak is higher still because of the **DC offset** (lesson 4.4).',
         };
       return null;
     },

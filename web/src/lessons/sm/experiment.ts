@@ -1,4 +1,4 @@
-// Module 4.3 — The synchronous machine: short circuit, excitation, capability.
+// Module 4.4 — The synchronous machine: short circuit, excitation, capability.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
@@ -14,7 +14,7 @@ export const smLesson: Experiment = {
   id: 'sm',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.3 Machine synchrone', en: '4.3 Synchronous machine' },
+    { fr: '4.4 Machine synchrone : court-circuit et capabilité', en: '4.4 Synchronous machine: short circuit and capability' },
   ],
   title: { fr: 'L’alternateur : court-circuit, excitation, diagramme de capacité', en: 'The generator: short circuit, excitation, capability' },
   model: syncMachine,

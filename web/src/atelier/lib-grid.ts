@@ -181,7 +181,7 @@ export const GRID_LIB: ElementDef[] = [
       const br = n.map((x, k) => capacitor(`${id}:${k}`, x, 0, C, h));
       return [...br, mon3(id, br)];
     },
-    formulas: [{ title: { fr: 'Condensateurs en étoile', en: 'Star-connected capacitors' }, tex: (c, id) => `C = \\frac{Q_C}{\\omega U_n^2} = ${c.q(c.p[`${id}.Q`] / (2 * Math.PI * c.p[`${id}.f`] * c.p[`${id}.Vn`] ** 2), 'F')} \\ \\text{par phase}`, note: (c) => c.tr({ fr: 'Elle fournit $Q_C$ sous sa tension nominale, et $Q_C (U/U_n)^2$ ailleurs (leçon 4.6).', en: 'It supplies $Q_C$ at rated voltage, and $Q_C (U/U_n)^2$ otherwise (lesson 4.6).' }) }],
+    formulas: [{ title: { fr: 'Condensateurs en étoile', en: 'Star-connected capacitors' }, tex: (c, id) => `C = \\frac{Q_C}{\\omega U_n^2} = ${c.q(c.p[`${id}.Q`] / (2 * Math.PI * c.p[`${id}.f`] * c.p[`${id}.Vn`] ** 2), 'F')} \\ \\text{par phase}`, note: (c) => c.tr({ fr: 'Elle fournit $Q_C$ sous sa tension nominale, et $Q_C (U/U_n)^2$ ailleurs (leçon 4.9).', en: 'It supplies $Q_C$ at rated voltage, and $Q_C (U/U_n)^2$ otherwise (lesson 4.9).' }) }],
   },
   {
     type: 'trafo3', family: 'grid', prefix: 'TR',
@@ -423,7 +423,7 @@ export const GRID_LIB: ElementDef[] = [
       {
         title: { fr: 'Couple et vitesse', en: 'Torque and speed' },
         tex: (c, id) => `J\\frac{d\\Omega}{dt} = T_e - T_c, \\qquad n = ${c.q(c.at(`${id}.n`), 'tr/min')},\\ T_e = ${c.q(c.at(`${id}.Te`), 'N·m')}`,
-        note: (c) => c.tr({ fr: 'Modèle à flux rotorique (tension derrière l’inductance transitoire). Démarre à l’arrêt : courant d’appel de 5 à 7 fois le nominal, puis glissement de quelques pour cent (leçon 4.5).', en: 'Rotor-flux model (voltage behind the transient inductance). Starts from standstill: inrush of 5 to 7 times rated, then a few per cent slip (lesson 4.5).' }),
+        note: (c) => c.tr({ fr: 'Modèle à flux rotorique (tension derrière l’inductance transitoire). Démarre à l’arrêt : courant d’appel de 5 à 7 fois le nominal, puis glissement de quelques pour cent (leçon 4.8).', en: 'Rotor-flux model (voltage behind the transient inductance). Starts from standstill: inrush of 5 to 7 times rated, then a few per cent slip (lesson 4.8).' }),
       },
     ],
   },

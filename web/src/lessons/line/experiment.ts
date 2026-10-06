@@ -162,8 +162,8 @@ export const lineLesson: Experiment = {
       tex: () => `P_{max} \\approx 3\\,\\mathrm{SIL}\\ (\\approx 80\\ \\mathrm{km}) \\;\\to\\; 1\\,\\mathrm{SIL}\\ (\\approx 500\\ \\mathrm{km})`,
       note: (c) =>
         c.tr({
-          fr: 'Courbe de St Clair : les lignes courtes sont limitées thermiquement, les longues par la chute de tension puis par la stabilité. D’où la compensation série et shunt (leçon 4.6).',
-          en: 'St Clair curve: short lines are thermally limited, long ones by voltage drop and then stability. Hence series and shunt compensation (lesson 4.6).',
+          fr: 'Courbe de St Clair : les lignes courtes sont limitées thermiquement, les longues par la chute de tension puis par la stabilité. D’où la compensation série et shunt (leçon 4.9).',
+          en: 'St Clair curve: short lines are thermally limited, long ones by voltage drop and then stability. Hence series and shunt compensation (lesson 4.9).',
         }),
     },
   ],

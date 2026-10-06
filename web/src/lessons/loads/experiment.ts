@@ -1,4 +1,4 @@
-// Module 4.4 — Loads: how consumption reacts to voltage.
+// Module 4.6 — Loads: how consumption reacts to voltage.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
@@ -16,7 +16,7 @@ export const loadsLesson: Experiment = {
   id: 'loads',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.4 Charges', en: '4.4 Loads' },
+    { fr: '4.6 Charges : ZIP et rétablissement', en: '4.6 Loads: ZIP and recovery' },
   ],
   title: { fr: 'Comment la consommation réagit à la tension', en: 'How consumption reacts to voltage' },
   model: loadModel,

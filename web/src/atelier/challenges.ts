@@ -124,8 +124,8 @@ export const CHALLENGES: Challenge[] = [
     ),
     hint: both('Sur un réseau inductif, $\\Delta V \\approx (RP + XQ)/V$ : fournir du réactif sur place réduit la chute.', 'On an inductive grid, $\\Delta V \\approx (RP + XQ)/V$: supplying reactive power locally reduces the drop.'),
     answer: both(
-      'Les condensateurs compensent une partie du réactif de la charge, qui n’a plus à traverser le transformateur et la ligne. Trop de condensateurs feraient dépasser la tension, surtout à faible charge (leçons 2.3 et 4.6).',
-      'The capacitors offset part of the load’s reactive power, which no longer has to cross the transformer and the line. Too many would raise the voltage too high, especially at light load (lessons 2.3 and 4.6).',
+      'Les condensateurs compensent une partie du réactif de la charge, qui n’a plus à traverser le transformateur et la ligne. Trop de condensateurs feraient dépasser la tension, surtout à faible charge (leçons 2.3 et 4.9).',
+      'The capacitors offset part of the load’s reactive power, which no longer has to cross the transformer and the line. Too many would raise the voltage too high, especially at light load (lessons 2.3 and 4.9).',
     ),
     doc: from('pf-grid', 'Défi : tension'),
     locked: ['G1', 'TR1', 'LG1', 'CH1', 'BC1'],

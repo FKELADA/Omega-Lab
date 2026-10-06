@@ -15,9 +15,9 @@ npm run dev        # http://localhost:5173
 
 | Command | What it does |
 |---|---|
-| `npm test` | 415 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, short circuit, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
+| `npm test` | 435 unit tests: solver, models and teaching-note and step-explanation completeness (closed forms, energy conservation, eigenvalues, RMS, phasors, margins, swing equation, PLL, frequency events, HVDC, lines, inrush, tap changer, phase shifter, vector groups, short circuit, generator controls, loads, motor stall, nose curve, FACTS, Newton–Raphson, faults, dispatch, feeder, converters, IBRs, every Module 8 stability step, and the baked G2ELin data) |
 | `npm run check` | Svelte + TypeScript type check |
-| `npm run smoke` | Walks all 51 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
+| `npm run smoke` | Walks all 54 lessons, the documentation page, the teaching notes and the zoom window in a real Chrome (needs `npm run dev` running) |
 | `node tests/shots.mjs <dir>` | Screenshots every lesson, for visual review |
 | `npm run build` | Static build into `web/dist/` |
 
@@ -49,12 +49,15 @@ e.g. `http://localhost:5173/#1.4`.
 | **3.3 State space and linearisation** | Predicts a generator's swing, compares linear and nonlinear models, loses synchronism, weakens the grid | Rotor-angle dial, P–δ curve with the tangent, phase portrait |
 | **3.4 PI control and the PLL** | Predicts the frequency spike after a phase jump, tunes bandwidth, P versus PI, windup and anti-windup | PLL block diagram, phase tracker |
 | **4.1 Transmission lines** | Predicts the far-end voltage of an unloaded line (Ferranti), loads it at SIL, overloads it, compares short, π and exact models | Voltage profile along the line, three-model table |
-| **4.2 Transformers** | Predicts the inrush current, switches at the right instant, meets residual flux, finds the efficiency peak | Saturating core, magnetising curve, efficiency versus load |
-| **4.3 Synchronous machine** | Predicts a terminal short circuit, finds the DC offset, over- and under-excites, reaches the stability limit | Phasor diagram, capability chart, V-curves |
-| **4.4 Loads** | Predicts consumption after a voltage step, compares Z, I and P loads, watches load recovery, estimates CVR savings | P–V and I–V curves, load composition |
-| **4.5 Induction motor** | Predicts the starting current, fails to start a heavy load, stalls a compressor in a dip (FIDVR), lets a fan ride through | Torque–speed and current–speed curves, turning rotor |
-| **4.6 Compensation** | Drops the voltage with load, restores it with a shunt capacitor, overshoots at night, adds series compensation, collapses past the nose | Nose curve, P_max versus series compensation |
-| **4.7 FACTS** | Compares an SVC and a STATCOM in a dip, deepens it, strengthens the grid, sizes the STATCOM | Side-by-side systems, V–I characteristics, Q_max versus V |
+| **4.2 Transformer: inrush and efficiency** | Predicts the inrush current, switches at the right instant, meets residual flux, finds the efficiency peak | Saturating core, magnetising curve, efficiency versus load |
+| **4.3 Transformer: tap changer, phase shifter, vector groups** | Predicts the stair-step voltage recovery, reaches the end stop, makes the regulator hunt, relieves a line with a phase shifter, picks Dyn11 | Tap position and voltage band, flows versus phase-shift angle, vector-group clock and phasors |
+| **4.4 Synchronous machine: short circuit and capability** | Predicts a terminal short circuit, finds the DC offset, over- and under-excites, reaches the stability limit | Phasor diagram, capability chart, V-curves |
+| **4.5 Synchronous machine: models and controls** | Predicts the frequency after a load step, chooses a droop, compares the classical and one-axis models after a fault and a line trip, brings the voltage back with the AVR, destabilises a weak grid with a fast AVR | Generator with governor and AVR, droop characteristic, P–δ before and after the trip |
+| **4.6 Loads: ZIP and recovery** | Predicts consumption after a voltage step, compares Z, I and P loads, watches load recovery, estimates CVR savings | P–V and I–V curves, load composition |
+| **4.7 Loads: exponential and frequency** | Recovers Z and P from one exponent, finds the ZIP equivalent, sees reactive power fall faster, measures frequency self-regulation | P–V curves with the ZIP mix, self-regulation versus K_pf |
+| **4.8 Induction motor** | Predicts the starting current, fails to start a heavy load, stalls a compressor in a dip (FIDVR), lets a fan ride through | Torque–speed and current–speed curves, turning rotor |
+| **4.9 Compensation** | Drops the voltage with load, restores it with a shunt capacitor, overshoots at night, adds series compensation, collapses past the nose | Nose curve, P_max versus series compensation |
+| **4.10 FACTS** | Compares an SVC and a STATCOM in a dip, deepens it, strengthens the grid, sizes the STATCOM | Side-by-side systems, V–I characteristics, Q_max versus V |
 | **5.1 Y-bus and power flow** | Predicts Newton–Raphson's convergence, builds Y line by line, trips a line, pushes the load until there is no solution | Network replayed iteration by iteration, Y matrix, NR versus Gauss–Seidel |
 | **5.2 P–V and Q–V curves** | Predicts the voltage as load rises, finds the nose, hits a generator's reactive limit, adds a capacitor, loses a line, reads the reactive margin | Load-level cursor, P–V curve, Q–V curve |
 | **5.3 Faults** | Predicts a fault current, compares fault types, isolates the neutral, finds a ground fault larger than three-phase, adds fault resistance | Sequence-network connections, fault phasors, current versus distance |

@@ -118,8 +118,8 @@ export const frtLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'Typiquement K = 2 et un temps de montée de quelques dizaines de millisecondes. Le courant réactif relève la tension autour du défaut (leçon 4.6) et aide les protections à voir le défaut.',
-          en: 'Typically K = 2 and a rise time of a few tens of milliseconds. Reactive current lifts the voltage around the fault (lesson 4.6) and helps protection see the fault.',
+          fr: 'Typiquement K = 2 et un temps de montée de quelques dizaines de millisecondes. Le courant réactif relève la tension autour du défaut (leçon 4.9) et aide les protections à voir le défaut.',
+          en: 'Typically K = 2 and a rise time of a few tens of milliseconds. Reactive current lifts the voltage around the fault (lesson 4.9) and helps protection see the fault.',
         }),
     },
     {

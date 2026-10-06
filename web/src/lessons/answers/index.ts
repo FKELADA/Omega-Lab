@@ -8,6 +8,7 @@ import { answers1 } from './m1';
 import { answers2 } from './m2';
 import { answers3 } from './m3';
 import { answers4 } from './m4';
+import { answers4b } from './m4b';
 import { answers5 } from './m5';
 import { answers6 } from './m6';
 import { answers7 } from './m7';
@@ -19,4 +20,4 @@ export interface StepHelp {
 }
 export type Answers = Record<string, Record<string, StepHelp>>;
 
-export const answers: Answers = { ...answers0, ...answers1, ...answers2, ...answers3, ...answers4, ...answers5, ...answers6, ...answers7, ...answers8 };
+export const answers: Answers = { ...answers0, ...answers1, ...answers2, ...answers3, ...answers4, ...answers4b, ...answers5, ...answers6, ...answers7, ...answers8 };

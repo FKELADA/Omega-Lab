@@ -14,7 +14,7 @@ describe('A4 templates against the lessons', () => {
     expect(Math.max(...lost.r.s['SM1.delta'])).toBeGreaterThan(360);
   });
 
-  it('motor start (4.5): inrush, then near synchronous speed', () => {
+  it('motor start (4.8): inrush, then near synchronous speed', () => {
     const { r } = runTemplate('motor');
     const n = r.s['M1.n'];
     expect(n[n.length - 1]).toBeGreaterThan(1440);

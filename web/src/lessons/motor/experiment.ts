@@ -1,4 +1,4 @@
-// Module 4.5 — The induction motor: torque–slip, start-up, stall.
+// Module 4.8 — The induction motor: torque–slip, start-up, stall.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
@@ -16,7 +16,7 @@ export const motorLesson: Experiment = {
   id: 'motor',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.5 Machine asynchrone', en: '4.5 Induction motor' },
+    { fr: '4.8 Machine asynchrone', en: '4.8 Induction motor' },
   ],
   title: { fr: 'Le moteur asynchrone : démarrer, tourner, caler', en: 'The induction motor: starting, running, stalling' },
   model: inductionMotor,

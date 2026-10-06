@@ -107,8 +107,8 @@ export const ssrLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'Un condensateur en série compense l’inductance d’une longue ligne et augmente la puissance transportable (leçon 4.6). Mais le circuit L–C série ainsi formé a une fréquence propre **sous** 50 Hz.',
-          en: 'A series capacitor offsets the inductance of a long line and increases the transfer capability (lesson 4.6). But the series L–C circuit it forms has a natural frequency **below** 50 Hz.',
+          fr: 'Un condensateur en série compense l’inductance d’une longue ligne et augmente la puissance transportable (leçon 4.9). Mais le circuit L–C série ainsi formé a une fréquence propre **sous** 50 Hz.',
+          en: 'A series capacitor offsets the inductance of a long line and increases the transfer capability (lesson 4.9). But the series L–C circuit it forms has a natural frequency **below** 50 Hz.',
         }),
     },
     {
@@ -155,8 +155,8 @@ export const ssrLesson: Experiment = {
       tex: () => `\\text{TCSC} \\cdot \\text{filtres bloqueurs} \\cdot \\text{relais de torsion} \\cdot \\text{amortissement par l’excitation}`,
       note: (c) =>
         c.tr({
-          fr: 'Un TCSC (leçon 4.7) compense à 50 Hz mais paraît **inductif** aux fréquences hyposynchrones : la résonance disparaît. On peut aussi filtrer, ou surveiller la torsion et déclencher l’alternateur avant la rupture.',
-          en: 'A TCSC (lesson 4.7) compensates at 50 Hz but looks **inductive** at subsynchronous frequencies: the resonance disappears. Filters, or torsional monitoring that trips the generator before the shaft fails, are other options.',
+          fr: 'Un TCSC (leçon 4.10) compense à 50 Hz mais paraît **inductif** aux fréquences hyposynchrones : la résonance disparaît. On peut aussi filtrer, ou surveiller la torsion et déclencher l’alternateur avant la rupture.',
+          en: 'A TCSC (lesson 4.10) compensates at 50 Hz but looks **inductive** at subsynchronous frequencies: the resonance disappears. Filters, or torsional monitoring that trips the generator before the shaft fails, are other options.',
         }),
     },
   ],

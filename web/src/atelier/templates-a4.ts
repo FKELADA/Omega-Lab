@@ -1,4 +1,4 @@
-// Templates of phase A4: three-phase grids and machines, mirroring lessons 8.1, 4.5, 4.1, 5.1 and 6.4.
+// Templates of phase A4: three-phase grids and machines, mirroring lessons 8.1, 4.8, 4.1, 5.1 and 6.4.
 
 import type { BenchEl, Wire } from './doc';
 import type { TemplateA } from './templates-a3';
@@ -33,7 +33,7 @@ export const TEMPLATES_A4: TemplateA[] = [
   },
   {
     id: 'motor',
-    name: { fr: 'Démarrage d’un moteur (leçon 4.5)', en: 'Motor start (lesson 4.5)' },
+    name: { fr: 'Démarrage d’un moteur (leçon 4.8)', en: 'Motor start (lesson 4.8)' },
     note: { fr: 'Moteur de 15 kW démarré à l’arrêt sur un réseau 400 V : courant d’appel, puis glissement de quelques pour cent. Passez la charge en couple constant.', en: '15 kW motor started from standstill on a 400 V grid: inrush, then a few per cent slip. Switch the load to constant torque.' },
     doc: () => ({
       version: 1,

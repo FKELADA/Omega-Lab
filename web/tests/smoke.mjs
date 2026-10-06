@@ -361,10 +361,25 @@ await setParam(3, 0.03, 0.002, 0.05, true);
 await setParam(4, 0.447, 0, 1.2); // copper losses = iron losses
 check('4.2 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
-// ── 4.3 Synchronous machine ───────────────────────────────────────────────────
+// ── 4.3 Tap changer, phase shifter, vector groups ─────────────────────────────
 await open('4.3');
-await predict((f) => 0.5 - 0.35 * Math.sin(2 * Math.PI * 12 * f) * Math.exp(-3 * f));
+await predict(() => 0.4);
 await scored('4.3');
+await setParam(0, 0.86, 0.85, 1.08); // beyond the regulating range
+check('4.3 tap changer at its limit', /butée/.test((await page.locator('.panel').first().textContent()) ?? ''));
+await setParam(0, 0.92, 0.85, 1.08);
+await setParam(1, 0.8, 0.5, 4); // band narrower than a tap step
+check('4.3 hunting shown', /pompage/.test((await page.locator('.panel').first().textContent()) ?? ''));
+await setParam(1, 2, 0.5, 4);
+await setParam(2, 8, 5, 60);
+await setParam(3, -6, -15, 15);
+await page.getByRole('radio', { name: 'Dyn11' }).click();
+check('4.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// ── 4.4 Synchronous machine ───────────────────────────────────────────────────
+await open('4.4');
+await predict((f) => 0.5 - 0.35 * Math.sin(2 * Math.PI * 12 * f) * Math.exp(-3 * f));
+await scored('4.4');
 await setParam(5, 90, 0, 90); // fault at the voltage zero: full DC offset
 await page.getByRole('radio', { name: 'Régime établi' }).click();
 await setParam(1, 2.4, 0.3, 2.8); // over-excited
@@ -372,12 +387,25 @@ await setParam(1, 1.55, 0.3, 2.8); // under-excited
 await setParam(1, 1.753, 0.3, 2.8); // unity power factor
 await setParam(0, 1, 0, 1);
 await setParam(1, 1.9, 0.3, 2.8); // δ ≈ 71°
-check('4.3 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+check('4.4 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
 
-// ── 4.4 Loads ─────────────────────────────────────────────────────────────────
-await open('4.4');
+// ── 4.5 Synchronous machine: models and controls ──────────────────────────────
+await open('4.5');
+await predict((f) => (f < 0.05 ? 0.2 : 0.2 + 0.3 * Math.min(1, (f - 0.05) * 10)));
+await scored('4.5');
+await setParam(1, 4, 2, 10); // 4 % droop holds 49.8 Hz
+await page.getByRole('radio', { name: 'Défaut puis déclenchement de ligne' }).click();
+await page.getByRole('radio', { name: 'Un axe (3 états + AVR)' }).click();
+await setParam(2, 30, 0, 400);
+await setParam(2, 100, 0, 400);
+await setParam(3, 0.5, 0.2, 0.6); // weak grid: the swing grows
+check('4.5 growing oscillations flagged', /oscillations croissantes|perte de synchronisme/.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('4.5 all steps completed', (await doneSteps()) === 6, `${await doneSteps()}/6`);
+
+// ── 4.6 Loads ─────────────────────────────────────────────────────────────────
+await open('4.6');
 await predict((f) => (f < 0.08 ? 0.2 : 0.7));
-await scored('4.4');
+await scored('4.6');
 await setParam(2, 0, 0, 1);
 await setParam(1, 1, 0, 1); // pure constant impedance
 await setParam(1, 0, 0, 1); // pure constant power …
@@ -387,12 +415,22 @@ await scrubToEnd();
 await setParam(3, 0, 0, 1);
 await setParam(1, 0.7, 0, 1);
 await setParam(0, 0.96, 0.85, 1.05); // conservation voltage reduction
-check('4.4 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+check('4.6 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
-// ── 4.5 Induction motor ───────────────────────────────────────────────────────
-await open('4.5');
+// ── 4.7 Loads: exponential and frequency ──────────────────────────────────────
+await open('4.7');
+await setParam(0, 2, 0, 2.5);
+await setParam(0, 0, 0, 2.5);
+await setParam(0, 1.1, 0, 2.5); // the ZIP equivalent
+await setParam(1, 3, 0, 5);
+await setParam(2, 2, 0, 3);
+await setParam(4, -0.5, -1, 0.5);
+check('4.7 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+
+// ── 4.8 Induction motor ───────────────────────────────────────────────────────
+await open('4.8');
 await predict((f) => (f < 0.35 ? 0.15 : 0.8));
-await scored('4.5');
+await scored('4.8');
 await page.getByRole('radio', { name: 'Couple constant' }).click(); // 0.8 pu > starting torque
 await page.getByRole('radio', { name: 'En marche' }).click();
 await setParam(0, 0.9, 0, 1.5);
@@ -400,13 +438,13 @@ await setParam(5, 0.2, 0.2, 3);
 await setParam(2, 0.5, 0.3, 1);
 await setParam(3, 0.5, 0.05, 1, true);
 await scrubToEnd();
-check('4.5 constant torque stalls in the dip', /calé/.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('4.8 constant torque stalls in the dip', /calé/.test((await page.locator('.panel').first().textContent()) ?? ''));
 await page.getByRole('radio', { name: 'Ventilateur' }).click();
 await setParam(4, 0.07, 0.005, 0.1, true);
-check('4.5 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+check('4.8 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
-// ── 4.6 Compensation ──────────────────────────────────────────────────────────
-await open('4.6');
+// ── 4.9 Compensation ──────────────────────────────────────────────────────────
+await open('4.9');
 await setParam(0, 0.8, 0, 2.2); // already below 0.9 pu at 0.6 pu load
 await setParam(2, 0.45, -0.5, 1);
 await setParam(0, 0.1, 0, 2.2);
@@ -414,11 +452,11 @@ await setParam(2, 0.6, -0.5, 1);
 await setParam(3, 0.5, 0, 0.7);
 await setParam(3, 0, 0, 0.7);
 await setParam(0, 2.2, 0, 2.2); // beyond the nose
-check('4.6 collapse shown', /effondr/i.test((await page.locator('.panel').first().textContent()) ?? ''));
-check('4.6 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+check('4.9 collapse shown', /effondr/i.test((await page.locator('.panel').first().textContent()) ?? ''));
+check('4.9 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
-// ── 4.7 FACTS ─────────────────────────────────────────────────────────────────
-await open('4.7');
+// ── 4.10 FACTS ─────────────────────────────────────────────────────────────────
+await open('4.10');
 await scrubToEnd();
 await setParam(0, 0.45, 0.4, 0.95);
 await setParam(1, 9, 1.5, 10);
@@ -426,7 +464,7 @@ await setParam(4, 0.01, 0.005, 0.2, true);
 await setParam(1, 3, 1.5, 10);
 await setParam(0, 0.7, 0.4, 0.95);
 await setParam(2, 0.7, 0.2, 1); // STATCOM sized to hold 0.9 pu
-check('4.7 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
+check('4.10 all steps completed', (await doneSteps()) === 5, `${await doneSteps()}/5`);
 
 // ── Module 5 ──────────────────────────────────────────────────────────────────
 const setCursor = (f) =>
@@ -944,7 +982,7 @@ await page.locator('.icon').click(); // auto → light
 await page.locator('.icon').click(); // light → dark
 check('English labels', (await page.getByText('Live equations').count()) === 1);
 await page.screenshot({ path: `${out}/smoke-dark-en.png` });
-for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9']) {
+for (const id of ['0.1', '0.2', '1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '3.1', '3.2', '3.3', '3.4', '4.1', '4.2', '4.3', '4.4', '4.5', '4.6', '4.7', '4.8', '4.9', '4.10', '5.1', '5.2', '5.3', '5.4', '5.5', '6.1', '6.2', '6.3', '6.4', '7.1', '7.2', '7.3', '7.4', '7.5', '7.6', '7.7', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6', '8.7', '8.8', '8.9']) {
   if (['2.1', '4.1', '6.1', '8.1'].includes(id)) {
     await page.close();
     page = watch(await context.newPage());

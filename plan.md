@@ -36,12 +36,15 @@ tests are in [documentation.md](documentation.md).
 | 3.3 State space and linearisation | ✅ Done | `86c5bb2` |
 | 3.4 PI control and the PLL | ✅ Done | `86c5bb2` |
 | 4.1 Transmission lines | ✅ Done | `2e3694f` |
-| 4.2 Transformers | ✅ Done | `2e3694f` |
-| 4.3 Synchronous machine | ✅ Done | `2e3694f` |
-| 4.4 Loads | ✅ Done | `2e3694f` |
-| 4.5 Induction motor | ✅ Done | `2e3694f` |
-| 4.6 Shunt and series compensation | ✅ Done | `2e3694f` |
-| 4.7 FACTS | ✅ Done | `2e3694f` |
+| 4.2 Transformer: inrush and efficiency | ✅ Done | `2e3694f` |
+| 4.3 Transformer: tap changer, phase shifter, vector groups | ✅ Done | Module 4 extension |
+| 4.4 Synchronous machine: short circuit and capability | ✅ Done | `2e3694f` |
+| 4.5 Synchronous machine: models and controls | ✅ Done | Module 4 extension |
+| 4.6 Loads: ZIP and recovery | ✅ Done | `2e3694f` |
+| 4.7 Loads: exponential and frequency | ✅ Done | Module 4 extension |
+| 4.8 Induction motor | ✅ Done | `2e3694f` |
+| 4.9 Shunt and series compensation | ✅ Done | `2e3694f` |
+| 4.10 FACTS | ✅ Done | `2e3694f` |
 | 5.1 Y-bus and power flow | ✅ Done | `9ba10f5` |
 | 5.2 P–V and Q–V curves | ✅ Done | `9ba10f5` |
 | 5.3 Faults | ✅ Done | `9ba10f5` |
@@ -68,8 +71,8 @@ tests are in [documentation.md](documentation.md).
 | 8.8 Modes and participation factors (G2ELin) | ✅ Done | `bd0d003` |
 | 8.9 Model reduction: EMT, RMS, machine orders (G2ELin) | ✅ Done | `bd0d003` |
 
-**Verification:** 415 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
-all 51 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
+**Verification:** 435 unit tests (solver, models, baked G2ELin data, note and step-explanation completeness), and a browser test that walks
+all 54 lessons, the documentation page, the teaching notes and the zoom window (predictions, misconception feedback, every step check, both languages, phone width,
 no console errors).
 
 ### Which interaction ideas (§4) exist so far
@@ -107,12 +110,14 @@ no console errors).
   rounded figures, not the details.
 - **Module 4** uses client-side models (ABCD lines, saturating-core RK4, the classical
   short-circuit expression, ZIP/Karlsson–Hill loads, the induction-motor equivalent circuit, nose
-  curves, SVC/STATCOM controllers), not G2ELin's `sm.py`. Deferred from the plan:
-  - the travelling-wave animation;
-  - tap changers and phase shifters;
-  - the generator's dq model and its fidelity slider, AVR, governor and PSS (better placed with
-    Module 8 on G2ELin);
-  - TCSC and UPFC as simulations (they appear as equation cards only).
+  curves, SVC/STATCOM controllers), not G2ELin's `sm.py`.
+  - Added later (4.3, 4.5, 4.7): the tap changer with dead band and delays, the phase shifter,
+    vector groups, the classical and one-axis generator models with AVR and governor, and
+    exponential and frequency-dependent loads.
+  - The fidelity slider stops at the one-axis model; the 4th- and 6th-order models are described,
+    not simulated. The PSS stays in 8.2.
+  - Still deferred: the travelling-wave animation in the lesson (the Atelier has the Bergeron
+    line), and TCSC and UPFC as simulations (they appear as equation cards only).
 - **Module 5** runs entirely in the browser on a new power-flow core (Y-bus, Newton–Raphson with
   reactive limits, Gauss–Seidel, DC flow).
   - The time-series power flow (5.5) is a client-side 20 kV feeder, not G2ELin's `timeseries`.
@@ -207,7 +212,7 @@ ideas that come back again and again at higher fidelity.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Concept map ▸ Module 4.3 Synchronous machine    [Learner|Research|Utility] │
+│ Concept map ▸ Module 4.4 Synchronous machine    [Learner|Research|Utility] │
 ├───────────────┬──────────────────────────────────┬───────────────────────┤
 │ CANVAS        │ INSTRUMENTS (tabs, can be split) │ LIVE EQUATIONS        │
 │ circuit /     │  Scope · Phasor · Spectrum ·     │  Each term in KaTeX,  │
@@ -352,7 +357,7 @@ Each tool is introduced on a circuit the learner already knows from Modules 1–
 
 ### Module 4: Conventional power-system elements
 
-✅ Built as seven lessons: 4.1 lines (models, Ferranti, SIL) · 4.2 transformers (inrush, efficiency) · 4.3 synchronous machine (short circuit, excitation, capability) · 4.4 loads (ZIP, recovery, CVR) · 4.5 induction motor (start-up, FIDVR stall) · 4.6 compensation (nose curve) · 4.7 SVC versus STATCOM. See "What changed from the plan" for the parts deferred.
+✅ Built as ten lessons: 4.1 lines (models, Ferranti, SIL) · 4.2 transformer inrush and efficiency · 4.3 tap changer, phase shifter, vector groups · 4.4 synchronous machine short circuit, excitation, capability · 4.5 generator models (classical, one-axis), AVR, governor and droop · 4.6 loads (ZIP, recovery, CVR) · 4.7 exponential and frequency-dependent loads · 4.8 induction motor (start-up, FIDVR stall) · 4.9 compensation (nose curve) · 4.10 SVC versus STATCOM. The module was renumbered when 4.3, 4.5 and 4.7 were added. See "What changed from the plan" for the parts deferred.
 
 - **4.1 Lines:**
   - distributed → π model
@@ -360,25 +365,25 @@ Each tool is introduced on a circuit the learner already knows from Modules 1–
   - a travelling-wave animation
   - a short / medium / long slider
   - an "is the π-model valid?" frequency check
-- **4.2 Transformers:**
+- **4.2–4.3 Transformers:**
   - ideal → real
   - magnetisation and the B-H curve
   - inrush
   - tap changers and phase shifters
   - vector groups (clock diagram)
-- **4.3 Synchronous generator** (reuses G2ELin's `sm.py`):
+- **4.4–4.5 Synchronous generator** (reuses G2ELin's `sm.py`):
   - rotating field animation and the dq model
   - the hierarchy of models (classical → 4th → 6th order via the fidelity slider)
   - capability curve
   - P–δ curve with the operating point as a draggable cursor
   - swing equation
   - exciter/AVR, governor, PSS
-- **4.4 Loads:** ZIP, exponential, dynamic loads, and voltage sensitivity.
-- **4.5 Induction motor:** torque–slip curve with a cursor, start-up, stalling, and why induction
+- **4.6–4.7 Loads:** ZIP, exponential, dynamic loads, voltage and frequency sensitivity.
+- **4.8 Induction motor:** torque–slip curve with a cursor, start-up, stalling, and why induction
   motors drive FIDVR.
-- **4.6 Shunt and series compensation:** capacitor banks, reactors, series capacitors (setting up
+- **4.9 Shunt and series compensation:** capacitor banks, reactors, series capacitors (setting up
   SSR).
-- **4.7 FACTS:** SVC, STATCOM, TCSC, UPFC, compared on a common V–I characteristic.
+- **4.10 FACTS:** SVC, STATCOM, TCSC, UPFC, compared on a common V–I characteristic.
 
 ### Module 5: The network in steady state
 
@@ -698,7 +703,7 @@ Three-phase elements carry three-conductor ports, drawn as one line with a "///"
 | **A1** | Netlist and nodal EMT solver (R, L, C, sources, switch, ground), probes, oscilloscope via the dynamic Experiment, formula panel, diagnostics, templates 1.2 and 1.4 | The bench reproduces lessons 1.2 and 1.4 to within 0.1 % (unit tests) |
 | **A2** | AC solve (phasors, Bode, impedance scan); inverse-Tustin poles with participation; THD analyser; multimeter and wattmeter | Bode and poles match the closed forms of 1.4 and 3.1; the THD of a square wave is 48.3 % |
 | **A3** | Diode, thyristor, IGBT with PWM, CDA, transformer with saturation; chopper, rectifier, PWM and LCL templates | Matches lessons 6.1–6.4 |
-| **A4** | Three-phase library: sources with SCR, lines (π, Bergeron), transformers, ZIP loads, faults, breakers, synchronous machine, induction motor; RMS power flow on the same drawing | Matches 4.1, 4.3, 4.5, 5.1 and 8.1 |
+| **A4** | Three-phase library: sources with SCR, lines (π, Bergeron), transformers, ZIP loads, faults, breakers, synchronous machine, induction motor; RMS power flow on the same drawing | Matches 4.1, 4.4, 4.8, 5.1 and 8.1 |
 | **A5** | Control blocks; averaged VSC with GFL/GFM control, PV with MPPT, BESS, wind, MMC | Matches 7.1, 7.2, 7.5 and 8.5 |
 | **A6** | Lessons ↔ Atelier, challenges, predict-then-run, docs, smoke test, phone layout | Every template and challenge passes the smoke test |
 

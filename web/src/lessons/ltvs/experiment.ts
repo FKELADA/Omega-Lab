@@ -100,8 +100,8 @@ export const ltvsLesson: Experiment = {
       tex: () => `P = P_0\\,V_{BT}^2\\ (\\text{impédance}) \\;+\\; a_D\\,x, \\qquad T_p\\,\\dot x = -x + P_0(1 - V_{BT}^2)`,
       note: (c) =>
         c.tr({
-          fr: 'Juste après l’incident, la charge baisse avec la tension (leçon 4.4) : cela soulage le réseau. Mais deux mécanismes lents la ramènent vers $P_0$ : le régleur, qui remonte la tension BT, et les thermostats, qui allongent les cycles de chauffage.',
-          en: 'Right after the incident, load falls with voltage (lesson 4.4): this relieves the grid. But two slow mechanisms bring it back towards $P_0$: the tap changer, which raises the LV voltage, and thermostats, which lengthen heating cycles.',
+          fr: 'Juste après l’incident, la charge baisse avec la tension (leçon 4.6) : cela soulage le réseau. Mais deux mécanismes lents la ramènent vers $P_0$ : le régleur, qui remonte la tension BT, et les thermostats, qui allongent les cycles de chauffage.',
+          en: 'Right after the incident, load falls with voltage (lesson 4.6): this relieves the grid. But two slow mechanisms bring it back towards $P_0$: the tap changer, which raises the LV voltage, and thermostats, which lengthen heating cycles.',
         }),
     },
     {

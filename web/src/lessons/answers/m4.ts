@@ -22,8 +22,8 @@ export const answers4: Answers = {
     heavy: {
       hint: { fr: r`Montez $P$ bien au-delà de 530 MW, vers 1000 MW ou plus.`, en: r`Raise $P$ well beyond 530 MW, towards 1000 MW or more.` },
       answer: {
-        fr: r`Au-delà de la puissance naturelle, les pertes réactives $X I^2$ dépassent la production capacitive $B V^2$ : la ligne **consomme** du réactif et la tension chute en bout. $$Q_{\text{ligne}} \approx X I^2 - B V^2 > 0 \quad \text{si } P > \text{SIL}$$ Il faut alors des condensateurs, une compensation série ou des compensateurs statiques (leçons 4.6 et 4.7).`,
-        en: r`Beyond surge impedance loading, the reactive losses $X I^2$ exceed the capacitive production $B V^2$: the line **absorbs** reactive power and the far-end voltage drops. $$Q_{\text{line}} \approx X I^2 - B V^2 > 0 \quad \text{if } P > \text{SIL}$$ Capacitors, series compensation or static compensators are then needed (lessons 4.6 and 4.7).`,
+        fr: r`Au-delà de la puissance naturelle, les pertes réactives $X I^2$ dépassent la production capacitive $B V^2$ : la ligne **consomme** du réactif et la tension chute en bout. $$Q_{\text{ligne}} \approx X I^2 - B V^2 > 0 \quad \text{si } P > \text{SIL}$$ Il faut alors des condensateurs, une compensation série ou des compensateurs statiques (leçons 4.9 et 4.10).`,
+        en: r`Beyond surge impedance loading, the reactive losses $X I^2$ exceed the capacitive production $B V^2$: the line **absorbs** reactive power and the far-end voltage drops. $$Q_{\text{line}} \approx X I^2 - B V^2 > 0 \quad \text{if } P > \text{SIL}$$ Capacitors, series compensation or static compensators are then needed (lessons 4.9 and 4.10).`,
       },
     },
     short: {
@@ -143,8 +143,8 @@ export const answers4: Answers = {
     constant: {
       hint: { fr: r`$a_Z = a_I = 0$, puis cliquez sur la pastille $I$ au-dessus de l’oscilloscope.`, en: r`$a_Z = a_I = 0$, then click the $I$ chip above the oscilloscope.` },
       answer: {
-        fr: r`Une alimentation électronique régulée garde $P$ constant : $$I = \frac{P}{V} = \frac{1}{0{,}9} \approx 1{,}11\ \text{pu}$$ Le courant **augmente** quand la tension baisse, ce qui accroît la chute de tension dans le réseau : ces charges aggravent l’instabilité de tension (leçons 4.6 et 8.3).`,
-        en: r`A regulated electronic supply keeps $P$ constant: $$I = \frac{P}{V} = \frac{1}{0.9} \approx 1.11\ \text{pu}$$ Current **rises** when voltage falls, which deepens the voltage drop across the grid: such loads worsen voltage instability (lessons 4.6 and 8.3).`,
+        fr: r`Une alimentation électronique régulée garde $P$ constant : $$I = \frac{P}{V} = \frac{1}{0{,}9} \approx 1{,}11\ \text{pu}$$ Le courant **augmente** quand la tension baisse, ce qui accroît la chute de tension dans le réseau : ces charges aggravent l’instabilité de tension (leçons 4.9 et 8.3).`,
+        en: r`A regulated electronic supply keeps $P$ constant: $$I = \frac{P}{V} = \frac{1}{0.9} \approx 1.11\ \text{pu}$$ Current **rises** when voltage falls, which deepens the voltage drop across the grid: such loads worsen voltage instability (lessons 4.9 and 8.3).`,
       },
     },
     recover: {

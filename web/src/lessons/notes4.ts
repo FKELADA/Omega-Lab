@@ -14,8 +14,8 @@ export const module4Note: ModuleNote = {
     en: 'Know how to model each element with just enough detail, and understand its physical limits.',
   },
   path: {
-    fr: '4.1 lignes → 4.2 transformateurs → 4.3 alternateur → 4.4 charges → 4.5 moteur asynchrone → 4.6 compensation → 4.7 FACTS.',
-    en: '4.1 lines → 4.2 transformers → 4.3 generator → 4.4 loads → 4.5 induction motor → 4.6 compensation → 4.7 FACTS.',
+    fr: '4.1 lignes → 4.2–4.3 transformateurs (appel, rendement ; régleur, déphaseur, couplages) → 4.4–4.5 alternateur (court-circuit, capabilité ; modèles, AVR, régulateur de vitesse) → 4.6–4.7 charges (ZIP, rétablissement ; exponentiel, fréquence) → 4.8 moteur asynchrone → 4.9 compensation → 4.10 FACTS.',
+    en: '4.1 lines → 4.2–4.3 transformers (inrush, efficiency; taps, phase shifter, vector groups) → 4.4–4.5 generator (short circuit, capability; models, AVR, governor) → 4.6–4.7 loads (ZIP, recovery; exponential, frequency) → 4.8 induction motor → 4.9 compensation → 4.10 FACTS.',
   },
 };
 
@@ -76,7 +76,7 @@ export const module4Notes: Record<string, LessonNote> = {
       { what: { fr: 'L’appel s’amortit ; le rendement est maximal à $\\sqrt{p_0/u_R}$.', en: 'The inrush decays; efficiency peaks at $\\sqrt{p_0/u_R}$.' }, why: { fr: 'Vérifie l’amortissement et la formule du rendement.', en: 'Checks the decay and the efficiency formula.' } },
     ],
   },
-  '4.3': {
+  '4.4': {
     summary: {
       fr: 'L’alternateur fournit la puissance active voulue par la turbine et la puissance réactive voulue par son excitation. En court-circuit, son courant décroît en trois étapes.',
       en: 'The generator supplies the active power set by its turbine and the reactive power set by its excitation. In a short circuit, its current decays in three stages.',
@@ -104,7 +104,7 @@ export const module4Notes: Record<string, LessonNote> = {
       { what: { fr: 'Le courant de court-circuit part de zéro et décroît vers $\\sqrt2/X_d$.', en: 'The short-circuit current starts at zero and decays towards $\\sqrt2/X_d$.' }, why: { fr: 'Vérifie la formule à trois constantes de temps.', en: 'Checks the three-time-constant formula.' } },
     ],
   },
-  '4.4': {
+  '4.6': {
     summary: {
       fr: 'Quand la tension baisse, la consommation baisse aussi… plus ou moins selon les appareils. Certaines charges reviennent ensuite à leur puissance d’origine.',
       en: 'When voltage falls, consumption falls too… more or less depending on the appliances. Some loads then return to their original power.',
@@ -131,7 +131,7 @@ export const module4Notes: Record<string, LessonNote> = {
       { what: { fr: 'Une charge qui se rétablit tombe à $V^2$ puis revient à 1.', en: 'A recovering load drops to $V^2$ then returns to 1.' }, why: { fr: 'Vérifie la dynamique de rétablissement.', en: 'Checks the recovery dynamics.' } },
     ],
   },
-  '4.5': {
+  '4.8': {
     summary: {
       fr: 'Le moteur asynchrone, le moteur le plus répandu : il démarre avec un courant énorme, tourne un peu moins vite que le champ, et peut caler si la tension s’effondre.',
       en: 'The induction motor, the most common motor: it starts with a huge current, turns slightly slower than the field, and can stall if voltage collapses.',
@@ -158,7 +158,7 @@ export const module4Notes: Record<string, LessonNote> = {
       { what: { fr: 'Un moteur en marche, à faible inertie et couple constant, cale sur un creux à 0,5 pu de 0,5 s ; le ventilateur passe, et le même creux éliminé en 0,3 s aussi.', en: 'A running low-inertia constant-torque motor stalls in a 0.5 pu, 0.5 s dip; the fan rides through, and so does the same dip cleared in 0.3 s.' }, why: { fr: 'Garantit l’exercice sur le FIDVR.', en: 'Guarantees the FIDVR exercise.' } },
     ],
   },
-  '4.6': {
+  '4.9': {
     summary: {
       fr: 'La tension dépend surtout de la puissance réactive. Des condensateurs ou des inductances (shunt), ou un condensateur série, permettent de la tenir et de transporter plus.',
       en: 'Voltage depends mainly on reactive power. Shunt capacitors or reactors, or a series capacitor, hold it and let more power through.',
@@ -185,7 +185,7 @@ export const module4Notes: Record<string, LessonNote> = {
       { what: { fr: 'Au-delà du nez, il n’y a plus de solution.', en: 'Beyond the nose, there is no solution.' }, why: { fr: 'Vérifie la détection de l’effondrement.', en: 'Checks the collapse detection.' } },
     ],
   },
-  '4.7': {
+  '4.10': {
     summary: {
       fr: 'Les FACTS sont des équipements d’électronique de puissance qui règlent la tension en un cycle. Le STATCOM, un onduleur, tient mieux que le SVC quand la tension s’effondre.',
       en: 'FACTS are power-electronic devices that regulate voltage within one cycle. The STATCOM, an inverter, holds up better than the SVC when voltage collapses.',

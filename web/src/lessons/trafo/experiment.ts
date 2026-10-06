@@ -10,7 +10,7 @@ export const trafoLesson: Experiment = {
   id: 'trafo',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.2 Transformateurs', en: '4.2 Transformers' },
+    { fr: '4.2 Transformateur : appel et rendement', en: '4.2 Transformer: inrush and efficiency' },
   ],
   title: { fr: 'Le transformateur : de l’idéal au réel', en: 'The transformer: from ideal to real' },
   model: transformer,

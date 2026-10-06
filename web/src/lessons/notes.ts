@@ -5,6 +5,7 @@
 
 import type { L } from '../lib/ui/ui.svelte';
 import { module4Note, module4Notes } from './notes4';
+import { module4bNotes } from './notes4b';
 import { module5Note, module5Notes } from './notes5';
 import { module6Note, module6Notes } from './notes6';
 import { module7Note, module7Notes } from './notes7';
@@ -616,6 +617,7 @@ export const lessonNotes: Record<string, LessonNote> = {
     ],
   },
   ...module4Notes,
+  ...module4bNotes,
   ...module5Notes,
   ...module6Notes,
   ...module7Notes,

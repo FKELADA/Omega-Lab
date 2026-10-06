@@ -1,4 +1,4 @@
-// Module 4.7 — FACTS: SVC versus STATCOM during a voltage dip.
+// Module 4.10 — FACTS: SVC versus STATCOM during a voltage dip.
 
 import Chart0 from '../../lib/instruments/charts/Chart0.svelte';
 import Chart1 from '../../lib/instruments/charts/Chart1.svelte';
@@ -10,7 +10,7 @@ export const factsLesson: Experiment = {
   id: 'facts',
   path: [
     { fr: 'Module 4 · Éléments du réseau', en: 'Module 4 · Grid elements' },
-    { fr: '4.7 FACTS', en: '4.7 FACTS' },
+    { fr: '4.10 FACTS', en: '4.10 FACTS' },
   ],
   title: { fr: 'SVC contre STATCOM : tenir la tension pendant un creux', en: 'SVC versus STATCOM: holding voltage through a dip' },
   model: facts,
@@ -135,8 +135,8 @@ export const factsLesson: Experiment = {
       tex: () => `\\text{TCSC: } X_{eff} = X_L - X_{TCSC}(\\alpha), \\qquad \\text{UPFC: } \\underline V_{ser} \\text{ + } I_{sh}`,
       note: (c) =>
         c.tr({
-          fr: 'Le TCSC fait varier la compensation série (leçon 4.6) en temps réel ; l’UPFC combine un STATCOM shunt et un convertisseur série pour contrôler séparément P et Q sur une ligne.',
-          en: 'The TCSC varies series compensation (lesson 4.6) in real time; the UPFC combines a shunt STATCOM and a series converter to control P and Q on a line independently.',
+          fr: 'Le TCSC fait varier la compensation série (leçon 4.9) en temps réel ; l’UPFC combine un STATCOM shunt et un convertisseur série pour contrôler séparément P et Q sur une ligne.',
+          en: 'The TCSC varies series compensation (lesson 4.9) in real time; the UPFC combines a shunt STATCOM and a series converter to control P and Q on a line independently.',
         }),
     },
   ],

@@ -157,8 +157,8 @@ export const pvLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'Un alternateur tient sa tension tant que son excitation le permet (diagramme de capacité, leçon 4.3). En butée, son nœud devient PQ : la tension n’est plus tenue et le nez recule. C’est souvent l’étape qui précède un effondrement.',
-          en: 'A generator holds its voltage as long as its excitation allows (capability chart, lesson 4.3). At the limit its bus becomes PQ: the voltage is no longer held and the nose moves in. This often comes just before a collapse.',
+          fr: 'Un alternateur tient sa tension tant que son excitation le permet (diagramme de capacité, leçon 4.4). En butée, son nœud devient PQ : la tension n’est plus tenue et le nez recule. C’est souvent l’étape qui précède un effondrement.',
+          en: 'A generator holds its voltage as long as its excitation allows (capability chart, lesson 4.4). At the limit its bus becomes PQ: the voltage is no longer held and the nose moves in. This often comes just before a collapse.',
         }),
     },
     {

@@ -185,7 +185,7 @@ export const trafoEfficiency = (S: number, pf: number) => {
   return P > 0 ? P / (P + TRAFO.p0 + S * S * TRAFO.uR) : 0;
 };
 
-// ── 4.3 Synchronous machine: steady state and three-phase short circuit ──────
+// ── 4.4 Synchronous machine: steady state and three-phase short circuit ──────
 
 export const SM = { V: 1, Emax: 2.6, Pturb: 0.9, Td2: 0.03, Td1: 0.8, Ta: 0.15, deltaMax: 70 };
 
@@ -262,7 +262,7 @@ export const vCurve = (P: number, Xd: number) => {
   return pts;
 };
 
-// ── 4.4 Loads: ZIP, exponential and recovering (Karlsson–Hill) ──────────────
+// ── 4.6 Loads: ZIP, exponential and recovering (Karlsson–Hill) ──────────────
 
 export const LOAD_T_STEP = 5;
 
@@ -309,7 +309,7 @@ export const loadModel: Model = {
   },
 };
 
-// ── 4.5 Induction motor: torque–slip, start-up, stall ────────────────────────
+// ── 4.8 Induction motor: torque–slip, start-up, stall ────────────────────────
 
 export const IM = { Rs: 0.01, Xs: 0.1, Xm: 3, Xr: 0.1, tDip: 2.5 };
 
@@ -414,7 +414,7 @@ export function imInfo(p: Params): ImInfo {
   return { tStart: imTorque(1, p.V, p.Rr), tMax, sMax, iStart: imCurrent(1, p.V, p.Rr), stalled: speedEnd < 0.5, speedEnd };
 }
 
-// ── 4.6 Compensation: shunt and series, on a radial line ─────────────────────
+// ── 4.9 Compensation: shunt and series, on a radial line ─────────────────────
 // Sending end 1∠δ pu, line R + jX(1 − k), load P (1 + j tan φ) at the receiving
 // end, shunt susceptance B there (B > 0 capacitor, B < 0 reactor).
 
@@ -487,7 +487,7 @@ export const compensation: Model = {
   },
 };
 
-// ── 4.7 FACTS: SVC versus STATCOM behind a Thevenin source ───────────────────
+// ── 4.10 FACTS: SVC versus STATCOM behind a Thevenin source ───────────────────
 
 export const FACTS = { tDip: 0.5, tClear: 1.5, Vref: 1 };
 

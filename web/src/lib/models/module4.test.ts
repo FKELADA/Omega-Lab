@@ -53,7 +53,7 @@ describe('transformer (4.2)', () => {
   });
 });
 
-describe('synchronous machine (4.3)', () => {
+describe('synchronous machine (4.4)', () => {
   const base = { mode: 0, P: 0.8, E: 1.8, Xd: 1.8, Xd2: 0.2, Xd1: 0.3, theta: 0 };
   it('Q = 0 when E = √(1 + (P·Xd)²)', () => {
     const E = Math.sqrt(1 + (0.8 * 1.8) ** 2);
@@ -76,7 +76,7 @@ describe('synchronous machine (4.3)', () => {
   });
 });
 
-describe('loads (4.4)', () => {
+describe('loads (4.6)', () => {
   const base = { z: 1, i: 0, dyn: 0, Tp: 10, Vstep: 0.9 };
   it('a constant-impedance load draws V²', () => {
     expect(loadInfo(base).pAfter).toBeCloseTo(0.81, 9);
@@ -95,7 +95,7 @@ describe('loads (4.4)', () => {
   });
 });
 
-describe('induction motor (4.5)', () => {
+describe('induction motor (4.8)', () => {
   const base = { V: 1, T0: 0.8, type: 0, Rr: 0.02, H: 0.8, dip: 1, dipDur: 0.2 };
   it('breakdown torque is several times the starting torque for a low-resistance rotor', () => {
     const k = imInfo(base);
@@ -123,7 +123,7 @@ describe('induction motor (4.5)', () => {
   });
 });
 
-describe('compensation (4.6)', () => {
+describe('compensation (4.9)', () => {
   const base = { P: 0.6, pf: 0.95, B: 0, k: 0 };
   it('a shunt capacitor raises the receiving voltage', () => {
     expect(compInfo({ ...base, B: 0.4 }).V!).toBeGreaterThan(compInfo(base).V!);
@@ -139,7 +139,7 @@ describe('compensation (4.6)', () => {
   });
 });
 
-describe('FACTS (4.7)', () => {
+describe('FACTS (4.10)', () => {
   const base = { Edip: 0.5, SCR: 3, rating: 0.5, slope: 0.03, Tr: 0.03 };
   it('both devices raise the voltage during the dip', () => {
     const k = factsInfo(base);

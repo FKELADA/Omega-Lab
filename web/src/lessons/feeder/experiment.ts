@@ -157,8 +157,8 @@ export const feederLesson: Experiment = {
       },
       note: (c) =>
         c.tr({
-          fr: 'En distribution, $R$ est du même ordre que $X$ (ou plus grand, en souterrain) : c’est la puissance **active** qui fait bouger la tension, contrairement au transport (leçon 4.6). Absorber du réactif aide, mais moins quand $R/X$ est grand.',
-          en: 'In distribution, $R$ is comparable to $X$ (or larger, underground): it is **active** power that moves the voltage, unlike in transmission (lesson 4.6). Absorbing reactive power helps, but less when $R/X$ is large.',
+          fr: 'En distribution, $R$ est du même ordre que $X$ (ou plus grand, en souterrain) : c’est la puissance **active** qui fait bouger la tension, contrairement au transport (leçon 4.9). Absorber du réactif aide, mais moins quand $R/X$ est grand.',
+          en: 'In distribution, $R$ is comparable to $X$ (or larger, underground): it is **active** power that moves the voltage, unlike in transmission (lesson 4.9). Absorbing reactive power helps, but less when $R/X$ is large.',
         }),
     },
     {

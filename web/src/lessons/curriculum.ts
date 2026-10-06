@@ -7,6 +7,9 @@ import { compLesson } from './comp/experiment';
 import { factsLesson } from './facts/experiment';
 import { lineLesson } from './line/experiment';
 import { loadsLesson } from './loads/experiment';
+import { loadExpLesson } from './loadexp/experiment';
+import { oltcLesson } from './oltc/experiment';
+import { smDynLesson } from './smdyn/experiment';
 import { motorLesson } from './motor/experiment';
 import { smLesson } from './sm/experiment';
 import { trafoLesson } from './trafo/experiment';
@@ -117,12 +120,15 @@ export const curriculum: ModuleEntry[] = [
     title: { fr: 'Éléments conventionnels', en: 'Conventional elements' },
     lessons: [
       { id: '4.1', title: { fr: 'Lignes', en: 'Lines' }, experiment: lineLesson },
-      { id: '4.2', title: { fr: 'Transformateurs', en: 'Transformers' }, experiment: trafoLesson },
-      { id: '4.3', title: { fr: 'Machine synchrone', en: 'Synchronous machine' }, experiment: smLesson },
-      { id: '4.4', title: { fr: 'Charges', en: 'Loads' }, experiment: loadsLesson },
-      { id: '4.5', title: { fr: 'Machine asynchrone', en: 'Induction motor' }, experiment: motorLesson },
-      { id: '4.6', title: { fr: 'Compensation', en: 'Compensation' }, experiment: compLesson },
-      { id: '4.7', title: { fr: 'FACTS', en: 'FACTS' }, experiment: factsLesson },
+      { id: '4.2', title: { fr: 'Transformateur : appel et rendement', en: 'Transformer: inrush and efficiency' }, experiment: trafoLesson },
+      { id: '4.3', title: { fr: 'Transformateur : régleur, déphaseur, couplages', en: 'Transformer: taps, phase shifter, vector groups' }, experiment: oltcLesson },
+      { id: '4.4', title: { fr: 'Machine synchrone : court-circuit et capabilité', en: 'Synchronous machine: short circuit and capability' }, experiment: smLesson },
+      { id: '4.5', title: { fr: 'Machine synchrone : modèles et régulations', en: 'Synchronous machine: models and controls' }, experiment: smDynLesson },
+      { id: '4.6', title: { fr: 'Charges : ZIP et rétablissement', en: 'Loads: ZIP and recovery' }, experiment: loadsLesson },
+      { id: '4.7', title: { fr: 'Charges : exponentiel et fréquence', en: 'Loads: exponential and frequency' }, experiment: loadExpLesson },
+      { id: '4.8', title: { fr: 'Machine asynchrone', en: 'Induction motor' }, experiment: motorLesson },
+      { id: '4.9', title: { fr: 'Compensation', en: 'Compensation' }, experiment: compLesson },
+      { id: '4.10', title: { fr: 'FACTS', en: 'FACTS' }, experiment: factsLesson },
     ],
   },
   {

@@ -206,7 +206,7 @@ export const POWER: ElementDef[] = [
           const { R, L } = loadRL({ P: c.p[`${id}.P`], Q: c.p[`${id}.Q`], Vn: c.p[`${id}.Vn`], f: c.p[`${id}.f`] });
           return `Z = \\frac{U_n^2}{P - jQ} = ${c.q(R, 'Ω')} + j\\,${c.q(2 * Math.PI * c.p[`${id}.f`] * L, 'Ω')} \\ \\text{par phase, en étoile}`;
         },
-        note: (c) => c.tr({ fr: 'Elle absorbe $P$ et $Q$ sous sa tension nominale, et varie en $V^2$ autour (leçon 4.4).', en: 'It absorbs $P$ and $Q$ at rated voltage, and varies as $V^2$ around it (lesson 4.4).' }),
+        note: (c) => c.tr({ fr: 'Elle absorbe $P$ et $Q$ sous sa tension nominale, et varie en $V^2$ autour (leçon 4.6).', en: 'It absorbs $P$ and $Q$ at rated voltage, and varies as $V^2$ around it (lesson 4.6).' }),
       },
     ],
   },

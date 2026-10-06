@@ -21,7 +21,7 @@ export const LINKS: Record<string, LessonLink> = {
   '4.1': { template: 'line-wave', map: (p) => ({ 'LG1.len': p.km }) },
   // Lesson 4.2 closes at the angle θ0 of a sine; the bench's source is a cosine.
   '4.2': { template: 'inrush', map: (p) => ({ 'TR1.psiR': p.psiR, 'TR1.psiK': p.psiSat, 'TR1.r': p.r, 'V1.ph': p.theta0 - 90 }) },
-  '4.5': { template: 'motor', map: (p) => ({ 'M1.T0': p.T0, 'M1.fan': p.type ? 0 : 1, 'M1.rr': p.Rr, 'M1.H': p.H }) },
+  '4.8': { template: 'motor', map: (p) => ({ 'M1.T0': p.T0, 'M1.fan': p.type ? 0 : 1, 'M1.rr': p.Rr, 'M1.H': p.H }) },
   '5.1': { template: 'pf-grid' },
   '6.1': { template: 'buck', map: (p): Record<string, number> => (p.type ? {} : { 'Q1.D': p.D, 'Q1.fs': p.fs * 1e3, 'L1.L': p.L * 1e-6, 'C1.C': p.C * 1e-6, 'R1.R': p.R }) },
   '6.2': { template: 'rectifier', map: (p) => ({ 'PD1.alpha': p.alpha, 'G1.L': Math.max(p.Ls, 0.001) * 1e-3 }) },
