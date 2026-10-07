@@ -4,3 +4,6 @@ dist/
 Thumbs.db
 *.log
 web/tests/_sub.mjs
+
+# Beamer slides: local only
+slides/

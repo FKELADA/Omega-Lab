@@ -164,7 +164,7 @@ Avec 30 GW de photovoltaïque, c’est impossible sans stockage : il faudrait d�
 
 With 30 GW of solar it is impossible without storage: midday energy would have to move to the evening. That is the job of batteries and pumped hydro (Module 7).`,
       },
-      hint: { fr: 'Gardez environ 10 GW de photovoltaïque et réglez le nucléaire entre 42 et 47 GW.', en: 'Keep about 10 GW of solar and set nuclear between 42 and 47 GW.' },
+      hint: { fr: 'Gardez environ 10 GW de photovoltaïque et réglez le nucléaire entre 42 et 45 GW.', en: 'Keep about 10 GW of solar and set nuclear between 42 and 45 GW.' },
       check: (lab) => (lab.info as DayInfo).balanced,
     },
   ],

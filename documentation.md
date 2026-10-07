@@ -301,7 +301,7 @@ Line losses for the transmission example: 20 kV > 100 % (impossible), 63 kV 75.6
 | 5 | Balancing the day | Flexible generation within $[0, 25]$ GW all day |
 
 For step 5, the evening peak requires nuclear ≥ 41.5 GW (with 5 GW wind and no sun). At 10 GW of
-PV, the midday floor allows nuclear up to 47 GW. At 20 GW of PV or more, no setting balances the
+PV, the night trough (around 4 h) caps nuclear at 45.8 GW. At 20 GW of PV or more, no setting balances the
 day, which is the point of the step text about storage.
 
 **Misconception detected** (y-range 30–90 GW): flat demand. Triggers when the sketch's spread is
